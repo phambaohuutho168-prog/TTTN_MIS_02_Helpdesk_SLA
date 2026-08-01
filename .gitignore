@@ -1,0 +1,42 @@
+# Thông tin bí mật
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# File log và file tạm
+*.log
+temp/
+tmp/
+
+# File Windows
+Thumbs.db
+Desktop.ini
+
+# Công cụ lập trình
+.vscode/
+.idea/
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Java
+target/
+*.class
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# .NET
+bin/
+obj/
+
+# File upload hoặc dữ liệu chạy thử
+uploads/
+coverage/
