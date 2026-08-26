@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request, Depends
+import uuid
+from datetime import datetime
+from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -6,10 +8,13 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import engine, Base, get_db
 from app.rbac import PermissionChecker, RoleEnum
+from app.models import Ticket
+from app.schemas import TicketCreate, TicketResponse
 
+# Tự động tạo các bảng trong DB
 Base.metadata.create_all(bind=engine)
 
-# Mô tả các nhóm API 
+# Định nghĩa các nhóm API hiển thị trên Swagger UI (Đã đồng bộ tên nhóm và bỏ CV027)
 tags_metadata = [
     {
         "name": "1. Hệ thống",
@@ -17,7 +22,11 @@ tags_metadata = [
     },
     {
         "name": "2. Phân quyền (RBAC)",
-        "description": "Các API yêu cầu xác thực vai trò người dùng (Quản trị viên / Người xử lí / Người gửi yêu cầu).",
+        "description": "Các API yêu cầu xác thực vai trò người dùng (Quản trị viên / Người xử lý / Người gửi yêu cầu).",
+    },
+    {
+        "name": "3. Quản lý Ticket",
+        "description": "Chức năng tạo và quản lý các yêu cầu hỗ trợ SLA.",
     },
 ]
 
@@ -30,6 +39,8 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+# --- 1. HỆ THỐNG ---
 
 @app.get(
     "/",
@@ -53,7 +64,7 @@ def home_page(request: Request, db: Session = Depends(get_db)):
 def health_check():
     return {"status": "ok"}
 
-# --- DEMO CÁC API PHÂN QUYỀN RBAC ---
+# --- 2. PHÂN QUYỀN (RBAC) ---
 
 @app.get(
     "/api/admin/settings",
@@ -74,3 +85,37 @@ def admin_only():
 )
 def handler_and_admin():
     return {"message": "Bạn đã truy cập vào khu vực Xử lý Ticket!"}
+
+# --- 3. QUẢN LÝ TICKET ---
+
+@app.post(
+    "/api/tickets",
+    response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Tạo yêu cầu hỗ trợ mới (Create Ticket)",
+    description="Người gửi nhập thông tin ticket; hệ thống tự động sinh Mã Ticket và Thời gian tạo.",
+    tags=["3. Quản lý Ticket"]
+)
+def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
+    # 1. Tự động sinh mã Ticket duy nhất (VD: TK-20260826-8A3F)
+    today_str = datetime.now().strftime("%Y%m%d")
+    random_code = str(uuid.uuid4())[:4].upper()
+    generated_code = f"TK-{today_str}-{random_code}"
+
+    # 2. Khởi tạo đối tượng Ticket mới
+    new_ticket = Ticket(
+        ticket_code=generated_code,
+        title=ticket_data.title,
+        description=ticket_data.description,
+        category=ticket_data.category,
+        priority=ticket_data.priority,
+        status="Mới",
+        created_at=datetime.now()
+    )
+
+    # 3. Lưu vào Cơ sở dữ liệu SQLite
+    db.add(new_ticket)
+    db.commit()
+    db.refresh(new_ticket)
+
+    return new_ticket
