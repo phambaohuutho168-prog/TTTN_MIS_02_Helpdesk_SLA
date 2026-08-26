@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="card">
+        <h1>{{ app_name }}</h1>
+        <p class="subtitle">Project Skeleton đã khởi tạo thành công!</p>
+        <hr>
+        <div class="status-box">
+            <p>Trạng thái Server: <span class="badge badge-success">ONLINE</span></p>
+            <p>Cơ sở dữ liệu (Database): <span class="badge badge-info">{{ db_status }}</span></p>
+        </div>
+        <p class="subtitle">Sẵn sàng phát triển các tính năng: Ticket SLA, Escalation, Phân quyền User.</p>
+    </div>
+</body>
+</html>
