@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     ATTACHMENT_STORAGE_DIR: str = "storage/attachments"
     MAX_ATTACHMENT_SIZE_MB: int = Field(10, ge=1, le=50)
+    COMMENT_EDIT_WINDOW_MINUTES: int = Field(15, ge=1, le=1_440)
 
     model_config = SettingsConfigDict(
         env_file=".env",
