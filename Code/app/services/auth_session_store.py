@@ -14,7 +14,15 @@ def _digest(value: str) -> str:
 
 
 def _ttl_from_claims(claims: dict[str, Any]) -> int:
-    expires_at = int(claims["exp"])
+    expires_value = claims["exp"]
+
+    if isinstance(expires_value, datetime):
+        if expires_value.tzinfo is None or expires_value.utcoffset() is None:
+            expires_value = expires_value.replace(tzinfo=timezone.utc)
+        expires_at = int(expires_value.timestamp())
+    else:
+        expires_at = int(expires_value)
+
     now = int(datetime.now(timezone.utc).timestamp())
     return max(expires_at - now, 1)
 
