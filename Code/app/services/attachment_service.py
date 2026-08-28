@@ -196,8 +196,11 @@ def _is_admin(user: User) -> bool:
 def _assert_ticket_scope(ticket: Ticket, user: User) -> None:
     if ticket.requester_id == user.user_id or _is_admin(user):
         return
-    # PROCESSOR is deliberately denied until a current assignment exists.
-    # This prevents a processor from reading every ticket by guessing IDs.
+    if RoleCode.PROCESSOR.value in user.role_codes and any(
+        assignment.is_current and assignment.assignee_id == user.user_id
+        for assignment in ticket.assignments
+    ):
+        return
     raise AppError(
         403,
         "TICKET_ACCESS_DENIED",
