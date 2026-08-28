@@ -41,3 +41,4 @@ class Priority(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     tickets = relationship("Ticket", back_populates="priority")
+    sla_policies = relationship("SLAPolicy", back_populates="priority")

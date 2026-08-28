@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from math import ceil
 from uuid import uuid4
 
@@ -147,6 +147,41 @@ async def create_ticket(
             title=payload.title,
             description=payload.description,
         )
+        await ticket_repository.create_status_history_record(
+            session,
+            ticket_id=ticket.ticket_id,
+            from_status_code=None,
+            to_status_code="NEW",
+            changed_by=requester.user_id,
+            reason="Ticket được tạo",
+        )
+        started_at = datetime.now(timezone.utc)
+        policy = await ticket_repository.get_effective_sla_policy(
+            session,
+            priority_id=payload.priority_id,
+            effective_at=started_at,
+        )
+        if policy is not None:
+            await ticket_repository.create_ticket_sla_record(
+                session,
+                ticket_id=ticket.ticket_id,
+                sla_policy_id=policy.sla_policy_id,
+                sla_type="RESPONSE",
+                cycle_no=1,
+                started_at=started_at,
+                due_at=started_at
+                + timedelta(minutes=policy.response_target_minutes),
+            )
+            await ticket_repository.create_ticket_sla_record(
+                session,
+                ticket_id=ticket.ticket_id,
+                sla_policy_id=policy.sla_policy_id,
+                sla_type="RESOLUTION",
+                cycle_no=1,
+                started_at=started_at,
+                due_at=started_at
+                + timedelta(minutes=policy.resolution_target_minutes),
+            )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

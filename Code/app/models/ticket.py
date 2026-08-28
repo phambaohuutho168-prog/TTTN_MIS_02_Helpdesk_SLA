@@ -98,6 +98,27 @@ class Ticket(Base):
         passive_deletes=True,
         order_by="TicketAssignment.assigned_at",
     )
+    resolutions = relationship(
+        "TicketResolution",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="TicketResolution.cycle_no",
+    )
+    status_history = relationship(
+        "TicketStatusHistory",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="TicketStatusHistory.changed_at",
+    )
+    sla_records = relationship(
+        "TicketSLA",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="TicketSLA.cycle_no",
+    )
 
     @property
     def current_assignment(self):

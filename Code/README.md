@@ -1,6 +1,8 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023 (Project skeleton) và CV024 (Authentication) của đề tài thực tập tốt nghiệp.
+Mã nguồn từ CV023 đến CV031 của đề tài thực tập tốt nghiệp: môi trường,
+xác thực, RBAC, quản trị tài khoản/vai trò, tạo và phân loại ticket, đính kèm,
+danh sách/bộ lọc, chi tiết ticket và lịch sử thay đổi.
 
 ## Công nghệ
 
@@ -91,9 +93,33 @@ Ví dụ đăng nhập:
 python -m pytest
 ```
 
-Các test CV023-CV024 bao phủ healthcheck, đăng nhập đúng/sai, tài khoản inactive, thiếu token, refresh rotation, reuse detection, logout/revocation và cập nhật hồ sơ.
+Hiện có 98 test bao phủ CV023-CV031: healthcheck, authentication, RBAC,
+quản trị user/role, ticket, catalog, attachment, data scope, phân trang,
+chi tiết ticket, trao đổi, phân công, SLA và lịch sử trạng thái.
 
-## 8. Kiểm tra secret trước khi commit
+## 8. API Ticket detail/history (CV031)
+
+| ID | Phương thức và endpoint | Phạm vi |
+| --- | --- | --- |
+| TKT-03 | `GET /api/v1/tickets/{ticket_id}` | Requester sở hữu; Processor đang được phân công; Admin toàn hệ thống |
+| TKT-06 | `GET /api/v1/tickets/{ticket_id}/status-history` | Theo phạm vi ticket, có phân trang |
+| COM-01 | `GET /api/v1/tickets/{ticket_id}/comments` | Requester không nhận comment `INTERNAL` |
+| ASN-02 | `GET /api/v1/tickets/{ticket_id}/assignments` | Processor đang xử lý hoặc Admin |
+
+TKT-03 tổng hợp nội dung, danh mục/ưu tiên/trạng thái, người gửi, phân công
+hiện tại, tệp trực tiếp, kết quả xử lý, quyền thao tác và SLA. API chỉ trả metadata
+attachment an toàn; không trả `storage_path`.
+
+Migration CV031:
+
+```powershell
+alembic upgrade head
+alembic current
+```
+
+Kết quả mong đợi của lệnh thứ hai là `20260828_0006 (head)`.
+
+## 9. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -102,8 +128,9 @@ git ls-files | Select-String -Pattern '(^|/)\.env$|\.db$|\.sqlite$'
 
 Lệnh thứ hai không được trả về `.env` hoặc database local.
 
-Commit đề xuất:
+Branch và commit đề xuất cho CV031:
 
 ```text
-feat(auth): complete project skeleton and secure authentication
+feature/ticket-detail
+feat(ticket): implement ticket detail and history
 ```

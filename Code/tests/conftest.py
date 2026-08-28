@@ -26,9 +26,13 @@ from app.models import (  # noqa: E402,F401
     Department,
     Priority,
     Role,
+    SLAPolicy,
     Ticket,
     TicketAssignment,
+    TicketResolution,
+    TicketSLA,
     TicketStatus,
+    TicketStatusHistory,
     User,
     UserRole,
 )

@@ -60,6 +60,14 @@ class User(Base):
         back_populates="assigner",
         foreign_keys="TicketAssignment.assigned_by",
     )
+    ticket_resolutions = relationship(
+        "TicketResolution",
+        back_populates="resolver",
+    )
+    ticket_status_changes = relationship(
+        "TicketStatusHistory",
+        back_populates="actor",
+    )
 
     @property
     def role_codes(self) -> list[str]:

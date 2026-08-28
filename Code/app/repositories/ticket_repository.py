@@ -1,12 +1,19 @@
+from datetime import datetime
+
 from sqlalchemy import Select, exists, false, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.category import Category
+from app.models.comment import Comment
 from app.models.priority import Priority
+from app.models.sla_policy import SLAPolicy
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
+from app.models.ticket_resolution import TicketResolution
+from app.models.ticket_sla import TicketSLA
 from app.models.ticket_status import TicketStatus
+from app.models.ticket_status_history import TicketStatusHistory
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.schemas.ticket import TicketListQuery
@@ -25,6 +32,23 @@ TICKET_LOAD_OPTIONS = (
     .selectinload(TicketAssignment.assignee)
     .selectinload(User.user_roles)
     .selectinload(UserRole.role),
+)
+
+TICKET_DETAIL_LOAD_OPTIONS = (
+    selectinload(Ticket.category),
+    selectinload(Ticket.priority),
+    selectinload(Ticket.current_status),
+    selectinload(Ticket.requester)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
+    selectinload(Ticket.attachments),
+    selectinload(Ticket.assignments)
+    .selectinload(TicketAssignment.assignee)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
+    selectinload(Ticket.assignments).selectinload(TicketAssignment.assigner),
+    selectinload(Ticket.resolutions).selectinload(TicketResolution.resolver),
+    selectinload(Ticket.sla_records).selectinload(TicketSLA.policy),
 )
 
 
@@ -194,3 +218,167 @@ async def get_ticket_by_id(
         .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()
+
+
+async def get_ticket_detail_by_id(
+    session: AsyncSession,
+    ticket_id: int,
+) -> Ticket | None:
+    result = await session.execute(
+        select(Ticket)
+        .where(Ticket.ticket_id == ticket_id)
+        .options(*TICKET_DETAIL_LOAD_OPTIONS)
+        .execution_options(populate_existing=True)
+    )
+    return result.scalar_one_or_none()
+
+
+async def create_status_history_record(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    from_status_code: str | None,
+    to_status_code: str,
+    changed_by: int | None,
+    reason: str | None,
+) -> TicketStatusHistory:
+    history = TicketStatusHistory(
+        ticket_id=ticket_id,
+        from_status_code=from_status_code,
+        to_status_code=to_status_code,
+        changed_by=changed_by,
+        reason=reason,
+    )
+    session.add(history)
+    await session.flush()
+    return history
+
+
+async def get_effective_sla_policy(
+    session: AsyncSession,
+    *,
+    priority_id: int,
+    effective_at: datetime,
+) -> SLAPolicy | None:
+    result = await session.execute(
+        select(SLAPolicy)
+        .where(
+            SLAPolicy.priority_id == priority_id,
+            SLAPolicy.is_active.is_(True),
+            SLAPolicy.effective_from <= effective_at,
+            or_(
+                SLAPolicy.effective_to.is_(None),
+                SLAPolicy.effective_to > effective_at,
+            ),
+        )
+        .order_by(SLAPolicy.version_no.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def create_ticket_sla_record(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    sla_policy_id: int,
+    sla_type: str,
+    cycle_no: int,
+    started_at: datetime,
+    due_at: datetime,
+) -> TicketSLA:
+    ticket_sla = TicketSLA(
+        ticket_id=ticket_id,
+        sla_policy_id=sla_policy_id,
+        sla_type=sla_type,
+        cycle_no=cycle_no,
+        started_at=started_at,
+        due_at=due_at,
+        runtime_status="RUNNING",
+    )
+    session.add(ticket_sla)
+    await session.flush()
+    return ticket_sla
+
+
+async def list_status_history(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    page: int,
+    page_size: int,
+) -> tuple[list[TicketStatusHistory], int]:
+    total = await session.scalar(
+        select(func.count(TicketStatusHistory.history_id)).where(
+            TicketStatusHistory.ticket_id == ticket_id
+        )
+    )
+    result = await session.execute(
+        select(TicketStatusHistory)
+        .where(TicketStatusHistory.ticket_id == ticket_id)
+        .options(selectinload(TicketStatusHistory.actor))
+        .order_by(
+            TicketStatusHistory.changed_at.asc(),
+            TicketStatusHistory.history_id.asc(),
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.scalars().all()), int(total or 0)
+
+
+async def list_comments(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    include_internal: bool,
+    page: int,
+    page_size: int,
+) -> tuple[list[Comment], int]:
+    conditions = [Comment.ticket_id == ticket_id]
+    if not include_internal:
+        conditions.append(Comment.visibility == "PUBLIC")
+    total = await session.scalar(
+        select(func.count(Comment.comment_id)).where(*conditions)
+    )
+    result = await session.execute(
+        select(Comment)
+        .where(*conditions)
+        .options(
+            selectinload(Comment.author),
+            selectinload(Comment.attachments),
+        )
+        .order_by(Comment.created_at.asc(), Comment.comment_id.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.scalars().all()), int(total or 0)
+
+
+async def list_assignments(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    page: int,
+    page_size: int,
+) -> tuple[list[TicketAssignment], int]:
+    total = await session.scalar(
+        select(func.count(TicketAssignment.assignment_id)).where(
+            TicketAssignment.ticket_id == ticket_id
+        )
+    )
+    result = await session.execute(
+        select(TicketAssignment)
+        .where(TicketAssignment.ticket_id == ticket_id)
+        .options(
+            selectinload(TicketAssignment.assignee),
+            selectinload(TicketAssignment.assigner),
+        )
+        .order_by(
+            TicketAssignment.assigned_at.asc(),
+            TicketAssignment.assignment_id.asc(),
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.scalars().all()), int(total or 0)
