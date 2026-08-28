@@ -1,4 +1,6 @@
+from app.models.attachment import Attachment
 from app.models.category import Category
+from app.models.comment import Comment
 from app.models.department import Department
 from app.models.priority import Priority
 from app.models.role import Role
@@ -8,7 +10,9 @@ from app.models.user import User
 from app.models.user_role import UserRole
 
 __all__ = [
+    "Attachment",
     "Category",
+    "Comment",
     "Department",
     "Priority",
     "Role",

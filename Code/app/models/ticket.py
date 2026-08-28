@@ -79,3 +79,15 @@ class Ticket(Base):
     category = relationship("Category", back_populates="tickets")
     priority = relationship("Priority", back_populates="tickets")
     current_status = relationship("TicketStatus", back_populates="tickets")
+    comments = relationship(
+        "Comment",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    attachments = relationship(
+        "Attachment",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

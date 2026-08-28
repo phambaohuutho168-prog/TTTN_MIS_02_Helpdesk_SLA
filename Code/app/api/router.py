@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import auth, catalogs, health, roles, tickets, users
+from app.api.v1.routes import attachments, auth, catalogs, health, roles, tickets, users
 
 
 api_router = APIRouter()
@@ -10,5 +10,6 @@ api_router.include_router(users.router)
 api_router.include_router(users.admin_router)
 api_router.include_router(roles.router)
 api_router.include_router(tickets.router)
+api_router.include_router(attachments.router)
 api_router.include_router(catalogs.router)
 api_router.include_router(catalogs.admin_router)

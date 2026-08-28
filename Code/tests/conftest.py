@@ -15,11 +15,14 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/15")
 
 from app.core.security import hash_password  # noqa: E402
+from app.core.config import settings  # noqa: E402
 from app.database.base import Base  # noqa: E402
 from app.database.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import (  # noqa: E402,F401
+    Attachment,
     Category,
+    Comment,
     Department,
     Priority,
     Role,
@@ -29,6 +32,15 @@ from app.models import (  # noqa: E402,F401
     UserRole,
 )
 from app.services.auth_session_store import get_session_store  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def isolated_attachment_storage(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        settings,
+        "ATTACHMENT_STORAGE_DIR",
+        str(tmp_path / "attachments"),
+    )
 
 
 class FakeSessionStore:
