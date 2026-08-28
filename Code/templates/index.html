@@ -13,9 +13,13 @@
         <hr>
         <div class="status-box">
             <p>Trạng thái Server: <span class="badge badge-success">ONLINE</span></p>
-            <p>Cơ sở dữ liệu (Database): <span class="badge badge-info">{{ db_status }}</span></p>
+            <p>Cơ sở dữ liệu: <span class="badge badge-info">{{ db_status }}</span></p>
+            <p>Quản lý phiên: <span class="badge badge-info">{{ redis_status }}</span></p>
         </div>
-        <p class="subtitle">Sẵn sàng phát triển các tính năng: Ticket SLA, Escalation, Phân quyền User.</p>
+        <p class="subtitle">
+            Kiểm tra đầy đủ tại <a href="/api/v1/health/ready">/api/v1/health/ready</a>
+            và tài liệu API tại <a href="/docs">/docs</a>.
+        </p>
     </div>
 </body>
 </html>
