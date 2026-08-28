@@ -13,3 +13,13 @@ class TicketStatus(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     tickets = relationship("Ticket", back_populates="current_status")
+    history_as_source = relationship(
+        "TicketStatusHistory",
+        back_populates="from_status",
+        foreign_keys="TicketStatusHistory.from_status_code",
+    )
+    history_as_target = relationship(
+        "TicketStatusHistory",
+        back_populates="to_status",
+        foreign_keys="TicketStatusHistory.to_status_code",
+    )
