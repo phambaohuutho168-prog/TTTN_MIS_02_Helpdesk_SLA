@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.models.attachment import Attachment
 from app.models.comment import Comment
 from app.models.ticket import Ticket
+from app.models.ticket_assignment import TicketAssignment
 from app.models.ticket_status import TicketStatus
 from tests.conftest import login_client
 
@@ -128,6 +129,41 @@ async def test_unassigned_processor_cannot_download_attachment(
     assert response.status_code == 403
     assert response.json()["code"] == "TICKET_ACCESS_DENIED"
     assert "file_name" not in response.text
+
+
+async def test_current_assignee_can_download_attachment(
+    client,
+    credentials,
+    processor_credentials,
+    seeded_users,
+    session_factory,
+):
+    ticket = await _create_ticket(client, credentials, seeded_users)
+    uploaded = await _upload_pdf(
+        client,
+        await _headers(client, credentials),
+        ticket["ticket_id"],
+    )
+    attachment_id = uploaded.json()["data"]["attachment_id"]
+    async with session_factory() as session:
+        session.add(
+            TicketAssignment(
+                ticket_id=ticket["ticket_id"],
+                assignee_id=seeded_users["processor_user_id"],
+                assigned_by=seeded_users["admin_user_id"],
+                is_current=True,
+                reason="Phân công xử lý",
+            )
+        )
+        await session.commit()
+
+    response = await client.get(
+        f"/api/v1/attachments/{attachment_id}/download",
+        headers=await _headers(client, processor_credentials),
+    )
+
+    assert response.status_code == 200
+    assert response.content == PDF_BYTES
 
 
 async def test_upload_rejects_extension_declared_mime_and_fake_content(

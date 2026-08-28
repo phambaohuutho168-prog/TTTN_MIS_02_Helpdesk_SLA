@@ -50,6 +50,16 @@ class User(Base):
     tickets = relationship("Ticket", back_populates="requester")
     comments = relationship("Comment", back_populates="author")
     uploaded_attachments = relationship("Attachment", back_populates="uploader")
+    ticket_assignments = relationship(
+        "TicketAssignment",
+        back_populates="assignee",
+        foreign_keys="TicketAssignment.assignee_id",
+    )
+    assignments_created = relationship(
+        "TicketAssignment",
+        back_populates="assigner",
+        foreign_keys="TicketAssignment.assigned_by",
+    )
 
     @property
     def role_codes(self) -> list[str]:

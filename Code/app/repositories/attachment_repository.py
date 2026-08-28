@@ -5,10 +5,20 @@ from sqlalchemy.orm import selectinload
 from app.models.attachment import Attachment
 from app.models.comment import Comment
 from app.models.ticket import Ticket
+from app.models.ticket_assignment import TicketAssignment
+from app.models.user import User
+from app.models.user_role import UserRole
 
 
 ATTACHMENT_LOAD_OPTIONS = (
     selectinload(Attachment.ticket).selectinload(Ticket.current_status),
+    selectinload(Attachment.ticket)
+    .selectinload(
+        Ticket.assignments.and_(TicketAssignment.is_current.is_(True))
+    )
+    .selectinload(TicketAssignment.assignee)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
     selectinload(Attachment.comment),
 )
 

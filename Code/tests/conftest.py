@@ -27,6 +27,7 @@ from app.models import (  # noqa: E402,F401
     Priority,
     Role,
     Ticket,
+    TicketAssignment,
     TicketStatus,
     User,
     UserRole,

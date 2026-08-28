@@ -91,3 +91,17 @@ class Ticket(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    assignments = relationship(
+        "TicketAssignment",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="TicketAssignment.assigned_at",
+    )
+
+    @property
+    def current_assignment(self):
+        return next(
+            (assignment for assignment in self.assignments if assignment.is_current),
+            None,
+        )
