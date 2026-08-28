@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.attachment import Attachment
 from app.models.audit_log import AuditLog
+from app.repositories.audit_repository import append_audit
 from app.models.comment import Comment
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
@@ -118,19 +119,17 @@ async def create_comment_audit_record(
     new_value: dict,
     ip_address: str | None,
 ) -> AuditLog:
-    audit = AuditLog(
+    return await append_audit(
+        session,
         actor_user_id=actor_user_id,
         ticket_id=ticket_id,
         action_code=action_code,
         entity_type="COMMENT",
         entity_id=comment_id,
-        old_value_json=old_value,
-        new_value_json=new_value,
+        old_value=old_value,
+        new_value=new_value,
         ip_address=ip_address,
     )
-    session.add(audit)
-    await session.flush()
-    return audit
 
 
 def complete_response_sla(

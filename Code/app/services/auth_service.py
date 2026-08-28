@@ -13,6 +13,7 @@ from app.core.security import (
     verify_password,
 )
 from app.models.user import User
+from app.repositories import audit_repository
 from app.repositories.user_repository import get_user_by_email, get_user_by_id
 from app.schemas.auth import AuthTokenData
 from app.schemas.user import DepartmentBrief, RoleBrief, UserDetail
@@ -94,8 +95,18 @@ async def login(
     password: str,
     ip_address: str,
 ) -> AuthTokenData:
+    normalized_email = email.strip().lower()
     retry_after = await store.login_retry_after(email, ip_address)
     if retry_after:
+        await audit_repository.append_audit(
+            session,
+            action_code="LOGIN_FAILED",
+            entity_type="AUTH_SESSION",
+            new_value={"email": normalized_email, "outcome": "RATE_LIMITED"},
+            reason="RATE_LIMIT_EXCEEDED",
+            ip_address=ip_address,
+        )
+        await session.commit()
         raise AppError(
             429,
             "RATE_LIMIT_EXCEEDED",
@@ -117,6 +128,17 @@ async def login(
 
     if user is None or not password_valid:
         await store.record_login_failure(email, ip_address)
+        await audit_repository.append_audit(
+            session,
+            actor_user_id=user.user_id if user is not None else None,
+            action_code="LOGIN_FAILED",
+            entity_type="USER",
+            entity_id=user.user_id if user is not None else None,
+            new_value={"email": normalized_email, "outcome": "INVALID_CREDENTIALS"},
+            reason="AUTH_INVALID_CREDENTIALS",
+            ip_address=ip_address,
+        )
+        await session.commit()
         raise AppError(
             401,
             "AUTH_INVALID_CREDENTIALS",
@@ -124,6 +146,17 @@ async def login(
         )
 
     if not user.is_active:
+        await audit_repository.append_audit(
+            session,
+            actor_user_id=user.user_id,
+            action_code="LOGIN_FAILED",
+            entity_type="USER",
+            entity_id=user.user_id,
+            new_value={"email": normalized_email, "outcome": "ACCOUNT_INACTIVE"},
+            reason="AUTH_ACCOUNT_INACTIVE",
+            ip_address=ip_address,
+        )
+        await session.commit()
         raise AppError(
             403,
             "AUTH_ACCOUNT_INACTIVE",
@@ -131,7 +164,18 @@ async def login(
         )
 
     await store.clear_login_failures(email, ip_address)
-    return await _issue_token_pair(user, store)
+    token_data = await _issue_token_pair(user, store)
+    await audit_repository.append_audit(
+        session,
+        actor_user_id=user.user_id,
+        action_code="LOGIN_SUCCEEDED",
+        entity_type="USER",
+        entity_id=user.user_id,
+        new_value={"email": normalized_email, "outcome": "SUCCEEDED"},
+        ip_address=ip_address,
+    )
+    await session.commit()
+    return token_data
 
 
 async def refresh(
@@ -206,10 +250,12 @@ async def authenticate_access_token(
 
 
 async def logout(
+    session: AsyncSession,
     store: SessionStore,
     *,
     context: AuthContext,
     refresh_token: str,
+    ip_address: str | None = None,
 ) -> None:
     try:
         refresh_claims = decode_token(refresh_token, expected_type="refresh")
@@ -228,3 +274,13 @@ async def logout(
         str(context.claims["jti"]),
         int(context.claims["exp"]),
     )
+    await audit_repository.append_audit(
+        session,
+        actor_user_id=context.user.user_id,
+        action_code="LOGOUT_SUCCEEDED",
+        entity_type="USER",
+        entity_id=context.user.user_id,
+        new_value={"outcome": "SUCCEEDED"},
+        ip_address=ip_address,
+    )
+    await session.commit()

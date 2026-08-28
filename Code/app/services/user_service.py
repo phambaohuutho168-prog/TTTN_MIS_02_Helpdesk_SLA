@@ -6,7 +6,7 @@ from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.core.security import hash_password
 from app.models.user import User
-from app.repositories import role_repository, user_repository
+from app.repositories import audit_repository, role_repository, user_repository
 from app.schemas.common import PageData
 from app.schemas.user import (
     AdminUserCreateRequest,
@@ -60,10 +60,7 @@ async def list_admin_users(
     )
 
 
-async def get_admin_user(
-    session: AsyncSession,
-    user_id: int,
-) -> UserDetail:
+async def get_admin_user(session: AsyncSession, user_id: int) -> UserDetail:
     user = await user_repository.get_user_by_id(session, user_id)
     if user is None:
         raise AppError(404, "USER_NOT_FOUND", "Không tìm thấy người dùng.")
@@ -75,6 +72,7 @@ async def create_admin_user(
     *,
     actor: User,
     payload: AdminUserCreateRequest,
+    ip_address: str | None = None,
 ) -> UserDetail:
     if await user_repository.get_user_by_email(session, str(payload.email)):
         raise AppError(409, "USER_EMAIL_CONFLICT", "Email đã được sử dụng.")
@@ -85,11 +83,7 @@ async def create_admin_user(
             payload.department_id,
         )
         if department is None:
-            raise AppError(
-                404,
-                "DEPARTMENT_NOT_FOUND",
-                "Không tìm thấy phòng ban.",
-            )
+            raise AppError(404, "DEPARTMENT_NOT_FOUND", "Không tìm thấy phòng ban.")
 
     roles = await role_repository.get_roles_by_ids(
         session,
@@ -116,6 +110,22 @@ async def create_admin_user(
                 role_id=role.role_id,
                 assigned_by=actor.user_id,
             )
+        await audit_repository.append_audit(
+            session,
+            actor_user_id=actor.user_id,
+            action_code="USER_CREATED",
+            entity_type="USER",
+            entity_id=user.user_id,
+            new_value={
+                "email": user.email,
+                "full_name": user.full_name,
+                "phone": user.phone,
+                "department_id": user.department_id,
+                "is_active": user.is_active,
+                "role_ids": sorted(role.role_id for role in roles),
+            },
+            ip_address=ip_address,
+        )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
@@ -131,7 +141,9 @@ async def update_admin_user(
     session: AsyncSession,
     *,
     user_id: int,
+    actor: User,
     payload: AdminUserUpdateRequest,
+    ip_address: str | None = None,
 ) -> UserDetail:
     user = await user_repository.get_user_by_id(session, user_id)
     if user is None:
@@ -144,11 +156,7 @@ async def update_admin_user(
             payload.department_id,
         )
         if department is None:
-            raise AppError(
-                404,
-                "DEPARTMENT_NOT_FOUND",
-                "Không tìm thấy phòng ban.",
-            )
+            raise AppError(404, "DEPARTMENT_NOT_FOUND", "Không tìm thấy phòng ban.")
 
     if (
         "is_active" in fields
@@ -163,6 +171,12 @@ async def update_admin_user(
             "Không được vô hiệu hóa quản trị viên hoạt động cuối cùng.",
         )
 
+    audited_fields = ("full_name", "phone", "department_id", "is_active")
+    old_value = {
+        field: getattr(user, field)
+        for field in audited_fields
+        if field in fields
+    }
     if "full_name" in fields:
         user.full_name = payload.full_name  # type: ignore[assignment]
     if "phone" in fields:
@@ -172,7 +186,25 @@ async def update_admin_user(
     if "is_active" in fields:
         user.is_active = payload.is_active  # type: ignore[assignment]
 
+    new_value = {
+        field: getattr(user, field)
+        for field in audited_fields
+        if field in fields
+    }
+    await audit_repository.append_audit(
+        session,
+        actor_user_id=actor.user_id,
+        action_code=(
+            "USER_STATUS_CHANGED" if "is_active" in fields else "USER_UPDATED"
+        ),
+        entity_type="USER",
+        entity_id=user.user_id,
+        old_value=old_value,
+        new_value=new_value,
+        ip_address=ip_address,
+    )
     await session.commit()
+
     updated = await user_repository.get_user_by_id(session, user.user_id)
     if updated is None:
         raise AppError(404, "USER_NOT_FOUND", "Không tìm thấy người dùng.")

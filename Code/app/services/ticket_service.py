@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.models.user import User
-from app.repositories import ticket_repository
+from app.repositories import audit_repository, ticket_repository
 from app.schemas.common import PageData
 from app.schemas.ticket import (
     CategoryBrief,
@@ -112,19 +112,13 @@ async def create_ticket(
     requester: User,
     payload: TicketCreateRequest,
 ) -> TicketDetail:
-    category = await ticket_repository.get_category_by_id(
-        session,
-        payload.category_id,
-    )
+    category = await ticket_repository.get_category_by_id(session, payload.category_id)
     if category is None:
         raise AppError(404, "CATEGORY_NOT_FOUND", "Không tìm thấy danh mục.")
     if not category.is_active:
         raise AppError(409, "CATEGORY_INACTIVE", "Danh mục đã ngừng sử dụng.")
 
-    priority = await ticket_repository.get_priority_by_id(
-        session,
-        payload.priority_id,
-    )
+    priority = await ticket_repository.get_priority_by_id(session, payload.priority_id)
     if priority is None:
         raise AppError(404, "PRIORITY_NOT_FOUND", "Không tìm thấy mức ưu tiên.")
     if not priority.is_active:
@@ -161,26 +155,62 @@ async def create_ticket(
             priority_id=payload.priority_id,
             effective_at=started_at,
         )
+        created_slas = []
         if policy is not None:
-            await ticket_repository.create_ticket_sla_record(
-                session,
-                ticket_id=ticket.ticket_id,
-                sla_policy_id=policy.sla_policy_id,
-                sla_type="RESPONSE",
-                cycle_no=1,
-                started_at=started_at,
-                due_at=started_at
-                + timedelta(minutes=policy.response_target_minutes),
+            created_slas.append(
+                await ticket_repository.create_ticket_sla_record(
+                    session,
+                    ticket_id=ticket.ticket_id,
+                    sla_policy_id=policy.sla_policy_id,
+                    sla_type="RESPONSE",
+                    cycle_no=1,
+                    started_at=started_at,
+                    due_at=started_at
+                    + timedelta(minutes=policy.response_target_minutes),
+                )
             )
-            await ticket_repository.create_ticket_sla_record(
+            created_slas.append(
+                await ticket_repository.create_ticket_sla_record(
+                    session,
+                    ticket_id=ticket.ticket_id,
+                    sla_policy_id=policy.sla_policy_id,
+                    sla_type="RESOLUTION",
+                    cycle_no=1,
+                    started_at=started_at,
+                    due_at=started_at
+                    + timedelta(minutes=policy.resolution_target_minutes),
+                )
+            )
+
+        await audit_repository.append_audit(
+            session,
+            actor_user_id=requester.user_id,
+            ticket_id=ticket.ticket_id,
+            action_code="TICKET_CREATED",
+            entity_type="TICKET",
+            entity_id=ticket.ticket_id,
+            new_value={
+                "ticket_code": ticket.ticket_code,
+                "category_id": ticket.category_id,
+                "priority_id": ticket.priority_id,
+                "status_code": "NEW",
+            },
+        )
+        for sla in created_slas:
+            await audit_repository.append_audit(
                 session,
+                actor_user_id=requester.user_id,
                 ticket_id=ticket.ticket_id,
-                sla_policy_id=policy.sla_policy_id,
-                sla_type="RESOLUTION",
-                cycle_no=1,
-                started_at=started_at,
-                due_at=started_at
-                + timedelta(minutes=policy.resolution_target_minutes),
+                action_code="SLA_RUNTIME_CREATED",
+                entity_type="TICKET_SLA",
+                entity_id=sla.ticket_sla_id,
+                new_value={
+                    "sla_type": sla.sla_type,
+                    "cycle_no": sla.cycle_no,
+                    "runtime_status": sla.runtime_status,
+                    "started_at": sla.started_at,
+                    "due_at": sla.due_at,
+                },
             )
         await session.commit()
     except IntegrityError as exc:
@@ -193,9 +223,5 @@ async def create_ticket(
 
     created = await ticket_repository.get_ticket_by_id(session, ticket.ticket_id)
     if created is None:
-        raise AppError(
-            500,
-            "INTERNAL_SERVER_ERROR",
-            "Không thể tải ticket vừa tạo.",
-        )
+        raise AppError(500, "INTERNAL_SERVER_ERROR", "Không thể tải ticket vừa tạo.")
     return TicketDetail.model_validate(created)
