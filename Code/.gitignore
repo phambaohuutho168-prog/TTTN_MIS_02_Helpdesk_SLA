@@ -19,6 +19,7 @@ htmlcov/
 *.sqlite
 *.sqlite3
 *.log
+storage/
 
 # IDE and operating system
 .vscode/

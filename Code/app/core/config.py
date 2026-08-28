@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     LOGIN_MAX_ATTEMPTS: int = Field(5, ge=1, le=20)
     LOGIN_RATE_LIMIT_SECONDS: int = Field(300, ge=10, le=3600)
 
+    ATTACHMENT_STORAGE_DIR: str = "storage/attachments"
+    MAX_ATTACHMENT_SIZE_MB: int = Field(10, ge=1, le=50)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

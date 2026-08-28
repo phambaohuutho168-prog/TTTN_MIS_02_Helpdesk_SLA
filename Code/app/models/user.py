@@ -48,6 +48,8 @@ class User(Base):
         foreign_keys="UserRole.user_id",
     )
     tickets = relationship("Ticket", back_populates="requester")
+    comments = relationship("Comment", back_populates="author")
+    uploaded_attachments = relationship("Attachment", back_populates="uploader")
 
     @property
     def role_codes(self) -> list[str]:
