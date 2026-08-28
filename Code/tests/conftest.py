@@ -18,7 +18,16 @@ from app.core.security import hash_password  # noqa: E402
 from app.database.base import Base  # noqa: E402
 from app.database.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Department, Role, User, UserRole  # noqa: E402,F401
+from app.models import (  # noqa: E402,F401
+    Category,
+    Department,
+    Priority,
+    Role,
+    Ticket,
+    TicketStatus,
+    User,
+    UserRole,
+)
 from app.services.auth_session_store import get_session_store  # noqa: E402
 
 
@@ -127,7 +136,49 @@ async def seeded_users(session_factory):
             role_name="Quản trị viên",
             is_active=True,
         )
-        session.add_all([department, requester_role, processor_role, admin_role])
+        active_category = Category(
+            category_name="Phần mềm",
+            description="Ứng dụng nghiệp vụ",
+            is_active=True,
+        )
+        inactive_category = Category(
+            category_name="Danh mục ngừng dùng",
+            description="Dùng để kiểm thử",
+            is_active=False,
+        )
+        active_priority = Priority(
+            priority_code="P3",
+            priority_level=3,
+            priority_name="Trung bình",
+            description="Mức ưu tiên mặc định",
+            is_active=True,
+        )
+        inactive_priority = Priority(
+            priority_code="P4",
+            priority_level=4,
+            priority_name="Mức cũ",
+            description="Dùng để kiểm thử",
+            is_active=False,
+        )
+        new_status = TicketStatus(
+            status_code="NEW",
+            status_name="Mới",
+            is_terminal=False,
+            description="Ticket vừa được tạo",
+        )
+        session.add_all(
+            [
+                department,
+                requester_role,
+                processor_role,
+                admin_role,
+                active_category,
+                inactive_category,
+                active_priority,
+                inactive_priority,
+                new_status,
+            ]
+        )
         await session.flush()
 
         active_user = User(
@@ -181,6 +232,10 @@ async def seeded_users(session_factory):
         "processor_role_id": processor_role.role_id,
         "admin_role_id": admin_role.role_id,
         "department_id": department.department_id,
+        "active_category_id": active_category.category_id,
+        "inactive_category_id": inactive_category.category_id,
+        "active_priority_id": active_priority.priority_id,
+        "inactive_priority_id": inactive_priority.priority_id,
     }
 
 
@@ -218,6 +273,14 @@ def credentials(seeded_users):
 def admin_credentials(seeded_users):
     return {
         "email": seeded_users["admin_email"],
+        "password": seeded_users["password"],
+    }
+
+
+@pytest.fixture
+def processor_credentials(seeded_users):
+    return {
+        "email": seeded_users["processor_email"],
         "password": seeded_users["password"],
     }
 
