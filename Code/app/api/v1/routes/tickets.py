@@ -3,10 +3,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.authorization import AnyBusinessRoleContext, RequesterContext
+from app.api.dependencies.authorization import (
+    AdminContext,
+    AnyBusinessRoleContext,
+    RequesterContext,
+)
 from app.core.response import success_response
 from app.database.session import get_db
 from app.schemas.common import PageData, SuccessResponse
+from app.schemas.assignment import AssignmentRequest
 from app.schemas.ticket import (
     TicketCreateRequest,
     TicketDetail,
@@ -21,10 +26,37 @@ from app.schemas.ticket_detail import (
     TicketDetailResponse,
     TicketTimelineQuery,
 )
-from app.services import ticket_detail_service
+from app.services import assignment_service, ticket_detail_service
 
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
+
+
+@router.put(
+    "/{ticket_id}/assignment",
+    response_model=SuccessResponse[AssignmentResponse],
+    summary="ASN-01 - Phân công hoặc tái phân công ticket",
+)
+async def assign_ticket(
+    request: Request,
+    ticket_id: int,
+    payload: AssignmentRequest,
+    context: AdminContext,
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await assignment_service.assign_ticket(
+        session,
+        ticket_id=ticket_id,
+        actor=context.user,
+        payload=payload,
+        ip_address=request.client.host if request.client is not None else None,
+    )
+    return success_response(
+        request,
+        data=result.data,
+        code=result.response_code,
+        message=result.message,
+    )
 
 
 @router.get(

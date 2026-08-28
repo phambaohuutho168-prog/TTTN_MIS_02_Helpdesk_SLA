@@ -21,6 +21,7 @@ from app.database.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import (  # noqa: E402,F401
     Attachment,
+    AuditLog,
     Category,
     Comment,
     Department,

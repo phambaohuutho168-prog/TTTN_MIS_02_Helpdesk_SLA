@@ -1,4 +1,5 @@
 from app.models.attachment import Attachment
+from app.models.audit_log import AuditLog
 from app.models.category import Category
 from app.models.comment import Comment
 from app.models.department import Department
@@ -16,6 +17,7 @@ from app.models.user_role import UserRole
 
 __all__ = [
     "Attachment",
+    "AuditLog",
     "Category",
     "Comment",
     "Department",
