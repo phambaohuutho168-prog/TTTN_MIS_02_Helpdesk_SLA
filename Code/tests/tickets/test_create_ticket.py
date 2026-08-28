@@ -43,7 +43,7 @@ async def test_requester_creates_ticket_successfully(
     assert ticket["current_status_code"] == "NEW"
     assert ticket["current_status"]["status_name"] == "Mới"
     assert ticket["category"]["category_name"] == "Phần mềm"
-    assert ticket["priority"]["priority_code"] == "MEDIUM"
+    assert ticket["priority"]["priority_code"] == "P3"
     assert ticket["created_at"]
     assert ticket["updated_at"]
     assert ticket["first_response_at"] is None

@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-from sqlalchemy import select
 from dotenv import load_dotenv
+from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.database.session import AsyncSessionLocal
@@ -13,7 +13,9 @@ from app.models.ticket_status import TicketStatus
 from app.models.user import User
 from app.models.user_role import UserRole
 
+
 load_dotenv()
+
 
 ROLE_SEEDS = (
     ("REQUESTER", "Người gửi yêu cầu", "Tạo và theo dõi ticket của chính mình."),
@@ -29,10 +31,10 @@ CATEGORY_SEEDS = (
 )
 
 PRIORITY_SEEDS = (
-    ("LOW", 1, "Thấp", "Ảnh hưởng nhỏ, có giải pháp tạm thời."),
-    ("MEDIUM", 2, "Trung bình", "Ảnh hưởng công việc của một người dùng."),
-    ("HIGH", 3, "Cao", "Ảnh hưởng đáng kể đến hoạt động."),
-    ("URGENT", 4, "Khẩn cấp", "Gián đoạn dịch vụ quan trọng."),
+    ("P1", 1, "Khẩn cấp", "Gián đoạn dịch vụ quan trọng."),
+    ("P2", 2, "Cao", "Ảnh hưởng đáng kể đến hoạt động."),
+    ("P3", 3, "Trung bình", "Ảnh hưởng công việc của một người dùng."),
+    ("P4", 4, "Thấp", "Ảnh hưởng nhỏ, có giải pháp tạm thời."),
 )
 
 STATUS_SEEDS = (

@@ -147,15 +147,15 @@ async def seeded_users(session_factory):
             is_active=False,
         )
         active_priority = Priority(
-            priority_code="MEDIUM",
-            priority_level=2,
+            priority_code="P3",
+            priority_level=3,
             priority_name="Trung bình",
             description="Mức ưu tiên mặc định",
             is_active=True,
         )
         inactive_priority = Priority(
-            priority_code="LEGACY",
-            priority_level=99,
+            priority_code="P4",
+            priority_level=4,
             priority_name="Mức cũ",
             description="Dùng để kiểm thử",
             is_active=False,
