@@ -68,6 +68,11 @@ class User(Base):
         "TicketStatusHistory",
         back_populates="actor",
     )
+    audit_logs = relationship(
+        "AuditLog",
+        back_populates="actor",
+        foreign_keys="AuditLog.actor_user_id",
+    )
 
     @property
     def role_codes(self) -> list[str]:

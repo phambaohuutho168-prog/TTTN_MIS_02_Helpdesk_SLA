@@ -4,6 +4,7 @@ from sqlalchemy import Select, exists, false, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.audit_log import AuditLog
 from app.models.category import Category
 from app.models.comment import Comment
 from app.models.priority import Priority
@@ -228,6 +229,108 @@ async def get_ticket_detail_by_id(
         select(Ticket)
         .where(Ticket.ticket_id == ticket_id)
         .options(*TICKET_DETAIL_LOAD_OPTIONS)
+        .execution_options(populate_existing=True)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_ticket_for_assignment(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+) -> Ticket | None:
+    """Lock the ticket row so concurrent assignment requests serialize."""
+
+    result = await session.execute(
+        select(Ticket)
+        .where(Ticket.ticket_id == ticket_id)
+        .options(
+            selectinload(Ticket.current_status),
+            selectinload(Ticket.assignments)
+            .selectinload(TicketAssignment.assignee),
+            selectinload(Ticket.assignments)
+            .selectinload(TicketAssignment.assigner),
+        )
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    return result.scalar_one_or_none()
+
+
+async def close_current_assignment(
+    session: AsyncSession,
+    *,
+    assignment: TicketAssignment,
+    ended_at: datetime,
+) -> None:
+    assignment.is_current = False
+    assignment.ended_at = ended_at
+    # Flush the UPDATE before INSERT so the unique current-assignment index
+    # remains valid on every supported database.
+    await session.flush()
+
+
+async def create_assignment_record(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    assignee_id: int,
+    assigned_by: int,
+    assigned_at: datetime,
+    reason: str | None,
+) -> TicketAssignment:
+    assignment = TicketAssignment(
+        ticket_id=ticket_id,
+        assignee_id=assignee_id,
+        assigned_by=assigned_by,
+        assigned_at=assigned_at,
+        is_current=True,
+        reason=reason,
+    )
+    session.add(assignment)
+    await session.flush()
+    return assignment
+
+
+async def create_assignment_audit_record(
+    session: AsyncSession,
+    *,
+    actor_user_id: int,
+    ticket_id: int,
+    assignment_id: int,
+    action_code: str,
+    old_value: dict,
+    new_value: dict,
+    reason: str | None,
+    ip_address: str | None,
+) -> AuditLog:
+    audit = AuditLog(
+        actor_user_id=actor_user_id,
+        ticket_id=ticket_id,
+        action_code=action_code,
+        entity_type="TICKET_ASSIGNMENT",
+        entity_id=assignment_id,
+        old_value_json=old_value,
+        new_value_json=new_value,
+        reason=reason,
+        ip_address=ip_address,
+    )
+    session.add(audit)
+    await session.flush()
+    return audit
+
+
+async def get_assignment_by_id(
+    session: AsyncSession,
+    assignment_id: int,
+) -> TicketAssignment | None:
+    result = await session.execute(
+        select(TicketAssignment)
+        .where(TicketAssignment.assignment_id == assignment_id)
+        .options(
+            selectinload(TicketAssignment.assignee),
+            selectinload(TicketAssignment.assigner),
+        )
         .execution_options(populate_existing=True)
     )
     return result.scalar_one_or_none()

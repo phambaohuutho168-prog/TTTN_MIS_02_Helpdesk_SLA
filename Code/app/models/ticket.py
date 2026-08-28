@@ -119,6 +119,11 @@ class Ticket(Base):
         passive_deletes=True,
         order_by="TicketSLA.cycle_no",
     )
+    audit_logs = relationship(
+        "AuditLog",
+        back_populates="ticket",
+        foreign_keys="AuditLog.ticket_id",
+    )
 
     @property
     def current_assignment(self):

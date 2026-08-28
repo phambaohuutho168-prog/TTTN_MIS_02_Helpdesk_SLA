@@ -1,8 +1,8 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn từ CV023 đến CV031 của đề tài thực tập tốt nghiệp: môi trường,
+Mã nguồn từ CV023 đến CV032 của đề tài thực tập tốt nghiệp: môi trường,
 xác thực, RBAC, quản trị tài khoản/vai trò, tạo và phân loại ticket, đính kèm,
-danh sách/bộ lọc, chi tiết ticket và lịch sử thay đổi.
+danh sách/bộ lọc, chi tiết ticket, lịch sử thay đổi và phân công người xử lý.
 
 ## Công nghệ
 
@@ -93,9 +93,9 @@ Ví dụ đăng nhập:
 python -m pytest
 ```
 
-Hiện có 98 test bao phủ CV023-CV031: healthcheck, authentication, RBAC,
+Hiện có 111 test bao phủ CV023-CV032: healthcheck, authentication, RBAC,
 quản trị user/role, ticket, catalog, attachment, data scope, phân trang,
-chi tiết ticket, trao đổi, phân công, SLA và lịch sử trạng thái.
+chi tiết ticket, trao đổi, phân công/tái phân công, audit, SLA và lịch sử trạng thái.
 
 ## 8. API Ticket detail/history (CV031)
 
@@ -117,9 +117,47 @@ alembic upgrade head
 alembic current
 ```
 
-Kết quả mong đợi của lệnh thứ hai là `20260828_0006 (head)`.
+Kết quả mong đợi của lệnh thứ hai là `20260828_0007 (head)`.
 
-## 9. Kiểm tra secret trước khi commit
+## 9. API Assignment (CV032)
+
+| ID | Phương thức và endpoint | Quyền và hành vi |
+| --- | --- | --- |
+| ASN-01 | `PUT /api/v1/tickets/{ticket_id}/assignment` | Chỉ `ADMIN`; phân công lần đầu hoặc tái phân công |
+| ASN-02 | `GET /api/v1/tickets/{ticket_id}/assignments` | `ADMIN` hoặc Processor đang xử lý; có phân trang |
+
+Request ASN-01:
+
+```json
+{
+  "assignee_id": 12,
+  "reason": "Điều chuyển do chuyên môn phù hợp hơn"
+}
+```
+
+- Người nhận phải là tài khoản hoạt động và có vai trò `PROCESSOR` đang hoạt động.
+- Phân công lần đầu chỉ áp dụng cho ticket `NEW`, tạo trạng thái
+  `NEW -> ASSIGNED` và ghi lịch sử trạng thái.
+- Tái phân công đóng bản ghi hiện tại, tạo bản ghi hiện tại mới, giữ nguyên
+  trạng thái ticket và bắt buộc có `reason`.
+- Phân công, lịch sử trạng thái và audit được lưu trong cùng transaction.
+- Audit lưu actor, thời gian máy chủ, ticket, assignment, giá trị cũ/mới,
+  lý do và IP; ứng dụng không cung cấp thao tác sửa/xóa audit.
+
+Migration CV032:
+
+```powershell
+python -m alembic upgrade head
+python -m alembic current
+```
+
+Kiểm thử riêng CV032:
+
+```powershell
+python -m pytest .\tests\assignments\test_assignment.py -v
+```
+
+## 10. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -128,9 +166,9 @@ git ls-files | Select-String -Pattern '(^|/)\.env$|\.db$|\.sqlite$'
 
 Lệnh thứ hai không được trả về `.env` hoặc database local.
 
-Branch và commit đề xuất cho CV031:
+Branch và commit đề xuất cho CV032:
 
 ```text
-feature/ticket-detail
-feat(ticket): implement ticket detail and history
+feature/ticket-assignment
+feat(assignment): implement ticket assignment and reassignment
 ```
