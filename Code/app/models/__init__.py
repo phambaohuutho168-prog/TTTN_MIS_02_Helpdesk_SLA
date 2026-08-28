@@ -5,7 +5,9 @@ from app.models.comment import Comment
 from app.models.department import Department
 from app.models.priority import Priority
 from app.models.role import Role
+from app.models.sla_pause_period import SLAPausePeriod
 from app.models.sla_policy import SLAPolicy
+from app.models.system_log import SystemLog
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
 from app.models.ticket_resolution import TicketResolution
@@ -23,7 +25,9 @@ __all__ = [
     "Department",
     "Priority",
     "Role",
+    "SLAPausePeriod",
     "SLAPolicy",
+    "SystemLog",
     "Ticket",
     "TicketAssignment",
     "TicketResolution",
