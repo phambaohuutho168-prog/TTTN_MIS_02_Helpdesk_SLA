@@ -9,7 +9,7 @@ from app.core.rbac import RoleCode
 from app.models.comment import Comment
 from app.models.ticket import Ticket
 from app.models.user import User
-from app.repositories import comment_repository
+from app.repositories import audit_repository, comment_repository
 from app.schemas.attachment import AttachmentResponse
 from app.schemas.comment import CommentCreateRequest, CommentUpdateRequest
 from app.schemas.ticket import TicketUserBrief
@@ -139,6 +139,7 @@ async def create_comment(
             comment_type=payload.comment_type,
             created_at=now,
         )
+        completed_response_sla = None
         if (
             payload.visibility == "PUBLIC"
             and payload.comment_type == "REPLY"
@@ -146,7 +147,10 @@ async def create_comment(
             and ticket.first_response_at is None
         ):
             ticket.first_response_at = now
-            comment_repository.complete_response_sla(ticket, completed_at=now)
+            completed_response_sla = comment_repository.complete_response_sla(
+                ticket,
+                completed_at=now,
+            )
         await comment_repository.create_comment_audit_record(
             session,
             actor_user_id=actor.user_id,
@@ -161,6 +165,25 @@ async def create_comment(
             },
             ip_address=ip_address,
         )
+        if completed_response_sla is not None:
+            await audit_repository.append_audit(
+                session,
+                actor_user_id=actor.user_id,
+                ticket_id=ticket.ticket_id,
+                action_code="SLA_COMPLETED",
+                entity_type="TICKET_SLA",
+                entity_id=completed_response_sla.ticket_sla_id,
+                old_value={"runtime_status": "RUNNING"},
+                new_value={
+                    "sla_type": "RESPONSE",
+                    "cycle_no": completed_response_sla.cycle_no,
+                    "runtime_status": completed_response_sla.runtime_status,
+                    "completed_at": completed_response_sla.completed_at,
+                    "result": completed_response_sla.result,
+                },
+                reason="First public processor response",
+                ip_address=ip_address,
+            )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

@@ -128,12 +128,13 @@ async def update_user(
     request: Request,
     user_id: int,
     payload: AdminUserUpdateRequest,
-    _context: AdminContext,
+    context: AdminContext,
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
     data = await user_service.update_admin_user(
         session,
         user_id=user_id,
+        actor=context.user,
         payload=payload,
     )
     return success_response(
@@ -176,11 +177,12 @@ async def assign_user_role(
 async def remove_user_role(
     user_id: int,
     role_id: int,
-    _context: AdminContext,
+    context: AdminContext,
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> Response:
     await role_service.remove_role(
         session,
+        actor=context.user,
         user_id=user_id,
         role_id=role_id,
     )

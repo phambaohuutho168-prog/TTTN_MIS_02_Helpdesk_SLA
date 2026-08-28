@@ -83,12 +83,15 @@ async def logout(
     request: Request,
     payload: LogoutRequest,
     context: CurrentAuthContext,
+    session: Annotated[AsyncSession, Depends(get_db)],
     store: Annotated[SessionStore, Depends(get_session_store)],
 ) -> Response:
     await auth_service.logout(
+        session,
         store,
         context=context,
         refresh_token=payload.refresh_token,
+        ip_address=request.client.host if request.client else None,
     )
     logger.info(
         "authentication_event request_id=%s code=LOGOUT_SUCCESS user_id=%s",

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.models.user import User
-from app.repositories import role_repository, user_repository
+from app.repositories import audit_repository, role_repository, user_repository
 from app.schemas.user import DepartmentResponse, RoleResponse, UserDetail
 from app.services.auth_service import build_user_detail
 
@@ -33,6 +33,7 @@ async def assign_role(
     actor: User,
     user_id: int,
     role_id: int,
+    ip_address: str | None = None,
 ) -> UserDetail:
     user = await user_repository.get_user_by_id(session, user_id)
     if user is None:
@@ -56,6 +57,19 @@ async def assign_role(
         role_id=role_id,
         assigned_by=actor.user_id,
     )
+    await audit_repository.append_audit(
+        session,
+        actor_user_id=actor.user_id,
+        action_code="ROLE_ASSIGNED",
+        entity_type="USER_ROLE",
+        entity_id=user_id,
+        new_value={
+            "user_id": user_id,
+            "role_id": role_id,
+            "role_code": role.role_code,
+        },
+        ip_address=ip_address,
+    )
     await session.commit()
 
     updated = await user_repository.get_user_by_id(session, user_id)
@@ -67,8 +81,10 @@ async def assign_role(
 async def remove_role(
     session: AsyncSession,
     *,
+    actor: User,
     user_id: int,
     role_id: int,
+    ip_address: str | None = None,
 ) -> None:
     user = await user_repository.get_user_by_id(session, user_id)
     if user is None:
@@ -103,4 +119,17 @@ async def remove_role(
         )
 
     await role_repository.delete_role_assignment(session, assignment)
+    await audit_repository.append_audit(
+        session,
+        actor_user_id=actor.user_id,
+        action_code="ROLE_REMOVED",
+        entity_type="USER_ROLE",
+        entity_id=user_id,
+        old_value={
+            "user_id": user_id,
+            "role_id": role_id,
+            "role_code": role.role_code,
+        },
+        ip_address=ip_address,
+    )
     await session.commit()

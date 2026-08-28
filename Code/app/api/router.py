@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.routes import (
     attachments,
+    audit_logs,
     auth,
     catalogs,
     comments,
@@ -25,3 +26,4 @@ api_router.include_router(workflow.router)
 api_router.include_router(attachments.router)
 api_router.include_router(catalogs.router)
 api_router.include_router(catalogs.admin_router)
+api_router.include_router(audit_logs.router)
