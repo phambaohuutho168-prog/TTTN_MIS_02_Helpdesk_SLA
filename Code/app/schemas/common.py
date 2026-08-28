@@ -25,6 +25,14 @@ class SuccessResponse(BaseModel, Generic[T]):
     meta: ResponseMeta
 
 
+class PageData(BaseModel, Generic[T]):
+    items: list[T]
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)
+    total: int = Field(ge=0)
+    total_pages: int = Field(ge=0)
+
+
 class ErrorResponse(BaseModel):
     success: bool = False
     code: str

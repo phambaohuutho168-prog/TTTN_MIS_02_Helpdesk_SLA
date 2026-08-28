@@ -2,18 +2,48 @@ import asyncio
 import os
 
 from sqlalchemy import select
+from dotenv import load_dotenv
 
 from app.core.security import hash_password
 from app.database.session import AsyncSessionLocal
+from app.models.category import Category
+from app.models.priority import Priority
 from app.models.role import Role
+from app.models.ticket_status import TicketStatus
 from app.models.user import User
 from app.models.user_role import UserRole
 
+load_dotenv()
 
 ROLE_SEEDS = (
     ("REQUESTER", "Người gửi yêu cầu", "Tạo và theo dõi ticket của chính mình."),
     ("PROCESSOR", "Người xử lý", "Tiếp nhận và xử lý ticket được phân công."),
     ("ADMIN", "Quản trị viên", "Quản trị tài khoản, vai trò và toàn hệ thống."),
+)
+
+CATEGORY_SEEDS = (
+    ("Phần cứng", "Máy tính, máy in và thiết bị ngoại vi."),
+    ("Phần mềm", "Ứng dụng nội bộ và phần mềm nghiệp vụ."),
+    ("Mạng", "Kết nối mạng, Internet và VPN."),
+    ("Tài khoản", "Tài khoản, mật khẩu và quyền truy cập."),
+)
+
+PRIORITY_SEEDS = (
+    ("LOW", 1, "Thấp", "Ảnh hưởng nhỏ, có giải pháp tạm thời."),
+    ("MEDIUM", 2, "Trung bình", "Ảnh hưởng công việc của một người dùng."),
+    ("HIGH", 3, "Cao", "Ảnh hưởng đáng kể đến hoạt động."),
+    ("URGENT", 4, "Khẩn cấp", "Gián đoạn dịch vụ quan trọng."),
+)
+
+STATUS_SEEDS = (
+    ("NEW", "Mới", False, "Ticket vừa được tạo."),
+    ("ASSIGNED", "Đã phân công", False, "Ticket đã có người xử lý."),
+    ("IN_PROGRESS", "Đang xử lý", False, "Người xử lý đang thực hiện."),
+    ("PENDING_INFO", "Chờ bổ sung", False, "Đang chờ requester bổ sung thông tin."),
+    ("RESOLVED", "Đã xử lý", False, "Đã có kết quả xử lý, chờ xác nhận."),
+    ("REOPENED", "Mở lại", False, "Requester yêu cầu xử lý lại."),
+    ("CLOSED", "Đã đóng", True, "Ticket đã hoàn tất."),
+    ("REJECTED", "Từ chối", True, "Ticket không hợp lệ hoặc ngoài phạm vi."),
 )
 
 
@@ -32,6 +62,48 @@ async def seed() -> None:
         raise RuntimeError("SEED_ADMIN_PASSWORD phải có ít nhất 12 ký tự")
 
     async with AsyncSessionLocal() as session:
+        for category_name, description in CATEGORY_SEEDS:
+            result = await session.execute(
+                select(Category).where(Category.category_name == category_name)
+            )
+            if result.scalar_one_or_none() is None:
+                session.add(
+                    Category(
+                        category_name=category_name,
+                        description=description,
+                        is_active=True,
+                    )
+                )
+
+        for priority_code, priority_level, priority_name, description in PRIORITY_SEEDS:
+            result = await session.execute(
+                select(Priority).where(Priority.priority_code == priority_code)
+            )
+            if result.scalar_one_or_none() is None:
+                session.add(
+                    Priority(
+                        priority_code=priority_code,
+                        priority_level=priority_level,
+                        priority_name=priority_name,
+                        description=description,
+                        is_active=True,
+                    )
+                )
+
+        for status_code, status_name, is_terminal, description in STATUS_SEEDS:
+            result = await session.execute(
+                select(TicketStatus).where(TicketStatus.status_code == status_code)
+            )
+            if result.scalar_one_or_none() is None:
+                session.add(
+                    TicketStatus(
+                        status_code=status_code,
+                        status_name=status_name,
+                        is_terminal=is_terminal,
+                        description=description,
+                    )
+                )
+
         roles: dict[str, Role] = {}
         for role_code, role_name, description in ROLE_SEEDS:
             result = await session.execute(
@@ -75,7 +147,10 @@ async def seed() -> None:
             )
 
         await session.commit()
-        print("Seed hoàn tất: 3 vai trò và tài khoản Admin cục bộ đã sẵn sàng.")
+        print(
+            "Seed hoàn tất: vai trò, danh mục, mức ưu tiên, trạng thái ticket "
+            "và tài khoản Admin cục bộ đã sẵn sàng."
+        )
 
 
 if __name__ == "__main__":

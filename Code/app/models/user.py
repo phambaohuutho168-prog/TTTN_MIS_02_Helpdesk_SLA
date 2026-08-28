@@ -47,6 +47,7 @@ class User(Base):
         cascade="all, delete-orphan",
         foreign_keys="UserRole.user_id",
     )
+    tickets = relationship("Ticket", back_populates="requester")
 
     @property
     def role_codes(self) -> list[str]:

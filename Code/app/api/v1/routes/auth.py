@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.authentication import CurrentAuthContext, CurrentUser
+from app.api.dependencies.authentication import CurrentAuthContext
+from app.api.dependencies.authorization import AnyBusinessRoleContext
 from app.core.response import success_response
 from app.database.session import get_db
 from app.schemas.auth import AuthTokenData, LoginRequest, LogoutRequest, RefreshTokenRequest
@@ -102,9 +103,9 @@ async def logout(
     response_model=SuccessResponse[UserDetail],
     summary="AUTH-04 - Hồ sơ hiện tại",
 )
-async def get_me(request: Request, user: CurrentUser):
+async def get_me(request: Request, context: AnyBusinessRoleContext):
     return success_response(
         request,
-        data=build_user_detail(user),
+        data=build_user_detail(context.user),
         message="Lấy hồ sơ thành công.",
     )
