@@ -47,7 +47,16 @@ class User(Base):
         cascade="all, delete-orphan",
         foreign_keys="UserRole.user_id",
     )
-    tickets = relationship("Ticket", back_populates="requester")
+    tickets = relationship(
+        "Ticket",
+        back_populates="requester",
+        foreign_keys="Ticket.requester_id",
+    )
+    tickets_closed = relationship(
+        "Ticket",
+        back_populates="closer",
+        foreign_keys="Ticket.closed_by",
+    )
     comments = relationship("Comment", back_populates="author")
     uploaded_attachments = relationship("Attachment", back_populates="uploader")
     ticket_assignments = relationship(

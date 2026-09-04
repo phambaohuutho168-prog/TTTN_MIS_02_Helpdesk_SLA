@@ -13,8 +13,13 @@ class Ticket(Base):
             "length(trim(title)) > 0",
             name="ck_tickets_title_not_blank",
         ),
+        CheckConstraint(
+            "closed_by IS NULL OR closed_at IS NOT NULL",
+            name="ck_tickets_closed_actor_time",
+        ),
         Index("ix_tickets_requester_created", "requester_id", "created_at"),
         Index("ix_tickets_current_status", "current_status_code"),
+        Index("ix_tickets_closed_by_time", "closed_by", "closed_at"),
     )
 
     ticket_id: Mapped[int] = mapped_column(
@@ -58,6 +63,11 @@ class Ticket(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    closed_by: Mapped[int | None] = mapped_column(
+        BIGINT_PK,
+        ForeignKey("users.user_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     rejected_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -75,7 +85,16 @@ class Ticket(Base):
         onupdate=func.now(),
     )
 
-    requester = relationship("User", back_populates="tickets")
+    requester = relationship(
+        "User",
+        back_populates="tickets",
+        foreign_keys=[requester_id],
+    )
+    closer = relationship(
+        "User",
+        back_populates="tickets_closed",
+        foreign_keys=[closed_by],
+    )
     category = relationship("Category", back_populates="tickets")
     priority = relationship("Priority", back_populates="tickets")
     current_status = relationship("TicketStatus", back_populates="tickets")

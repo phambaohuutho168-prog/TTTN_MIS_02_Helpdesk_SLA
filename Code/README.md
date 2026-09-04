@@ -1,6 +1,6 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV038 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV039 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
@@ -46,7 +46,7 @@ python -m alembic current
 ```
 
 Hai service phải ở trạng thái `healthy`; Alembic phải trả về
-`20260904_0010 (head)`.
+`20260904_0011 (head)`.
 
 Tạo dữ liệu ban đầu sau khi đã đặt các biến `SEED_ADMIN_*` trong `.env`:
 
@@ -165,19 +165,52 @@ GET /api/v1/sla/breaches
 API hỗ trợ lọc theo `state`, `sla_type`, `ticket_id`, khoảng `triggered_at` và
 phân trang.
 
-## 9. Chạy kiểm thử
+## 9. Đóng ticket theo business rules CV039
+
+Endpoint `POST /api/v1/tickets/{ticket_id}/close` chỉ chấp nhận ticket đang ở
+`RESOLVED` và đã có bản ghi cách xử lý (`ticket_resolutions`). Requester sở hữu
+ticket có thể xác nhận đóng; Admin có thể đóng thay nhưng bắt buộc nhập lý do.
+Processor không có quyền đóng ticket.
+
+Khi thành công, hệ thống thực hiện nguyên tử trong cùng transaction:
+
+- chuyển trạng thái `RESOLVED -> CLOSED`;
+- lưu `closed_by` và `closed_at` (đóng tự động có `closed_by = null`);
+- thêm lịch sử trạng thái;
+- thêm audit log với người đóng, thời điểm đóng và lý do.
+
+Ticket đã đóng không thể đóng lại, trao đổi thêm hoặc tải attachment mới. Worker
+tự động đóng sau 72 giờ cũng chỉ xử lý ticket có cách xử lý hợp lệ và vẫn bảo
+đảm idempotent.
+
+Payload của Requester:
+
+```json
+{}
+```
+
+Payload của Admin:
+
+```json
+{
+  "reason": "Admin xác nhận kết quả xử lý hợp lệ."
+}
+```
+
+## 10. Chạy kiểm thử
 
 ```powershell
+python -m pytest .\tests\workflow\test_close_ticket.py -v
 python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
 ```
 
 Kết quả mong đợi:
 
-- CV038: `15 passed`.
-- Toàn bộ CV023–CV038: `190 passed`.
+- CV039: `10 passed`.
+- Toàn bộ CV023–CV039: `200 passed`.
 
-## 10. Kiểm tra secret trước khi commit
+## 11. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -189,7 +222,7 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/sla-escalation
-feat(sla): add idempotent overdue escalation
+feature/ticket-close
+feat(ticket): enforce resolved close flow
 ```
 

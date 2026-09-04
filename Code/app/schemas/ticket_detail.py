@@ -76,6 +76,7 @@ class TicketDetailResponse(BaseModel):
     resolutions: list[TicketResolutionResponse]
     first_response_at: datetime | None
     closed_at: datetime | None
+    closed_by: TicketUserBrief | None
     rejected_at: datetime | None
     rejection_reason: str | None
     permissions: list[str]
