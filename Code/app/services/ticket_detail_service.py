@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 from math import ceil
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +6,6 @@ from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
-from app.models.ticket_sla import TicketSLA
 from app.models.user import User
 from app.repositories import ticket_repository
 from app.schemas.attachment import AttachmentResponse
@@ -24,10 +22,9 @@ from app.schemas.ticket_detail import (
     StatusHistoryResponse,
     TicketDetailResponse,
     TicketResolutionResponse,
-    TicketSLAItemResponse,
-    TicketSLASummaryResponse,
     TicketTimelineQuery,
 )
+from app.services import sla_service
 
 
 def _role_codes(user: User) -> set[str]:
@@ -76,6 +73,21 @@ async def _load_scoped_ticket(
     return ticket
 
 
+async def load_scoped_ticket(
+    session: AsyncSession,
+    *,
+    ticket_id: int,
+    current_user: User,
+) -> Ticket:
+    """Load a ticket with all detail relations and enforce its access scope."""
+
+    return await _load_scoped_ticket(
+        session,
+        ticket_id=ticket_id,
+        current_user=current_user,
+    )
+
+
 def _assignment_response(assignment: TicketAssignment) -> AssignmentResponse:
     return AssignmentResponse(
         assignment_id=assignment.assignment_id,
@@ -86,42 +98,6 @@ def _assignment_response(assignment: TicketAssignment) -> AssignmentResponse:
         ended_at=assignment.ended_at,
         is_current=assignment.is_current,
         reason=assignment.reason,
-    )
-
-
-def _as_utc(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
-
-
-def _sla_response(record: TicketSLA, now: datetime) -> TicketSLAItemResponse:
-    remaining_seconds: int | None
-    if record.runtime_status == "NOT_APPLICABLE":
-        remaining_seconds = None
-    else:
-        due_at = _as_utc(record.due_at) + timedelta(
-            seconds=record.total_paused_seconds
-        )
-        if record.completed_at is not None:
-            anchor = _as_utc(record.completed_at)
-        elif record.runtime_status == "PAUSED" and record.paused_at is not None:
-            anchor = _as_utc(record.paused_at)
-        else:
-            anchor = now
-        remaining_seconds = int((due_at - anchor).total_seconds())
-    return TicketSLAItemResponse(
-        ticket_sla_id=record.ticket_sla_id,
-        sla_type=record.sla_type,
-        cycle_no=record.cycle_no,
-        started_at=record.started_at,
-        due_at=record.due_at,
-        completed_at=record.completed_at,
-        paused_at=record.paused_at,
-        total_paused_seconds=record.total_paused_seconds,
-        runtime_status=record.runtime_status,
-        result=record.result,
-        remaining_seconds=remaining_seconds,
     )
 
 
@@ -157,19 +133,6 @@ async def get_ticket_detail(
         if current_assignment is not None
         else None
     )
-    response_sla = next(
-        (record for record in ticket.sla_records if record.sla_type == "RESPONSE"),
-        None,
-    )
-    resolution_slas = sorted(
-        (
-            record
-            for record in ticket.sla_records
-            if record.sla_type == "RESOLUTION"
-        ),
-        key=lambda record: record.cycle_no,
-    )
-    now = datetime.now(timezone.utc)
     return TicketDetailResponse(
         ticket_id=ticket.ticket_id,
         ticket_code=ticket.ticket_code,
@@ -206,14 +169,7 @@ async def get_ticket_detail(
         rejected_at=ticket.rejected_at,
         rejection_reason=ticket.rejection_reason,
         permissions=_permissions(ticket, current_user),
-        sla_summary=TicketSLASummaryResponse(
-            response_sla=(
-                _sla_response(response_sla, now) if response_sla is not None else None
-            ),
-            resolution_cycles=[
-                _sla_response(record, now) for record in resolution_slas
-            ],
-        ),
+        sla_summary=sla_service.build_sla_summary(ticket),
         created_at=ticket.created_at,
         updated_at=ticket.updated_at,
     )

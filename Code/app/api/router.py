@@ -8,6 +8,7 @@ from app.api.v1.routes import (
     comments,
     health,
     roles,
+    sla,
     tickets,
     users,
     workflow,
@@ -21,6 +22,7 @@ api_router.include_router(users.router)
 api_router.include_router(users.admin_router)
 api_router.include_router(roles.router)
 api_router.include_router(tickets.router)
+api_router.include_router(sla.router)
 api_router.include_router(comments.router)
 api_router.include_router(workflow.router)
 api_router.include_router(attachments.router)
