@@ -73,6 +73,12 @@ class User(Base):
         back_populates="actor",
         foreign_keys="AuditLog.actor_user_id",
     )
+    notifications = relationship(
+        "Notification",
+        back_populates="recipient",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     @property
     def role_codes(self) -> list[str]:

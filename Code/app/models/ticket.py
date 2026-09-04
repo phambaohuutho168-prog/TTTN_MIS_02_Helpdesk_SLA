@@ -124,6 +124,12 @@ class Ticket(Base):
         back_populates="ticket",
         foreign_keys="AuditLog.ticket_id",
     )
+    notifications = relationship(
+        "Notification",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     @property
     def current_assignment(self):
