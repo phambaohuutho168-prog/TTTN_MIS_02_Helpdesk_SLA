@@ -88,6 +88,7 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    ratings_given = relationship("Rating", back_populates="rater")
 
     @property
     def role_codes(self) -> list[str]:

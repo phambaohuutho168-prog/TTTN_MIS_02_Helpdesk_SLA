@@ -149,6 +149,13 @@ class Ticket(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    rating = relationship(
+        "Rating",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
+    )
 
     @property
     def current_assignment(self):

@@ -1,6 +1,6 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV039 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV040 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
@@ -197,9 +197,35 @@ Payload của Admin:
 }
 ```
 
-## 10. Chạy kiểm thử
+## 10. Mở lại ticket theo business rules CV040
+
+Endpoint `POST /api/v1/tickets/{ticket_id}/reopen` chỉ dành cho Requester sở
+hữu ticket, áp dụng khi ticket đang `RESOLVED` và chưa quá 72 giờ kể từ
+`resolved_at` gần nhất. Body bắt buộc có `reason` từ 5 đến 2.000 ký tự.
+
+Luồng mở lại tuân theo thiết kế hai bước:
+
+1. WF-06 chuyển `RESOLVED -> REOPENED`, giữ nguyên resolution và SLA cycle cũ,
+   đồng thời ghi history/audit với actor, lý do, mốc thời gian và cycle dự kiến.
+2. WF-07 do Processor đang được phân công hoặc Admin thực hiện, chuyển
+   `REOPENED -> IN_PROGRESS`, tạo Resolution SLA cycle kế tiếp và ghi audit
+   `SLA_RUNTIME_CREATED` trong cùng transaction.
+
+Ticket `CLOSED`, ticket ngoài quyền sở hữu, quá cửa sổ 72 giờ hoặc thiếu bản
+ghi resolution đều bị từ chối mà không làm thay đổi history, audit hay SLA.
+
+Payload WF-06:
+
+```json
+{
+  "reason": "Sự cố vẫn tái diễn sau kết quả xử lý trước."
+}
+```
+
+## 11. Chạy kiểm thử
 
 ```powershell
+python -m pytest .\tests\workflow\test_reopen_ticket.py -v
 python -m pytest .\tests\workflow\test_close_ticket.py -v
 python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
@@ -207,10 +233,10 @@ python -m pytest
 
 Kết quả mong đợi:
 
-- CV039: `10 passed`.
-- Toàn bộ CV023–CV039: `200 passed`.
+- CV040: `15 passed`.
+- Toàn bộ CV023–CV040: `215 passed`.
 
-## 11. Kiểm tra secret trước khi commit
+## 12. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -222,7 +248,6 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/ticket-close
-feat(ticket): enforce resolved close flow
+feature/ticket-reopen-cv040
+feat(ticket): enforce reopen window and SLA cycle
 ```
-

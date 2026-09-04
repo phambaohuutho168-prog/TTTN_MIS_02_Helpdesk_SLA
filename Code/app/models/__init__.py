@@ -5,6 +5,7 @@ from app.models.comment import Comment
 from app.models.department import Department
 from app.models.notification import Notification
 from app.models.priority import Priority
+from app.models.rating import Rating
 from app.models.role import Role
 from app.models.sla_pause_period import SLAPausePeriod
 from app.models.sla_event import SLAEvent
@@ -27,6 +28,7 @@ __all__ = [
     "Department",
     "Notification",
     "Priority",
+    "Rating",
     "Role",
     "SLAPausePeriod",
     "SLAEvent",
