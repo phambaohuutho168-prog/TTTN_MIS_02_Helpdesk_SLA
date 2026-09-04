@@ -251,4 +251,3 @@ Branch và commit đề xuất:
 feature/ticket-reopen-cv040
 feat(ticket): enforce reopen window and SLA cycle
 ```
-

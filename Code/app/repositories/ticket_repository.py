@@ -50,8 +50,14 @@ TICKET_DETAIL_LOAD_OPTIONS = (
     .selectinload(TicketAssignment.assignee)
     .selectinload(User.user_roles)
     .selectinload(UserRole.role),
-    selectinload(Ticket.assignments).selectinload(TicketAssignment.assigner),
-    selectinload(Ticket.resolutions).selectinload(TicketResolution.resolver),
+    selectinload(Ticket.assignments)
+    .selectinload(TicketAssignment.assigner)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
+    selectinload(Ticket.resolutions)
+    .selectinload(TicketResolution.resolver)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
     selectinload(Ticket.sla_records).selectinload(TicketSLA.policy),
 )
 
