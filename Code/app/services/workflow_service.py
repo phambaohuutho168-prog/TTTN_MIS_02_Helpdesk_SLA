@@ -9,7 +9,11 @@ from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.models.ticket import Ticket
 from app.models.user import User
-from app.repositories import ticket_repository, workflow_repository
+from app.repositories import (
+    audit_repository,
+    ticket_repository,
+    workflow_repository,
+)
 from app.schemas.ticket_detail import TicketDetailResponse
 from app.schemas.workflow import (
     CloseRequest,
@@ -33,7 +37,10 @@ class WorkflowResult:
     message: str
 
 
-SideEffect = Callable[[Ticket, datetime], Awaitable[None]]
+SideEffect = Callable[
+    [Ticket, datetime],
+    Awaitable[dict[str, object] | None],
+]
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -171,8 +178,9 @@ async def _transition(
             )
 
         changed_at = now or datetime.now(timezone.utc)
+        side_effect_audit: dict[str, object] = {}
         if side_effect is not None:
-            await side_effect(ticket, changed_at)
+            side_effect_audit = await side_effect(ticket, changed_at) or {}
 
         ticket.current_status_code = target
         actor_id = actor.user_id if actor is not None else None
@@ -194,14 +202,18 @@ async def _transition(
             to_status_code=target,
             reason=reason or history_reason,
             ip_address=ip_address,
-            new_value_extra=(
-                {
-                    "closed_by": actor_id,
-                    "closed_at": changed_at.isoformat(),
-                }
-                if target == "CLOSED"
-                else None
-            ),
+            new_value_extra={
+                **(
+                    {
+                        "closed_by": actor_id,
+                        "closed_at": changed_at.isoformat(),
+                    }
+                    if target == "CLOSED"
+                    else {}
+                ),
+                **side_effect_audit,
+            }
+            or None,
         )
         await session.commit()
     except AppError:
@@ -465,8 +477,12 @@ async def reopen_ticket(
     actor: User,
     payload: ReopenRequest,
     ip_address: str | None,
+    now: datetime | None = None,
 ) -> WorkflowResult:
-    async def side_effect(ticket: Ticket, changed_at: datetime) -> None:
+    async def side_effect(
+        ticket: Ticket,
+        changed_at: datetime,
+    ) -> dict[str, object]:
         latest_resolution = max(
             ticket.resolutions,
             key=lambda resolution: resolution.cycle_no,
@@ -478,12 +494,25 @@ async def reopen_ticket(
                 "RESOLUTION_RECORD_MISSING",
                 "Ticket RESOLVED chưa có bản ghi kết quả xử lý.",
             )
-        if _as_utc(changed_at) > _as_utc(latest_resolution.resolved_at) + REOPEN_WINDOW:
+        if (
+            _as_utc(changed_at)
+            > _as_utc(latest_resolution.resolved_at) + REOPEN_WINDOW
+        ):
             raise AppError(
                 409,
                 "REOPEN_WINDOW_EXPIRED",
                 "Đã quá thời hạn mở lại ticket trong vòng 72 giờ.",
             )
+        reopen_deadline = _as_utc(latest_resolution.resolved_at) + REOPEN_WINDOW
+        return {
+            "reopened_by": actor.user_id,
+            "reopened_at": _as_utc(changed_at).isoformat(),
+            "source_resolution_cycle": latest_resolution.cycle_no,
+            "source_resolved_at": _as_utc(latest_resolution.resolved_at).isoformat(),
+            "reopen_window_expires_at": reopen_deadline.isoformat(),
+            "sla_action": "PRESERVE_COMPLETED_CYCLES_UNTIL_RESUME",
+            "next_resolution_cycle": sla_service.latest_resolution_cycle(ticket) + 1,
+        }
 
     return await _transition(
         session,
@@ -500,6 +529,7 @@ async def reopen_ticket(
         message="Mở lại ticket thành công.",
         ip_address=ip_address,
         side_effect=side_effect,
+        now=now,
     )
 
 
@@ -511,12 +541,42 @@ async def resume_reopened_ticket(
     payload: TransitionReasonRequest,
     ip_address: str | None,
 ) -> WorkflowResult:
-    async def side_effect(ticket: Ticket, changed_at: datetime) -> None:
-        await sla_service.create_resolution_cycle(
+    async def side_effect(
+        ticket: Ticket,
+        changed_at: datetime,
+    ) -> dict[str, object]:
+        previous_cycle = sla_service.latest_resolution_cycle(ticket)
+        record = await sla_service.create_resolution_cycle(
             session,
             ticket=ticket,
             started_at=changed_at,
         )
+        await audit_repository.append_audit(
+            session,
+            actor_user_id=actor.user_id,
+            ticket_id=ticket.ticket_id,
+            action_code="SLA_RUNTIME_CREATED",
+            entity_type="TICKET_SLA",
+            entity_id=record.ticket_sla_id,
+            old_value={"previous_resolution_cycle": previous_cycle},
+            new_value={
+                "sla_type": record.sla_type,
+                "cycle_no": record.cycle_no,
+                "runtime_status": record.runtime_status,
+                "started_at": record.started_at,
+                "due_at": record.due_at,
+                "sla_policy_id": record.sla_policy_id,
+            },
+            reason=payload.reason,
+            ip_address=ip_address,
+        )
+        return {
+            "sla_action": "CREATE_RESOLUTION_CYCLE",
+            "ticket_sla_id": record.ticket_sla_id,
+            "resolution_cycle": record.cycle_no,
+            "sla_started_at": _as_utc(record.started_at).isoformat(),
+            "sla_due_at": _as_utc(record.due_at).isoformat(),
+        }
 
     return await _transition(
         session,
