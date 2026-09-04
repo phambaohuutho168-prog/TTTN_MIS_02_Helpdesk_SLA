@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.core.rbac import RoleCode
 from app.models.ticket import Ticket
-from app.models.ticket_sla import TicketSLA
 from app.models.user import User
 from app.repositories import ticket_repository, workflow_repository
 from app.schemas.ticket_detail import TicketDetailResponse
@@ -21,7 +20,7 @@ from app.schemas.workflow import (
     ResolveRequest,
     TransitionReasonRequest,
 )
-from app.services import ticket_detail_service
+from app.services import sla_service, ticket_detail_service
 
 
 REOPEN_WINDOW = timedelta(hours=72)
@@ -117,26 +116,6 @@ def _assert_state(ticket: Ticket, source: str, target: str) -> None:
             "INVALID_STATE_TRANSITION",
             f"Không thể chuyển ticket từ {ticket.current_status_code} sang {target}.",
         )
-
-
-def _current_resolution_sla(ticket: Ticket) -> TicketSLA | None:
-    records = [
-        record
-        for record in ticket.sla_records
-        if record.sla_type == "RESOLUTION"
-        and record.runtime_status in {"RUNNING", "PAUSED"}
-    ]
-    return max(records, key=lambda record: record.cycle_no, default=None)
-
-
-def _latest_resolution_cycle(ticket: Ticket) -> int:
-    candidates = [
-        record.cycle_no
-        for record in ticket.sla_records
-        if record.sla_type == "RESOLUTION"
-    ]
-    candidates.extend(resolution.cycle_no for resolution in ticket.resolutions)
-    return max(candidates, default=0)
 
 
 async def _transition(
@@ -282,7 +261,7 @@ async def request_information(
             content=payload.content,
             comment_type="REQUEST_INFO",
         )
-        resolution_sla = _current_resolution_sla(ticket)
+        resolution_sla = sla_service.current_resolution_sla(ticket)
         if resolution_sla is None:
             return
         if resolution_sla.runtime_status != "RUNNING":
@@ -291,8 +270,10 @@ async def request_information(
                 "SLA_RUNTIME_CONFLICT",
                 "Resolution SLA hiện tại không ở trạng thái RUNNING.",
             )
-        resolution_sla.runtime_status = "PAUSED"
-        resolution_sla.paused_at = changed_at
+        sla_service.pause_resolution_runtime(
+            resolution_sla,
+            paused_at=changed_at,
+        )
         await workflow_repository.create_sla_pause_period(
             session,
             ticket_sla_id=resolution_sla.ticket_sla_id,
@@ -334,7 +315,7 @@ async def provide_information(
             content=payload.content,
             comment_type="REPLY",
         )
-        resolution_sla = _current_resolution_sla(ticket)
+        resolution_sla = sla_service.current_resolution_sla(ticket)
         if resolution_sla is None:
             return
         if resolution_sla.runtime_status != "PAUSED" or resolution_sla.paused_at is None:
@@ -359,17 +340,11 @@ async def provide_information(
                 "SLA_RUNTIME_CONFLICT",
                 "Không tìm thấy khoảng tạm dừng SLA đang mở.",
             )
-        duration_seconds = max(
-            0,
-            int((changed_at - _as_utc(open_pause.paused_at)).total_seconds()),
+        sla_service.resume_resolution_runtime(
+            resolution_sla,
+            pause_period=open_pause,
+            resumed_at=changed_at,
         )
-        open_pause.resumed_at = changed_at
-        open_pause.duration_seconds = duration_seconds
-        resolution_sla.total_paused_seconds += duration_seconds
-        # The policy target stays immutable; the ticket detail presenter
-        # derives the effective deadline from total_paused_seconds.
-        resolution_sla.paused_at = None
-        resolution_sla.runtime_status = "RUNNING"
 
     return await _transition(
         session,
@@ -398,7 +373,7 @@ async def resolve_ticket(
     ip_address: str | None,
 ) -> WorkflowResult:
     async def side_effect(ticket: Ticket, changed_at: datetime) -> None:
-        resolution_sla = _current_resolution_sla(ticket)
+        resolution_sla = sla_service.current_resolution_sla(ticket)
         if resolution_sla is not None and resolution_sla.runtime_status != "RUNNING":
             raise AppError(
                 409,
@@ -408,7 +383,7 @@ async def resolve_ticket(
         cycle_no = (
             resolution_sla.cycle_no
             if resolution_sla is not None
-            else _latest_resolution_cycle(ticket) + 1
+            else sla_service.latest_resolution_cycle(ticket) + 1
         )
         await workflow_repository.create_resolution_record(
             session,
@@ -419,15 +394,9 @@ async def resolve_ticket(
             resolved_at=changed_at,
         )
         if resolution_sla is not None:
-            resolution_sla.completed_at = changed_at
-            resolution_sla.runtime_status = "COMPLETED"
-            effective_due_at = _as_utc(resolution_sla.due_at) + timedelta(
-                seconds=resolution_sla.total_paused_seconds
-            )
-            resolution_sla.result = (
-                "MET"
-                if _as_utc(changed_at) <= effective_due_at
-                else "BREACHED"
+            sla_service.complete_runtime(
+                resolution_sla,
+                completed_at=changed_at,
             )
 
     return await _transition(
@@ -531,26 +500,10 @@ async def resume_reopened_ticket(
     ip_address: str | None,
 ) -> WorkflowResult:
     async def side_effect(ticket: Ticket, changed_at: datetime) -> None:
-        policy = await ticket_repository.get_effective_sla_policy(
+        await sla_service.create_resolution_cycle(
             session,
-            priority_id=ticket.priority_id,
-            effective_at=changed_at,
-        )
-        if policy is None:
-            raise AppError(
-                500,
-                "SLA_POLICY_CONFIGURATION_ERROR",
-                "Không tìm thấy SLA policy hiệu lực cho mức ưu tiên của ticket.",
-            )
-        await ticket_repository.create_ticket_sla_record(
-            session,
-            ticket_id=ticket.ticket_id,
-            sla_policy_id=policy.sla_policy_id,
-            sla_type="RESOLUTION",
-            cycle_no=_latest_resolution_cycle(ticket) + 1,
+            ticket=ticket,
             started_at=changed_at,
-            due_at=changed_at
-            + timedelta(minutes=policy.resolution_target_minutes),
         )
 
     return await _transition(
@@ -585,10 +538,7 @@ async def reject_ticket(
         for record in ticket.sla_records:
             if record.runtime_status not in {"RUNNING", "PAUSED"}:
                 continue
-            record.completed_at = changed_at
-            record.paused_at = None
-            record.runtime_status = "NOT_APPLICABLE"
-            record.result = "NOT_APPLICABLE"
+            sla_service.mark_not_applicable(record, completed_at=changed_at)
 
     return await _transition(
         session,

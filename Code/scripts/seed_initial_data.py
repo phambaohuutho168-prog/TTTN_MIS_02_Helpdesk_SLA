@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from sqlalchemy import select
@@ -9,6 +10,7 @@ from app.database.session import AsyncSessionLocal
 from app.models.category import Category
 from app.models.priority import Priority
 from app.models.role import Role
+from app.models.sla_policy import SLAPolicy
 from app.models.ticket_status import TicketStatus
 from app.models.user import User
 from app.models.user_role import UserRole
@@ -35,6 +37,14 @@ PRIORITY_SEEDS = (
     ("P2", 2, "Cao", "Ảnh hưởng đáng kể đến hoạt động."),
     ("P3", 3, "Trung bình", "Ảnh hưởng công việc của một người dùng."),
     ("P4", 4, "Thấp", "Ảnh hưởng nhỏ, có giải pháp tạm thời."),
+)
+
+SLA_POLICY_SEEDS = (
+    # priority_code, response minutes, resolution minutes
+    ("P1", 15, 240),
+    ("P2", 30, 480),
+    ("P3", 60, 1440),
+    ("P4", 240, 2880),
 )
 
 STATUS_SEEDS = (
@@ -88,6 +98,32 @@ async def seed() -> None:
                         priority_level=priority_level,
                         priority_name=priority_name,
                         description=description,
+                        is_active=True,
+                    )
+                )
+
+        await session.flush()
+        for priority_code, response_minutes, resolution_minutes in SLA_POLICY_SEEDS:
+            priority_result = await session.execute(
+                select(Priority).where(Priority.priority_code == priority_code)
+            )
+            priority = priority_result.scalar_one()
+            policy_result = await session.execute(
+                select(SLAPolicy).where(
+                    SLAPolicy.priority_id == priority.priority_id,
+                    SLAPolicy.version_no == 1,
+                )
+            )
+            if policy_result.scalar_one_or_none() is None:
+                session.add(
+                    SLAPolicy(
+                        priority_id=priority.priority_id,
+                        version_no=1,
+                        response_target_minutes=response_minutes,
+                        resolution_target_minutes=resolution_minutes,
+                        warning_percent=80,
+                        escalation_percent=150,
+                        effective_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
                         is_active=True,
                     )
                 )
@@ -150,8 +186,8 @@ async def seed() -> None:
 
         await session.commit()
         print(
-            "Seed hoàn tất: vai trò, danh mục, mức ưu tiên, trạng thái ticket "
-            "và tài khoản Admin cục bộ đã sẵn sàng."
+            "Seed hoàn tất: vai trò, danh mục, mức ưu tiên, SLA policy, "
+            "trạng thái ticket và tài khoản Admin cục bộ đã sẵn sàng."
         )
 
 
