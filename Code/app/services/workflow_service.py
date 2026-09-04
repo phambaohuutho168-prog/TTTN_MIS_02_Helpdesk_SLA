@@ -194,6 +194,14 @@ async def _transition(
             to_status_code=target,
             reason=reason or history_reason,
             ip_address=ip_address,
+            new_value_extra=(
+                {
+                    "closed_by": actor_id,
+                    "closed_at": changed_at.isoformat(),
+                }
+                if target == "CLOSED"
+                else None
+            ),
         )
         await session.commit()
     except AppError:
@@ -426,7 +434,11 @@ async def close_ticket(
     ip_address: str | None,
 ) -> WorkflowResult:
     async def side_effect(ticket: Ticket, changed_at: datetime) -> None:
-        ticket.closed_at = changed_at
+        await _set_close_metadata(
+            ticket,
+            changed_at,
+            closed_by=actor.user_id,
+        )
 
     return await _transition(
         session,
@@ -587,7 +599,11 @@ async def auto_close_expired_tickets(
                 response_code="TICKET_CLOSED",
                 message="Đóng ticket tự động thành công.",
                 ip_address=None,
-                side_effect=lambda ticket, at: _set_closed_at(ticket, at),
+                side_effect=lambda ticket, at: _set_close_metadata(
+                    ticket,
+                    at,
+                    closed_by=None,
+                ),
                 now=changed_at,
             )
             closed += 1
@@ -597,5 +613,25 @@ async def auto_close_expired_tickets(
     return closed
 
 
-async def _set_closed_at(ticket: Ticket, changed_at: datetime) -> None:
+async def _set_close_metadata(
+    ticket: Ticket,
+    changed_at: datetime,
+    *,
+    closed_by: int | None,
+) -> None:
+    latest_resolution = max(
+        ticket.resolutions,
+        key=lambda resolution: resolution.cycle_no,
+        default=None,
+    )
+    if (
+        latest_resolution is None
+        or not latest_resolution.resolution_note.strip()
+    ):
+        raise AppError(
+            409,
+            "RESOLUTION_RECORD_MISSING",
+            "Ticket chỉ được đóng sau khi đã ghi nhận cách xử lý.",
+        )
     ticket.closed_at = changed_at
+    ticket.closed_by = closed_by

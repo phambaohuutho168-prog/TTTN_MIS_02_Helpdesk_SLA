@@ -166,6 +166,11 @@ async def get_ticket_detail(
         ],
         first_response_at=ticket.first_response_at,
         closed_at=ticket.closed_at,
+        closed_by=(
+            TicketUserBrief.model_validate(ticket.closer)
+            if ticket.closer is not None
+            else None
+        ),
         rejected_at=ticket.rejected_at,
         rejection_reason=ticket.rejection_reason,
         permissions=_permissions(ticket, current_user),

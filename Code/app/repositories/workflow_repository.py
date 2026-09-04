@@ -69,7 +69,14 @@ async def create_workflow_audit_record(
     to_status_code: str,
     reason: str | None,
     ip_address: str | None,
+    new_value_extra: dict | None = None,
 ) -> AuditLog:
+    new_value = {
+        "status_code": to_status_code,
+        "workflow_code": workflow_code,
+    }
+    if new_value_extra:
+        new_value.update(new_value_extra)
     audit = AuditLog(
         actor_user_id=actor_user_id,
         ticket_id=ticket_id,
@@ -77,10 +84,7 @@ async def create_workflow_audit_record(
         entity_type="TICKET",
         entity_id=ticket_id,
         old_value_json={"status_code": from_status_code},
-        new_value_json={
-            "status_code": to_status_code,
-            "workflow_code": workflow_code,
-        },
+        new_value_json=new_value,
         reason=reason,
         ip_address=ip_address,
     )

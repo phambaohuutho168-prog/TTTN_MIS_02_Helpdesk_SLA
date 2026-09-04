@@ -154,6 +154,7 @@ class TicketDetail(BaseModel):
     description: str
     first_response_at: datetime | None
     closed_at: datetime | None
+    closed_by: int | None
     rejected_at: datetime | None
     rejection_reason: str | None
     created_at: datetime

@@ -42,6 +42,9 @@ TICKET_DETAIL_LOAD_OPTIONS = (
     selectinload(Ticket.requester)
     .selectinload(User.user_roles)
     .selectinload(UserRole.role),
+    selectinload(Ticket.closer)
+    .selectinload(User.user_roles)
+    .selectinload(UserRole.role),
     selectinload(Ticket.attachments),
     selectinload(Ticket.assignments)
     .selectinload(TicketAssignment.assignee)
