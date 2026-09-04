@@ -3,9 +3,11 @@ from app.models.audit_log import AuditLog
 from app.models.category import Category
 from app.models.comment import Comment
 from app.models.department import Department
+from app.models.notification import Notification
 from app.models.priority import Priority
 from app.models.role import Role
 from app.models.sla_pause_period import SLAPausePeriod
+from app.models.sla_event import SLAEvent
 from app.models.sla_policy import SLAPolicy
 from app.models.system_log import SystemLog
 from app.models.ticket import Ticket
@@ -23,9 +25,11 @@ __all__ = [
     "Category",
     "Comment",
     "Department",
+    "Notification",
     "Priority",
     "Role",
     "SLAPausePeriod",
+    "SLAEvent",
     "SLAPolicy",
     "SystemLog",
     "Ticket",

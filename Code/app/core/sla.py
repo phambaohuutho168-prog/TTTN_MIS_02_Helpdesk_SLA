@@ -20,6 +20,12 @@ class SLAStatusPresentation:
     css_class: str
 
 
+@dataclass(frozen=True)
+class SLAThresholdEvent:
+    event_type: str
+    threshold_percent: int
+
+
 SLA_STATUS_PRESENTATIONS = {
     "ON_TRACK": SLAStatusPresentation(
         code="ON_TRACK",
@@ -136,6 +142,41 @@ def overall_sla_status(
     if not statuses:
         return None
     return max(statuses, key=lambda status: SLA_STATUS_SEVERITY[status.code])
+
+
+def reached_sla_thresholds(
+    *,
+    progress_percent: float | None,
+    remaining_seconds: int | None,
+    warning_percent: int,
+    escalation_percent: int,
+    priority_level: int,
+) -> list[SLAThresholdEvent]:
+    """Return every SLA threshold reached in deterministic event order."""
+
+    if not 1 <= warning_percent <= 99:
+        raise ValueError("SLA warning_percent must be between 1 and 99")
+    if escalation_percent < 100:
+        raise ValueError("SLA escalation_percent must be at least 100")
+    if not 1 <= priority_level <= 4:
+        raise ValueError("SLA priority_level must be between 1 and 4")
+    if progress_percent is None or remaining_seconds is None:
+        return []
+
+    events = []
+    if progress_percent >= warning_percent:
+        events.append(SLAThresholdEvent("WARNING", warning_percent))
+
+    overdue = remaining_seconds < 0
+    if overdue:
+        events.append(SLAThresholdEvent("OVERDUE", 100))
+
+    escalation_threshold = 100 if priority_level == 1 else escalation_percent
+    if overdue and progress_percent >= escalation_threshold:
+        events.append(
+            SLAThresholdEvent("ESCALATED", escalation_threshold)
+        )
+    return events
 
 
 def calculate_metrics(

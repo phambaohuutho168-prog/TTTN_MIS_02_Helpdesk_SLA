@@ -1,6 +1,6 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV037 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV038 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
@@ -46,7 +46,7 @@ python -m alembic current
 ```
 
 Hai service phải ở trạng thái `healthy`; Alembic phải trả về
-`20260828_0009 (head)`.
+`20260904_0010 (head)`.
 
 Tạo dữ liệu ban đầu sau khi đã đặt các biến `SEED_ADMIN_*` trong `.env`:
 
@@ -134,19 +134,50 @@ runtime cùng `overall_status` của ticket. Giao diện dùng cùng `code` và
 tại thời điểm pause. Trang chủ `/` có bộ badge màu minh họa bốn trạng thái
 chính.
 
-## 8. Chạy kiểm thử
+## 8. Cảnh báo và escalation CV038
+
+Worker SLA tạo tối đa một event cho mỗi runtime và loại ngưỡng:
+`WARNING`, `OVERDUE`, `ESCALATED`. Khóa duy nhất trong database bảo đảm chạy
+lặp hoặc nhiều worker đồng thời không tạo event và notification trùng.
+
+- `WARNING`: đạt `warning_percent` của policy (mặc định 80%).
+- `OVERDUE`: thời gian còn lại âm, tức đã qua deadline hiệu lực.
+- `ESCALATED`: P1 ngay khi quá hạn; P2–P4 khi đạt `escalation_percent`
+  (mặc định 150%).
+
+Mỗi event gửi notification cho Processor đang được phân công (nếu có) và
+toàn bộ Admin đang hoạt động, đồng thời ghi audit log. Worker không tự thay đổi
+người xử lý.
+
+Chạy một lượt worker:
 
 ```powershell
-python -m pytest .\tests\sla\test_sla_status.py -v
+python -m scripts.process_sla_escalations
+```
+
+Tra cứu event đã phát sinh (Admin xem tất cả; Processor chỉ xem ticket đang
+được phân công):
+
+```text
+GET /api/v1/sla/breaches
+```
+
+API hỗ trợ lọc theo `state`, `sla_type`, `ticket_id`, khoảng `triggered_at` và
+phân trang.
+
+## 9. Chạy kiểm thử
+
+```powershell
+python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
 ```
 
 Kết quả mong đợi:
 
-- CV037: `13 passed`.
-- Toàn bộ CV023–CV037: `175 passed`.
+- CV038: `15 passed`.
+- Toàn bộ CV023–CV038: `190 passed`.
 
-## 9. Kiểm tra secret trước khi commit
+## 10. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -158,7 +189,7 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/sla-status
-feat(sla): expose SLA status for API and UI
+feature/sla-escalation
+feat(sla): add idempotent overdue escalation
 ```
 

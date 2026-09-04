@@ -102,3 +102,9 @@ class TicketSLA(Base):
 
     ticket = relationship("Ticket", back_populates="sla_records")
     policy = relationship("SLAPolicy", back_populates="ticket_slas")
+    events = relationship(
+        "SLAEvent",
+        back_populates="ticket_sla",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
