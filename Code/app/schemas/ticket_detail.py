@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.attachment import AttachmentResponse
+from app.schemas.sla import TicketSLAItemResponse, TicketSLASummaryResponse
 from app.schemas.ticket import (
     CategoryBrief,
     PriorityBrief,
@@ -58,25 +59,6 @@ class TicketResolutionResponse(BaseModel):
     cycle_no: int
     resolution_note: str
     resolved_at: datetime
-
-
-class TicketSLAItemResponse(BaseModel):
-    ticket_sla_id: int
-    sla_type: str
-    cycle_no: int
-    started_at: datetime
-    due_at: datetime
-    completed_at: datetime | None
-    paused_at: datetime | None
-    total_paused_seconds: int
-    runtime_status: str
-    result: str | None
-    remaining_seconds: int | None
-
-
-class TicketSLASummaryResponse(BaseModel):
-    response_sla: TicketSLAItemResponse | None
-    resolution_cycles: list[TicketSLAItemResponse]
 
 
 class TicketDetailResponse(BaseModel):

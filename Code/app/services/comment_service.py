@@ -14,6 +14,7 @@ from app.schemas.attachment import AttachmentResponse
 from app.schemas.comment import CommentCreateRequest, CommentUpdateRequest
 from app.schemas.ticket import TicketUserBrief
 from app.schemas.ticket_detail import CommentResponse
+from app.services import sla_service
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -146,8 +147,7 @@ async def create_comment(
             and _is_current_processor(ticket, actor)
             and ticket.first_response_at is None
         ):
-            ticket.first_response_at = now
-            completed_response_sla = comment_repository.complete_response_sla(
+            completed_response_sla = sla_service.complete_first_response(
                 ticket,
                 completed_at=now,
             )

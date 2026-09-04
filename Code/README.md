@@ -1,8 +1,8 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV033 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV036 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
-sách/bộ lọc, chi tiết/lịch sử, phân công và workflow chuyển trạng thái.
+sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
 ## Công nghệ
 
@@ -46,7 +46,7 @@ python -m alembic current
 ```
 
 Hai service phải ở trạng thái `healthy`; Alembic phải trả về
-`20260828_0008 (head)`.
+`20260828_0009 (head)`.
 
 Tạo dữ liệu ban đầu sau khi đã đặt các biến `SEED_ADMIN_*` trong `.env`:
 
@@ -89,19 +89,46 @@ Tự động đóng ticket `RESOLVED` quá 72 giờ bằng tác nhân hệ thố
 python -m scripts.auto_close_resolved
 ```
 
-## 6. Chạy kiểm thử
+## 6. SLA engine CV036
+
+Khi tạo ticket, hệ thống chọn phiên bản SLA policy đang hiệu lực theo mức ưu
+tiên và tạo hai runtime: `RESPONSE` và `RESOLUTION`. Mốc phản hồi được lưu khi
+người xử lý hiện tại gửi phản hồi công khai đầu tiên; mốc hoàn tất được lưu khi
+ticket chuyển sang `RESOLVED`. Resolution SLA dừng trong `PENDING_INFO`, tiếp
+tục sau khi requester bổ sung thông tin và tạo chu kỳ mới khi ticket mở lại.
+
+Rule mặc định do `scripts.seed_initial_data` tạo (đơn vị: phút):
+
+| Ưu tiên | Phản hồi | Xử lý |
+| --- | ---: | ---: |
+| P1 | 15 | 240 |
+| P2 | 30 | 480 |
+| P3 | 60 | 1440 |
+| P4 | 240 | 2880 |
+
+Xem SLA của ticket bằng endpoint có kiểm tra phạm vi truy cập:
+
+```text
+GET /api/v1/tickets/{ticket_id}/sla
+```
+
+`due_at`/`base_due_at` là deadline gốc theo policy; `effective_due_at` là
+deadline hiệu lực sau các khoảng pause đã hoàn tất. Hệ thống đang tính theo
+phút lịch UTC vì chưa có lịch làm việc/ngày nghỉ trong mô hình dữ liệu hiện tại.
+
+## 7. Chạy kiểm thử
 
 ```powershell
-python -m pytest .\tests\workflow\test_workflow.py -v
+python -m pytest .\tests\sla\test_sla_engine.py -v
 python -m pytest
 ```
 
 Kết quả mong đợi:
 
-- CV033: `19 passed`.
-- Toàn bộ CV023–CV033: `130 passed`.
+- CV036: `9 passed`.
+- Toàn bộ CV023–CV036: `162 passed`.
 
-## 7. Kiểm tra secret trước khi commit
+## 8. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -113,8 +140,8 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/ticket-workflow
-feat(workflow): enforce ticket state transitions
+feature/sla-engine
+feat(sla): implement deadline and milestone engine
 ```
 
-Hướng dẫn thao tác chi tiết nằm trong `CV033_HUONG_DAN.md`.
+Hướng dẫn thao tác chi tiết nằm trong `CV036_HUONG_DAN.md`.

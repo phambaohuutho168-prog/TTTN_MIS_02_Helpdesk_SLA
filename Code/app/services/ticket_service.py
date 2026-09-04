@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from math import ceil
 from uuid import uuid4
 
@@ -20,6 +20,7 @@ from app.schemas.ticket import (
     TicketSummaryResponse,
     TicketUserBrief,
 )
+from app.services import sla_service
 
 
 def generate_ticket_code() -> str:
@@ -149,38 +150,12 @@ async def create_ticket(
             changed_by=requester.user_id,
             reason="Ticket được tạo",
         )
-        started_at = datetime.now(timezone.utc)
-        policy = await ticket_repository.get_effective_sla_policy(
+        started_at = ticket.created_at or datetime.now(timezone.utc)
+        created_slas = await sla_service.create_initial_runtimes(
             session,
-            priority_id=payload.priority_id,
-            effective_at=started_at,
+            ticket=ticket,
+            started_at=started_at,
         )
-        created_slas = []
-        if policy is not None:
-            created_slas.append(
-                await ticket_repository.create_ticket_sla_record(
-                    session,
-                    ticket_id=ticket.ticket_id,
-                    sla_policy_id=policy.sla_policy_id,
-                    sla_type="RESPONSE",
-                    cycle_no=1,
-                    started_at=started_at,
-                    due_at=started_at
-                    + timedelta(minutes=policy.response_target_minutes),
-                )
-            )
-            created_slas.append(
-                await ticket_repository.create_ticket_sla_record(
-                    session,
-                    ticket_id=ticket.ticket_id,
-                    sla_policy_id=policy.sla_policy_id,
-                    sla_type="RESOLUTION",
-                    cycle_no=1,
-                    started_at=started_at,
-                    due_at=started_at
-                    + timedelta(minutes=policy.resolution_target_minutes),
-                )
-            )
 
         await audit_repository.append_audit(
             session,
@@ -205,6 +180,7 @@ async def create_ticket(
                 entity_type="TICKET_SLA",
                 entity_id=sla.ticket_sla_id,
                 new_value={
+                    "sla_policy_id": sla.sla_policy_id,
                     "sla_type": sla.sla_type,
                     "cycle_no": sla.cycle_no,
                     "runtime_status": sla.runtime_status,
