@@ -4,17 +4,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.core.sla import (
+    SLA_STATUS_PRESENTATIONS,
     as_utc,
     calculate_deadline,
     calculate_effective_due_at,
     calculate_metrics,
     calculate_result,
+    classify_sla_status,
+    overall_sla_status,
 )
 from app.models.sla_pause_period import SLAPausePeriod
 from app.models.ticket import Ticket
 from app.models.ticket_sla import TicketSLA
 from app.repositories import ticket_repository
 from app.schemas.sla import (
+    SLAStatusResponse,
     TicketSLAItemResponse,
     TicketSLAResponse,
     TicketSLASummaryResponse,
@@ -26,6 +30,15 @@ def _target_minutes(record: TicketSLA) -> int:
     if record.sla_type == "RESPONSE":
         return record.policy.response_target_minutes
     return record.policy.resolution_target_minutes
+
+
+def _status_response(status) -> SLAStatusResponse:
+    return SLAStatusResponse(
+        code=status.code,
+        label=status.label,
+        tone=status.tone,
+        css_class=status.css_class,
+    )
 
 
 def current_resolution_sla(ticket: Ticket) -> TicketSLA | None:
@@ -200,6 +213,13 @@ def build_sla_item(
         paused_at=record.paused_at,
         now=now,
     )
+    status = classify_sla_status(
+        runtime_status=record.runtime_status,
+        result=record.result,
+        remaining_seconds=metrics.remaining_seconds,
+        progress_percent=metrics.progress_percent,
+        warning_percent=record.policy.warning_percent,
+    )
     return TicketSLAItemResponse(
         ticket_sla_id=record.ticket_sla_id,
         sla_policy_id=record.sla_policy_id,
@@ -223,6 +243,7 @@ def build_sla_item(
         elapsed_seconds=metrics.elapsed_seconds,
         remaining_seconds=metrics.remaining_seconds,
         progress_percent=metrics.progress_percent,
+        status=_status_response(status),
     )
 
 
@@ -244,13 +265,23 @@ def build_sla_summary(
         ),
         key=lambda record: record.cycle_no,
     )
+    response_item = (
+        build_sla_item(response_sla, now=now) if response_sla is not None else None
+    )
+    resolution_items = [
+        build_sla_item(record, now=now) for record in resolution_slas
+    ]
+    items = ([response_item] if response_item is not None else []) + resolution_items
+    overall = overall_sla_status(
+        [
+            SLA_STATUS_PRESENTATIONS[item.status.code]
+            for item in items
+        ]
+    )
     return TicketSLASummaryResponse(
-        response_sla=(
-            build_sla_item(response_sla, now=now) if response_sla is not None else None
-        ),
-        resolution_cycles=[
-            build_sla_item(record, now=now) for record in resolution_slas
-        ],
+        response_sla=response_item,
+        resolution_cycles=resolution_items,
+        overall_status=(_status_response(overall) if overall is not None else None),
     )
 
 
@@ -260,7 +291,7 @@ def build_ticket_sla_response(
     now: datetime | None = None,
 ) -> TicketSLAResponse:
     summary = build_sla_summary(ticket, now=now)
-    if summary.response_sla is None and not summary.resolution_cycles:
+    if summary.overall_status is None:
         raise AppError(
             404,
             "SLA_RUNTIME_NOT_FOUND",
@@ -277,4 +308,5 @@ def build_ticket_sla_response(
         ),
         response_sla=summary.response_sla,
         resolution_cycles=summary.resolution_cycles,
+        overall_status=summary.overall_status,
     )

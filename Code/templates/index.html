@@ -16,6 +16,15 @@
             <p>Cơ sở dữ liệu: <span class="badge badge-info">{{ db_status }}</span></p>
             <p>Quản lý phiên: <span class="badge badge-info">{{ redis_status }}</span></p>
         </div>
+        <section class="sla-legend" aria-labelledby="sla-legend-title">
+            <h2 id="sla-legend-title">Trạng thái SLA</h2>
+            <div class="sla-legend-items">
+                <span class="sla-status sla-status--on-track" data-sla-status="ON_TRACK">Còn hạn</span>
+                <span class="sla-status sla-status--near-due" data-sla-status="NEAR_DUE">Sắp quá hạn</span>
+                <span class="sla-status sla-status--overdue" data-sla-status="OVERDUE">Quá hạn</span>
+                <span class="sla-status sla-status--met" data-sla-status="MET">Đúng SLA</span>
+            </div>
+        </section>
         <p class="subtitle">
             Kiểm tra đầy đủ tại <a href="/api/v1/health/ready">/api/v1/health/ready</a>
             và tài liệu API tại <a href="/docs">/docs</a>.

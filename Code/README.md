@@ -1,6 +1,6 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV036 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV037 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
@@ -116,19 +116,37 @@ GET /api/v1/tickets/{ticket_id}/sla
 deadline hiệu lực sau các khoảng pause đã hoàn tất. Hệ thống đang tính theo
 phút lịch UTC vì chưa có lịch làm việc/ngày nghỉ trong mô hình dữ liệu hiện tại.
 
-## 7. Chạy kiểm thử
+## 7. Trạng thái SLA CV037
+
+SLA-01 và phần `sla_summary` trong chi tiết ticket trả về `status` cho từng
+runtime cùng `overall_status` của ticket. Giao diện dùng cùng `code` và
+`css_class`, nên màu sắc không bị lệch với business rule phía server.
+
+| Mã | Nhãn giao diện | Điều kiện |
+| --- | --- | --- |
+| `ON_TRACK` | Còn hạn | Chưa đạt `warning_percent` |
+| `NEAR_DUE` | Sắp quá hạn | Đạt ngưỡng cảnh báo nhưng chưa trễ deadline |
+| `OVERDUE` | Quá hạn | Đã trễ deadline hoặc kết quả là `BREACHED` |
+| `MET` | Đúng SLA | Runtime hoàn tất trong deadline hiệu lực |
+| `NOT_APPLICABLE` | Không áp dụng | SLA không áp dụng cho ticket |
+
+`runtime_status=PAUSED` vẫn được giữ riêng; trạng thái hiển thị được đóng băng
+tại thời điểm pause. Trang chủ `/` có bộ badge màu minh họa bốn trạng thái
+chính.
+
+## 8. Chạy kiểm thử
 
 ```powershell
-python -m pytest .\tests\sla\test_sla_engine.py -v
+python -m pytest .\tests\sla\test_sla_status.py -v
 python -m pytest
 ```
 
 Kết quả mong đợi:
 
-- CV036: `9 passed`.
-- Toàn bộ CV023–CV036: `162 passed`.
+- CV037: `13 passed`.
+- Toàn bộ CV023–CV037: `175 passed`.
 
-## 8. Kiểm tra secret trước khi commit
+## 9. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -140,8 +158,7 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/sla-engine
-feat(sla): implement deadline and milestone engine
+feature/sla-status
+feat(sla): expose SLA status for API and UI
 ```
 
-Hướng dẫn thao tác chi tiết nằm trong `CV036_HUONG_DAN.md`.

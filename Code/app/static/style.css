@@ -21,3 +21,32 @@ h1 { color: #0d6efd; font-size: 22px; margin-bottom: 5px; }
 .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
 .badge-success { background-color: #d1e7dd; color: #0f5132; }
 .badge-info { background-color: #cff4fc; color: #055160; }
+
+.sla-legend {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+.sla-legend h2 {
+    margin: 0 0 12px;
+    color: #343a40;
+    font-size: 16px;
+}
+.sla-legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.sla-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.sla-status--on-track { background: #cfe2ff; color: #084298; }
+.sla-status--near-due { background: #fff3cd; color: #664d03; }
+.sla-status--overdue { background: #f8d7da; color: #842029; }
+.sla-status--met { background: #d1e7dd; color: #0f5132; }
+.sla-status--not-applicable { background: #e9ecef; color: #495057; }

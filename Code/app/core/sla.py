@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from math import floor
 
 
 @dataclass(frozen=True)
@@ -9,6 +10,56 @@ class SLAMetrics:
     elapsed_seconds: int | None
     remaining_seconds: int | None
     progress_percent: float | None
+
+
+@dataclass(frozen=True)
+class SLAStatusPresentation:
+    code: str
+    label: str
+    tone: str
+    css_class: str
+
+
+SLA_STATUS_PRESENTATIONS = {
+    "ON_TRACK": SLAStatusPresentation(
+        code="ON_TRACK",
+        label="Còn hạn",
+        tone="INFO",
+        css_class="sla-status--on-track",
+    ),
+    "NEAR_DUE": SLAStatusPresentation(
+        code="NEAR_DUE",
+        label="Sắp quá hạn",
+        tone="WARNING",
+        css_class="sla-status--near-due",
+    ),
+    "OVERDUE": SLAStatusPresentation(
+        code="OVERDUE",
+        label="Quá hạn",
+        tone="DANGER",
+        css_class="sla-status--overdue",
+    ),
+    "MET": SLAStatusPresentation(
+        code="MET",
+        label="Đúng SLA",
+        tone="SUCCESS",
+        css_class="sla-status--met",
+    ),
+    "NOT_APPLICABLE": SLAStatusPresentation(
+        code="NOT_APPLICABLE",
+        label="Không áp dụng",
+        tone="MUTED",
+        css_class="sla-status--not-applicable",
+    ),
+}
+
+SLA_STATUS_SEVERITY = {
+    "NOT_APPLICABLE": 0,
+    "MET": 1,
+    "ON_TRACK": 2,
+    "NEAR_DUE": 3,
+    "OVERDUE": 4,
+}
 
 
 def as_utc(value: datetime) -> datetime:
@@ -52,6 +103,41 @@ def calculate_result(
     return "MET" if as_utc(completed_at) <= effective_due_at else "BREACHED"
 
 
+def classify_sla_status(
+    *,
+    runtime_status: str,
+    result: str | None,
+    remaining_seconds: int | None,
+    progress_percent: float | None,
+    warning_percent: int,
+) -> SLAStatusPresentation:
+    """Map one SLA runtime to a stable API/UI presentation state."""
+
+    if not 1 <= warning_percent <= 99:
+        raise ValueError("SLA warning_percent must be between 1 and 99")
+    if runtime_status == "NOT_APPLICABLE" or result == "NOT_APPLICABLE":
+        code = "NOT_APPLICABLE"
+    elif result == "MET":
+        code = "MET"
+    elif result == "BREACHED" or (
+        remaining_seconds is not None and remaining_seconds < 0
+    ):
+        code = "OVERDUE"
+    elif progress_percent is not None and progress_percent >= warning_percent:
+        code = "NEAR_DUE"
+    else:
+        code = "ON_TRACK"
+    return SLA_STATUS_PRESENTATIONS[code]
+
+
+def overall_sla_status(
+    statuses: list[SLAStatusPresentation],
+) -> SLAStatusPresentation | None:
+    if not statuses:
+        return None
+    return max(statuses, key=lambda status: SLA_STATUS_SEVERITY[status.code])
+
+
 def calculate_metrics(
     *,
     started_at: datetime,
@@ -89,7 +175,7 @@ def calculate_metrics(
         int((anchor - started).total_seconds()) - total_paused_seconds,
     )
     target_seconds = max(1, int((base_due_at - started).total_seconds()))
-    remaining_seconds = int((effective_due_at - anchor).total_seconds())
+    remaining_seconds = floor((effective_due_at - anchor).total_seconds())
     return SLAMetrics(
         base_due_at=base_due_at,
         due_at=effective_due_at,

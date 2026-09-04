@@ -1,8 +1,16 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
 from app.schemas.ticket import PriorityBrief
+
+
+class SLAStatusResponse(BaseModel):
+    code: Literal["ON_TRACK", "NEAR_DUE", "OVERDUE", "MET", "NOT_APPLICABLE"]
+    label: str
+    tone: Literal["INFO", "WARNING", "DANGER", "SUCCESS", "MUTED"]
+    css_class: str
 
 
 class TicketSLAItemResponse(BaseModel):
@@ -26,11 +34,13 @@ class TicketSLAItemResponse(BaseModel):
     elapsed_seconds: int | None
     remaining_seconds: int | None
     progress_percent: float | None
+    status: SLAStatusResponse
 
 
 class TicketSLASummaryResponse(BaseModel):
     response_sla: TicketSLAItemResponse | None
     resolution_cycles: list[TicketSLAItemResponse]
+    overall_status: SLAStatusResponse | None
 
 
 class TicketSLAResponse(BaseModel):
@@ -40,3 +50,4 @@ class TicketSLAResponse(BaseModel):
     first_response_at: datetime | None
     response_sla: TicketSLAItemResponse | None
     resolution_cycles: list[TicketSLAItemResponse]
+    overall_status: SLAStatusResponse
