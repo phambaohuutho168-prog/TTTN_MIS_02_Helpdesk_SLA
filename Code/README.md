@@ -1,6 +1,6 @@
 # Helpdesk Request and SLA Management System
 
-Mã nguồn CV023–CV040 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
+Mã nguồn CV023–CV043 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
 
@@ -46,7 +46,7 @@ python -m alembic current
 ```
 
 Hai service phải ở trạng thái `healthy`; Alembic phải trả về
-`20260904_0011 (head)`.
+`20260904_0012 (head)`.
 
 Tạo dữ liệu ban đầu sau khi đã đặt các biến `SEED_ADMIN_*` trong `.env`:
 
@@ -281,12 +281,40 @@ báo của tài khoản khác.
 CV042 dùng bảng `notifications` đã có từ migration `20260904_0010`, nên không
 tạo migration mới và Alembic head vẫn là `20260904_0012`.
 
-## 13. Chạy kiểm thử
+## 13. API KPI Dashboard CV043
+
+Dashboard cung cấp hai endpoint chỉ dành cho Admin và Processor:
+
+```text
+GET /api/v1/dashboard/overview
+GET /api/v1/dashboard/sla-performance
+```
+
+Admin xem toàn bộ dữ liệu; Processor chỉ xem ticket hiện đang được phân công
+cho chính mình. Hai API cùng hỗ trợ bộ lọc `from`, `to`, `category_id`,
+`priority_id`, `department_id` và `assignee_id`. Mốc thời gian phải là ISO
+8601 có múi giờ.
+
+RPT-01 trả số ticket tổng/mở/đóng/từ chối/mở lại, phân bố theo trạng thái,
+danh mục và ưu tiên, thời gian phản hồi đầu tiên trung bình, thời gian xử lý
+trung bình, tỷ lệ đúng SLA và điểm hài lòng. Số ticket mở lại được tính theo
+ticket từng có lịch sử chuyển đến `REOPENED`, không đếm trùng một ticket.
+
+RPT-02 tách kết quả SLA `RESPONSE` và `RESOLUTION`, đồng thời trả tỷ lệ tổng và
+xu hướng theo ngày. Chỉ `MET` và `BREACHED` nằm trong mẫu số; runtime chưa hoàn
+tất và `NOT_APPLICABLE` bị loại. Khi không có mẫu hợp lệ, rate trả `null` thay
+vì số 0 gây hiểu nhầm.
+
+CV043 chỉ tổng hợp từ dữ liệu hiện có, không thay đổi database schema và
+Alembic head vẫn là `20260904_0012`.
+
+## 14. Chạy kiểm thử
 
 ```powershell
 python -m pytest .\tests\workflow\test_reopen_ticket.py -v
 python -m pytest .\tests\ratings\test_rating.py -v
 python -m pytest .\tests\notifications\test_notifications.py -v
+python -m pytest .\tests\dashboard\test_dashboard.py -v
 python -m pytest .\tests\workflow\test_close_ticket.py -v
 python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
@@ -294,10 +322,10 @@ python -m pytest
 
 Kết quả mong đợi:
 
-- CV042: `16 passed`.
-- Toàn bộ CV023–CV042: `248 passed`.
+- CV043: `16 passed`.
+- Toàn bộ CV023–CV043: `264 passed`.
 
-## 14. Kiểm tra secret trước khi commit
+## 15. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -309,7 +337,8 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/in-app-notifications-cv042
-feat(notification): add in-app notification center
+feature/dashboard-kpi-cv043
+feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
+Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
