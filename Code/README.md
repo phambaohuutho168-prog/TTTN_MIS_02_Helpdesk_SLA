@@ -1,6 +1,14 @@
 # Helpdesk Request and SLA Management System
 
-feature/dashboard-ui
+## CV045 - Dữ liệu mô phỏng
+
+Chạy `python -m scripts.seed_demo_data` sau khi cấu hình các biến
+`SEED_ADMIN_*` và `SEED_DEMO_PASSWORD` trong `.env`. Script tự bảo đảm dữ liệu
+nền rồi tạo đúng sáu ticket demo: bình thường, gần hạn, quá hạn, đã đóng, mở lại
+và bị từ chối. Mã ticket cố định giúp chạy lại an toàn mà không tạo bản ghi
+trùng. Chi tiết tài khoản, trạng thái và cách kiểm tra nằm trong
+`CV045_HUONG_DAN.md`.
+
 ## CV044 - Giao diện KPI dashboard
 
 Giao diện responsive tại `http://127.0.0.1:8000/dashboard` sử dụng trực tiếp
@@ -18,7 +26,6 @@ Chạy ứng dụng rồi mở dashboard:
 python -m uvicorn app.main:app --reload
 ```
 
-main
 Mã nguồn CV023–CV043 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
@@ -360,4 +367,3 @@ feature/dashboard-kpi-cv043
 feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
-Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
