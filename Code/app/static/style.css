@@ -50,3 +50,16 @@ h1 { color: #0d6efd; font-size: 22px; margin-bottom: 5px; }
 .sla-status--overdue { background: #f8d7da; color: #842029; }
 .sla-status--met { background: #d1e7dd; color: #0f5132; }
 .sla-status--not-applicable { background: #e9ecef; color: #495057; }
+
+.dashboard-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 10px 16px;
+    border-radius: 7px;
+    background: #0d6efd;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+.dashboard-link:hover { background: #0a58ca; }
+.dashboard-link:focus-visible { outline: 3px solid #ffc107; outline-offset: 3px; }

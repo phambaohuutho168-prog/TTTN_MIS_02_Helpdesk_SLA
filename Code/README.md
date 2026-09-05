@@ -1,5 +1,24 @@
 # Helpdesk Request and SLA Management System
 
+feature/dashboard-ui
+## CV044 - Giao diện KPI dashboard
+
+Giao diện responsive tại `http://127.0.0.1:8000/dashboard` sử dụng trực tiếp
+hai API KPI của CV043. Quản trị viên xem KPI toàn hệ thống và có thể lọc theo
+người xử lý; nhân viên xử lý chỉ xem phạm vi ticket đang được phân công cho mình.
+
+Bộ lọc hỗ trợ khoảng thời gian, danh mục, mức ưu tiên và người xử lý. Giao diện
+phân biệt rõ trạng thái đang tải, lỗi, không có dữ liệu và giá trị chưa đủ mẫu
+(hiển thị `—` thay vì số 0 giả). Access token chỉ được giữ trong
+`sessionStorage` và được làm mới một lần qua refresh token khi API trả về 401.
+
+Chạy ứng dụng rồi mở dashboard:
+
+```powershell
+python -m uvicorn app.main:app --reload
+```
+
+main
 Mã nguồn CV023–CV043 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.

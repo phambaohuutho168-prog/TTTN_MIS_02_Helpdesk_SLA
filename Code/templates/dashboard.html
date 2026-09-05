@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>KPI Dashboard · {{ app_name }}</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="/static/dashboard.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#dashboard-main">Bỏ qua điều hướng</a>
+
+    <section id="auth-panel" class="auth-page" aria-labelledby="login-title">
+        <div class="auth-brand" aria-hidden="true">
+            <span class="brand-mark">H</span>
+            <span>HELPDESK</span>
+        </div>
+        <form id="login-form" class="login-card">
+            <p class="eyebrow">CV044 · DASHBOARD</p>
+            <h1 id="login-title">Đăng nhập để xem KPI</h1>
+            <p class="muted">Dành cho quản trị viên và nhân viên xử lý.</p>
+
+            <div id="login-error" class="alert alert--error" role="alert" hidden></div>
+
+            <label for="login-email">Email</label>
+            <input id="login-email" name="email" type="email" autocomplete="username" required maxlength="254">
+
+            <label for="login-password">Mật khẩu</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+
+            <button id="login-button" class="button button--primary button--wide" type="submit">
+                Đăng nhập
+            </button>
+            <a class="back-link" href="/">← Quay về trang hệ thống</a>
+        </form>
+    </section>
+
+    <div id="dashboard-shell" class="app-shell" hidden>
+        <aside class="sidebar" aria-label="Điều hướng chính">
+            <a class="brand" href="/dashboard" aria-label="Helpdesk Dashboard">
+                <span class="brand-mark">H</span>
+                <span class="brand-copy"><strong>HELPDESK</strong><small>SLA Management</small></span>
+            </a>
+
+            <nav class="nav-list">
+                <a class="nav-link nav-link--active" href="/dashboard" aria-current="page">
+                    <span aria-hidden="true">▦</span> Dashboard
+                </a>
+                <a class="nav-link" href="/docs#/Tickets"><span aria-hidden="true">▤</span> Ticket</a>
+                <a class="nav-link" href="/docs#/Dashboard"><span aria-hidden="true">◴</span> Báo cáo API</a>
+                <a class="nav-link" href="/docs"><span aria-hidden="true">⌘</span> Tài liệu API</a>
+            </nav>
+
+            <div class="sidebar-note">
+                <span class="status-dot" aria-hidden="true"></span>
+                Dữ liệu trực tiếp từ API
+            </div>
+        </aside>
+
+        <div class="workspace">
+            <header class="topbar">
+                <button id="menu-button" class="icon-button menu-button" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Mở điều hướng">☰</button>
+                <div>
+                    <p class="topbar-kicker">Helpdesk SLA</p>
+                    <strong>KPI Dashboard</strong>
+                </div>
+                <div class="user-menu">
+                    <span class="avatar" id="user-initials" aria-hidden="true">--</span>
+                    <span class="user-copy"><strong id="user-name">—</strong><small id="user-role">—</small></span>
+                    <button id="logout-button" class="button button--ghost" type="button">Đăng xuất</button>
+                </div>
+            </header>
+
+            <nav id="mobile-nav" class="mobile-nav" aria-label="Điều hướng thu gọn" hidden>
+                <a href="/dashboard" aria-current="page">Dashboard</a>
+                <a href="/docs#/Tickets">Ticket</a>
+                <a href="/docs#/Dashboard">Báo cáo API</a>
+            </nav>
+
+            <main id="dashboard-main" class="dashboard-main" tabindex="-1">
+                <section class="page-heading">
+                    <div>
+                        <p class="eyebrow">TỔNG QUAN VẬN HÀNH</p>
+                        <h1>Dashboard</h1>
+                        <p id="scope-description" class="muted">Theo dõi hiệu suất xử lý ticket và cam kết SLA.</p>
+                    </div>
+                    <p class="updated-at">Cập nhật: <time id="last-updated">—</time></p>
+                </section>
+
+                <form id="dashboard-filters" class="filter-panel" aria-label="Bộ lọc dashboard">
+                    <div class="filter-field">
+                        <label for="filter-from">Từ ngày</label>
+                        <input id="filter-from" name="from" type="date" required>
+                    </div>
+                    <div class="filter-field">
+                        <label for="filter-to">Đến ngày</label>
+                        <input id="filter-to" name="to" type="date" required>
+                    </div>
+                    <div class="filter-field">
+                        <label for="filter-category">Danh mục</label>
+                        <select id="filter-category" name="category_id">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="filter-priority">Ưu tiên</label>
+                        <select id="filter-priority" name="priority_id">
+                            <option value="">Tất cả ưu tiên</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="filter-assignee">Người xử lý</label>
+                        <select id="filter-assignee" name="assignee_id">
+                            <option value="">Tất cả người xử lý</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="button button--primary" type="submit">Áp dụng</button>
+                        <button id="reset-filters" class="button button--secondary" type="button">Đặt lại</button>
+                    </div>
+                </form>
+
+                <div id="dashboard-alert" class="alert alert--error" role="alert" hidden></div>
+                <div id="loading-state" class="loading-state" role="status" aria-live="polite" hidden>
+                    <span class="spinner" aria-hidden="true"></span>
+                    Đang tải dữ liệu dashboard…
+                </div>
+                <p id="dashboard-announcer" class="sr-only" aria-live="polite"></p>
+
+                <section id="dashboard-content" aria-label="Các chỉ số dashboard">
+                    <div class="kpi-grid">
+                        <article class="kpi-card kpi-card--blue">
+                            <div class="kpi-icon" aria-hidden="true">▤</div>
+                            <div><p>Ticket đang mở</p><strong id="kpi-open">—</strong><small id="kpi-open-note">Trong kỳ lọc</small></div>
+                        </article>
+                        <article class="kpi-card kpi-card--purple">
+                            <div class="kpi-icon" aria-hidden="true">↻</div>
+                            <div><p>Ticket mở lại</p><strong id="kpi-reopened">—</strong><small id="kpi-reopened-note">Trong kỳ lọc</small></div>
+                        </article>
+                        <article class="kpi-card kpi-card--orange">
+                            <div class="kpi-icon" aria-hidden="true">◷</div>
+                            <div><p>Phản hồi trung bình</p><strong id="kpi-response">—</strong><small id="kpi-response-note">Chưa có mẫu</small></div>
+                        </article>
+                        <article class="kpi-card kpi-card--green">
+                            <div class="kpi-icon" aria-hidden="true">✓</div>
+                            <div><p>Tỷ lệ đúng SLA</p><strong id="kpi-sla">—</strong><small id="kpi-sla-note">Chưa có mẫu</small></div>
+                        </article>
+                        <article class="kpi-card kpi-card--teal">
+                            <div class="kpi-icon" aria-hidden="true">★</div>
+                            <div><p>Điểm hài lòng</p><strong id="kpi-satisfaction">—</strong><small id="kpi-satisfaction-note">Chưa có đánh giá</small></div>
+                        </article>
+                        <article class="kpi-card kpi-card--navy">
+                            <div class="kpi-icon" aria-hidden="true">∑</div>
+                            <div><p>Tổng ticket</p><strong id="kpi-total">—</strong><small id="kpi-total-note">Trong kỳ lọc</small></div>
+                        </article>
+                    </div>
+
+                    <div id="empty-state" class="empty-state" hidden>
+                        <span aria-hidden="true">⌕</span>
+                        <h2>Không có dữ liệu phù hợp</h2>
+                        <p>Hãy mở rộng khoảng thời gian hoặc thay đổi bộ lọc.</p>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <article class="panel panel--wide">
+                            <header class="panel-header">
+                                <div><p class="eyebrow">PHÂN BỐ</p><h2>Ticket theo trạng thái</h2></div>
+                                <span id="status-total" class="panel-total">— ticket</span>
+                            </header>
+                            <div id="status-breakdown" class="bar-list" aria-label="Biểu đồ phân bố trạng thái"></div>
+                        </article>
+
+                        <article class="panel">
+                            <header class="panel-header"><div><p class="eyebrow">CHẤT LƯỢNG</p><h2>Hiệu suất SLA</h2></div></header>
+                            <div class="sla-summary">
+                                <div id="sla-ring" class="sla-ring" role="img" aria-label="Chưa có dữ liệu SLA"><span id="sla-ring-value">—</span><small>tổng thể</small></div>
+                                <div class="sla-detail-list">
+                                    <div><span>Phản hồi</span><strong id="sla-response-rate">—</strong></div>
+                                    <div><span>Xử lý</span><strong id="sla-resolution-rate">—</strong></div>
+                                    <div><span>Loại trừ</span><strong id="sla-excluded">—</strong></div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="panel">
+                            <header class="panel-header"><div><p class="eyebrow">CƠ CẤU</p><h2>Theo mức ưu tiên</h2></div></header>
+                            <div id="priority-breakdown" class="compact-list"></div>
+                        </article>
+
+                        <article class="panel panel--wide">
+                            <header class="panel-header"><div><p class="eyebrow">NHU CẦU HỖ TRỢ</p><h2>Ticket theo danh mục</h2></div></header>
+                            <div id="category-breakdown" class="category-grid"></div>
+                        </article>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

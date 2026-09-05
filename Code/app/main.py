@@ -54,3 +54,12 @@ async def home_page(request: Request):
             "redis_status": "Redis configured",
         },
     )
+
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context={"app_name": settings.APP_NAME},
+    )
