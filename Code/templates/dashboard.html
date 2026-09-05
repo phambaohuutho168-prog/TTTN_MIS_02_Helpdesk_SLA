@@ -17,7 +17,7 @@
             <span>HELPDESK</span>
         </div>
         <form id="login-form" class="login-card">
-            <p class="eyebrow">CV044 · DASHBOARD</p>
+            <p class="eyebrow">CV046 · TÍCH HỢP TUẦN 4</p>
             <h1 id="login-title">Đăng nhập để xem KPI</h1>
             <p class="muted">Dành cho quản trị viên và nhân viên xử lý.</p>
 
@@ -34,6 +34,17 @@
             </button>
             <a class="back-link" href="/">← Quay về trang hệ thống</a>
         </form>
+
+        <section id="access-denied-state" class="login-card access-denied-state" role="alert" hidden>
+            <span class="access-denied-icon" aria-hidden="true">!</span>
+            <p class="eyebrow">KHÔNG CÓ QUYỀN</p>
+            <h1>Không thể mở dashboard</h1>
+            <p id="access-denied-message" class="muted">Tài khoản hiện tại không có quyền truy cập chức năng này.</p>
+            <button id="denied-back-to-login" class="button button--primary button--wide" type="button">
+                Đăng nhập tài khoản khác
+            </button>
+            <a class="back-link" href="/">← Quay về trang hệ thống</a>
+        </section>
     </section>
 
     <div id="dashboard-shell" class="app-shell" hidden>
@@ -121,6 +132,7 @@
                     </div>
                 </form>
 
+                <div id="dashboard-success" class="alert alert--success" role="status" aria-live="polite" hidden></div>
                 <div id="dashboard-alert" class="alert alert--error" role="alert" hidden></div>
                 <div id="loading-state" class="loading-state" role="status" aria-live="polite" hidden>
                     <span class="spinner" aria-hidden="true"></span>

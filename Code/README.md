@@ -367,3 +367,23 @@ feature/dashboard-kpi-cv043
 feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
+Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
+
+## 16. Tích hợp end-to-end Tuần 4 CV046
+
+CV046 chuẩn hóa validation và các lỗi router 404/405/413 theo cùng response
+envelope, giữ `X-Request-ID` để truy vết. Dashboard có đủ state thành công,
+thất bại, rỗng và không quyền; lỗi validation đầu tiên được hiển thị kèm tên
+field và lỗi kết nối có thông báo dễ hiểu.
+
+Kiểm thử tích hợp chạy luồng thật từ tạo ticket, phân công, bắt đầu xử lý,
+phản hồi, resolve, đóng và đánh giá; sau đó kiểm tra status history,
+notification, audit, SLA và KPI dashboard.
+
+```powershell
+python -m pytest .\tests\integration\test_week4_end_to_end.py -v
+python -m pytest
+```
+
+Kết quả mong đợi: `285 passed`. CV046 không đổi database schema; Alembic head
+vẫn là `20260904_0012`
