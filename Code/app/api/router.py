@@ -6,6 +6,7 @@ from app.api.v1.routes import (
     auth,
     catalogs,
     comments,
+    dashboard,
     escalations,
     health,
     notifications,
@@ -27,6 +28,7 @@ api_router.include_router(roles.router)
 api_router.include_router(tickets.router)
 api_router.include_router(ratings.router)
 api_router.include_router(notifications.router)
+api_router.include_router(dashboard.router)
 api_router.include_router(sla.router)
 api_router.include_router(escalations.router)
 api_router.include_router(comments.router)
