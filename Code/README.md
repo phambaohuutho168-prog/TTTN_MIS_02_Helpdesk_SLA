@@ -1,5 +1,6 @@
 # Helpdesk Request and SLA Management System
 
+feature/dashboard-ui
 ## CV044 - Giao diện KPI dashboard
 
 Giao diện responsive tại `http://127.0.0.1:8000/dashboard` sử dụng trực tiếp
@@ -17,6 +18,7 @@ Chạy ứng dụng rồi mở dashboard:
 python -m uvicorn app.main:app --reload
 ```
 
+main
 Mã nguồn CV023–CV043 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
 RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
 sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
@@ -358,3 +360,4 @@ feature/dashboard-kpi-cv043
 feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
+Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
