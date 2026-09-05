@@ -14,7 +14,7 @@ from app.schemas.attachment import AttachmentResponse
 from app.schemas.comment import CommentCreateRequest, CommentUpdateRequest
 from app.schemas.ticket import TicketUserBrief
 from app.schemas.ticket_detail import CommentResponse
-from app.services import sla_service
+from app.services import notification_service, sla_service
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -165,6 +165,13 @@ async def create_comment(
             },
             ip_address=ip_address,
         )
+        if payload.visibility == "PUBLIC" and payload.comment_type == "REPLY":
+            await notification_service.notify_public_reply(
+                session,
+                ticket=ticket,
+                actor_id=actor.user_id,
+                created_at=now,
+            )
         if completed_response_sla is not None:
             await audit_repository.append_audit(
                 session,
