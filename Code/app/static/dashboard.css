@@ -109,6 +109,19 @@ button, select { cursor: pointer; }
 }
 .login-card input:focus { border-color: var(--blue-600); }
 .back-link { display: block; margin-top: 18px; color: var(--blue-700); text-align: center; }
+.access-denied-state { text-align: center; }
+.access-denied-state h1 { margin: 10px 0 8px; font-size: clamp(25px, 4vw, 32px); }
+.access-denied-icon {
+    display: inline-grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #b42332;
+    font-size: 28px;
+    font-weight: 900;
+}
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 228px minmax(0, 1fr); }
 .sidebar {
@@ -230,6 +243,7 @@ button, select { cursor: pointer; }
 
 .alert { margin: 16px 0; padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.45; }
 .alert--error { color: #861f2a; border: 1px solid #f0b7bd; background: var(--danger-bg); }
+.alert--success { color: #11633f; border: 1px solid #9bd6ba; background: #eaf8f1; }
 .loading-state { display: flex; align-items: center; gap: 10px; margin: 15px 0; color: var(--ink-700); font-size: 13px; }
 .spinner { width: 18px; height: 18px; border: 2px solid #cad6e8; border-top-color: var(--blue-700); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -38,6 +38,7 @@ function initialize() {
     elements.resetFilters.addEventListener("click", resetFilters);
     elements.logoutButton.addEventListener("click", handleLogout);
     elements.menuButton.addEventListener("click", toggleMobileNavigation);
+    elements.deniedBackToLogin.addEventListener("click", () => showLogin());
 
     if (state.accessToken && state.user) {
         startDashboard();
@@ -49,9 +50,10 @@ function initialize() {
 function cacheElements() {
     const ids = [
         "auth-panel", "login-form", "login-email", "login-password", "login-button",
-        "login-error", "dashboard-shell", "dashboard-filters", "filter-from", "filter-to",
+        "login-error", "access-denied-state", "access-denied-message", "denied-back-to-login",
+        "dashboard-shell", "dashboard-filters", "filter-from", "filter-to",
         "filter-category", "filter-priority", "filter-assignee", "reset-filters",
-        "dashboard-alert", "loading-state", "dashboard-announcer", "dashboard-content",
+        "dashboard-success", "dashboard-alert", "loading-state", "dashboard-announcer", "dashboard-content",
         "empty-state", "last-updated", "scope-description", "user-initials", "user-name",
         "user-role", "logout-button", "menu-button", "mobile-nav", "kpi-open",
         "kpi-open-note", "kpi-reopened", "kpi-reopened-note", "kpi-response",
@@ -126,11 +128,16 @@ async function handleLogin(event) {
         elements.loginPassword.value = "";
         if (!dashboardRole()) {
             clearSession();
-            throw new Error("Dashboard chỉ dành cho quản trị viên và nhân viên xử lý.");
+            showAccessDenied("Dashboard chỉ dành cho quản trị viên và nhân viên xử lý.");
+            return;
         }
         await startDashboard();
     } catch (error) {
-        setLoginError(error.message);
+        setLoginError(
+            error instanceof TypeError
+                ? "Không thể kết nối đến máy chủ. Vui lòng thử lại."
+                : error.message,
+        );
     } finally {
         setLoginBusy(false);
     }
@@ -139,7 +146,7 @@ async function handleLogin(event) {
 async function startDashboard() {
     if (!dashboardRole()) {
         clearSession();
-        showLogin("Tài khoản không có quyền xem dashboard.");
+        showAccessDenied("Tài khoản không có quyền xem dashboard.");
         return;
     }
     elements.authPanel.hidden = true;
@@ -157,8 +164,19 @@ async function startDashboard() {
 function showLogin(message = "") {
     elements.dashboardShell.hidden = true;
     elements.authPanel.hidden = false;
+    elements.accessDeniedState.hidden = true;
+    elements.loginForm.hidden = false;
     setLoginError(message);
     window.setTimeout(() => elements.loginEmail.focus(), 0);
+}
+
+function showAccessDenied(message) {
+    elements.dashboardShell.hidden = true;
+    elements.authPanel.hidden = false;
+    elements.loginForm.hidden = true;
+    elements.accessDeniedMessage.textContent = message;
+    elements.accessDeniedState.hidden = false;
+    window.setTimeout(() => elements.deniedBackToLogin.focus(), 0);
 }
 
 function renderUser() {
@@ -295,6 +313,7 @@ async function loadDashboard() {
     if (state.loading) return;
     setDashboardBusy(true);
     showDashboardError("");
+    showDashboardSuccess("");
     try {
         const query = buildDashboardQuery();
         const [overview, sla] = await Promise.all([
@@ -306,6 +325,7 @@ async function loadDashboard() {
         elements.lastUpdated.dateTime = now.toISOString();
         elements.lastUpdated.textContent = now.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
         elements.dashboardAnnouncer.textContent = `Dashboard đã cập nhật. Tổng số ${overview.ticket_counts.total} ticket.`;
+        showDashboardSuccess("Dữ liệu dashboard đã được cập nhật thành công.");
     } catch (error) {
         if (state.accessToken) showDashboardError(error.message);
     } finally {
@@ -472,7 +492,12 @@ async function apiRequest(path, options = {}, retry = true) {
     const headers = new Headers(options.headers || {});
     headers.set("Accept", "application/json");
     if (state.accessToken) headers.set("Authorization", `Bearer ${state.accessToken}`);
-    const response = await fetch(`${API_PREFIX}${path}`, { ...options, headers });
+    let response;
+    try {
+        response = await fetch(`${API_PREFIX}${path}`, { ...options, headers });
+    } catch (_error) {
+        throw new Error("Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.");
+    }
     if (response.status === 401 && retry && state.refreshToken) {
         const refreshed = await refreshSession();
         if (refreshed) return apiRequest(path, options, false);
@@ -482,6 +507,10 @@ async function apiRequest(path, options = {}, retry = true) {
         if (response.status === 401) {
             clearSession();
             showLogin("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+        if (response.status === 403 && path.startsWith("/dashboard/")) {
+            clearSession();
+            showAccessDenied(errorMessage(payload, "Tài khoản không có quyền xem dashboard."));
         }
         throw new Error(errorMessage(payload, `Yêu cầu thất bại (${response.status}).`));
     }
@@ -523,10 +552,18 @@ async function parseResponse(response) {
     if (response.status === 204) return null;
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) return null;
-    return response.json();
+    try {
+        return await response.json();
+    } catch (_error) {
+        return null;
+    }
 }
 
 function errorMessage(payload, fallback) {
+    if (payload?.message && payload?.errors?.[0]?.message) {
+        const field = payload.errors[0].field ? `${payload.errors[0].field}: ` : "";
+        return `${payload.message} ${field}${payload.errors[0].message}`;
+    }
     if (payload?.message) return payload.message;
     if (payload?.detail) return typeof payload.detail === "string" ? payload.detail : fallback;
     return fallback;
@@ -577,4 +614,10 @@ function setLoginError(message) {
 function showDashboardError(message) {
     elements.dashboardAlert.textContent = message;
     elements.dashboardAlert.hidden = !message;
+    if (message) showDashboardSuccess("");
+}
+
+function showDashboardSuccess(message) {
+    elements.dashboardSuccess.textContent = message;
+    elements.dashboardSuccess.hidden = !message;
 }
