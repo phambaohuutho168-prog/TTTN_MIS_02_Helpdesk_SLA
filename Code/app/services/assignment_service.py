@@ -12,6 +12,7 @@ from app.repositories import ticket_repository, user_repository
 from app.schemas.assignment import AssignmentRequest
 from app.schemas.ticket import TicketUserBrief
 from app.schemas.ticket_detail import AssignmentResponse
+from app.services import notification_service
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,22 @@ async def assign_ticket(
             reason=payload.reason,
             ip_address=ip_address,
         )
+        await notification_service.notify_assignment(
+            session,
+            ticket=ticket,
+            assignee_id=assignee.user_id,
+            is_reassignment=not initial_assignment,
+            created_at=now,
+        )
+        if initial_assignment:
+            await notification_service.notify_status_change(
+                session,
+                ticket=ticket,
+                actor_id=actor.user_id,
+                from_status_code="NEW",
+                to_status_code="ASSIGNED",
+                created_at=now,
+            )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

@@ -222,10 +222,71 @@ Payload WF-06:
 }
 ```
 
-## 11. Chạy kiểm thử
+## 11. Đánh giá mức hài lòng CV041
+
+Requester sở hữu ticket có thể gửi một đánh giá CSAT qua
+`POST /api/v1/tickets/{ticket_id}/rating` khi ticket ở `RESOLVED` hoặc
+`CLOSED`. Điểm bắt buộc từ 1 đến 5; nhận xét là tùy chọn, tối đa 2.000 ký tự.
+Mỗi ticket chỉ có một đánh giá và không hỗ trợ sửa/xóa nhằm giữ nguyên bằng
+chứng phản hồi.
+
+Hệ thống bảo vệ quy tắc ở cả ba lớp:
+
+- Pydantic kiểm tra miền điểm, độ dài và field lạ;
+- service kiểm tra vai trò Requester, quyền sở hữu và trạng thái ticket;
+- database có check `score BETWEEN 1 AND 5` và unique theo `ticket_id` để
+  chống gửi trùng, kể cả khi có request đồng thời.
+
+Tạo thành công sẽ ghi audit `TICKET_RATED`. Người thuộc phạm vi ticket có thể
+xem đánh giá qua `GET /api/v1/tickets/{ticket_id}/rating`; ticket chưa được
+đánh giá trả về `RATING_NOT_FOUND`, không tạo điểm giả bằng 0.
+
+Payload mẫu:
+
+```json
+{
+  "score": 5,
+  "comment": "Nhân viên hỗ trợ nhanh và hướng dẫn rõ ràng."
+}
+```
+
+## 12. Thông báo trong hệ thống CV042
+
+Module thông báo cung cấp hộp thư cá nhân và phát notification trong cùng
+transaction với nghiệp vụ nguồn. Nội dung chỉ chứa mã ticket và mô tả chung,
+không sao chép comment, resolution note, mật khẩu hoặc dữ liệu nhạy cảm.
+
+Các thời điểm phát thông báo:
+
+- phân công/tái phân công: gửi cho Processor mới;
+- phản hồi công khai: gửi cho bên còn lại của cuộc trao đổi;
+- đổi trạng thái: gửi cho Requester và Processor hiện tại, loại trừ người vừa
+  thực hiện hành động;
+- SLA `WARNING`, `OVERDUE`, `ESCALATED`: tiếp tục dùng cơ chế idempotent của
+  worker CV038 để gửi cho Processor hiện tại và Admin hoạt động.
+
+API:
+
+```text
+GET   /api/v1/notifications
+PATCH /api/v1/notifications/{notification_id}/read
+PATCH /api/v1/notifications/read-all
+```
+
+Danh sách chỉ trả thông báo của người đăng nhập, hỗ trợ `is_read`, `type`,
+`page`, `page_size`, sắp xếp mới nhất trước và trả `deep_link` đến ticket.
+Đánh dấu đã đọc là idempotent; người dùng không thể đọc hoặc cập nhật thông
+báo của tài khoản khác.
+
+CV042 dùng bảng `notifications` đã có từ migration `20260904_0010`, nên không
+tạo migration mới và Alembic head vẫn là `20260904_0012`.
+
+## 13. Chạy kiểm thử
 
 ```powershell
 python -m pytest .\tests\workflow\test_reopen_ticket.py -v
+python -m pytest .\tests\ratings\test_rating.py -v
+python -m pytest .\tests\notifications\test_notifications.py -v
 python -m pytest .\tests\workflow\test_close_ticket.py -v
 python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
@@ -233,10 +294,10 @@ python -m pytest
 
 Kết quả mong đợi:
 
-- CV040: `15 passed`.
-- Toàn bộ CV023–CV040: `215 passed`.
+- CV042: `16 passed`.
+- Toàn bộ CV023–CV042: `248 passed`.
 
-## 12. Kiểm tra secret trước khi commit
+## 14. Kiểm tra secret trước khi commit
 
 ```powershell
 git check-ignore .env
@@ -248,6 +309,7 @@ Lệnh thứ hai không được trả về `.env` hoặc database local.
 Branch và commit đề xuất:
 
 ```text
-feature/ticket-reopen-cv040
-feat(ticket): enforce reopen window and SLA cycle
+feature/in-app-notifications-cv042
+feat(notification): add in-app notification center
 ```
+

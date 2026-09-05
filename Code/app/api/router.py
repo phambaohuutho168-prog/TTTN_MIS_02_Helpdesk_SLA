@@ -8,6 +8,7 @@ from app.api.v1.routes import (
     comments,
     escalations,
     health,
+    notifications,
     ratings,
     roles,
     sla,
@@ -25,6 +26,7 @@ api_router.include_router(users.admin_router)
 api_router.include_router(roles.router)
 api_router.include_router(tickets.router)
 api_router.include_router(ratings.router)
+api_router.include_router(notifications.router)
 api_router.include_router(sla.router)
 api_router.include_router(escalations.router)
 api_router.include_router(comments.router)

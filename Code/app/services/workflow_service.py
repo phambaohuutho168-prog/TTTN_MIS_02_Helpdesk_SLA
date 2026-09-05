@@ -24,7 +24,7 @@ from app.schemas.workflow import (
     ResolveRequest,
     TransitionReasonRequest,
 )
-from app.services import sla_service, ticket_detail_service
+from app.services import notification_service, sla_service, ticket_detail_service
 
 
 REOPEN_WINDOW = timedelta(hours=72)
@@ -214,6 +214,14 @@ async def _transition(
                 **side_effect_audit,
             }
             or None,
+        )
+        await notification_service.notify_status_change(
+            session,
+            ticket=ticket,
+            actor_id=actor_id,
+            from_status_code=source,
+            to_status_code=target,
+            created_at=changed_at,
         )
         await session.commit()
     except AppError:
