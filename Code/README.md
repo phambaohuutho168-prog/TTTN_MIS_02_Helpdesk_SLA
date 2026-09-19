@@ -367,7 +367,7 @@ feature/dashboard-kpi-cv043
 feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
-Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
+
 
 ## 16. Tích hợp end-to-end Tuần 4 CV046
 
@@ -404,8 +404,7 @@ python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
 python -m pytest
 ```
 
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV047_HUONG_DAN.md` và
-`evidence/CV047_TEST_EVIDENCE.md`.
+
 
 ## 18. SLA Test ticket sắp hạn và quá hạn CV048
 
@@ -418,3 +417,32 @@ Processor phản hồi sau deadline.
 python -m pytest .\tests\functional\test_cv048_sla_deadlines.py -v
 python -m pytest
 ```
+
+
+
+## 19. Workflow Test đóng và mở lại ticket CV049
+
+CV049 kiểm thử việc đóng ticket và các business rule mở lại: ticket đã đóng bị
+chặn, ticket quá cửa sổ 72 giờ bị rollback, ticket `RESOLVED` hợp lệ chuyển sang
+`REOPENED`, và khi Processor resume thì hệ thống tạo resolution SLA cycle mới.
+Test đồng thời đối soát status history và audit context.
+
+```powershell
+python -m pytest .\tests\functional\test_cv049_close_reopen_workflow.py -v
+python -m pytest
+```
+
+
+
+## 20. Security Test sai quyền và truy cập trái phép CV050
+
+CV050 kiểm thử ma trận RBAC của Requester, Processor và Admin tại API/UI, ngăn
+giả mạo role header, đồng thời xác minh attachment không bị tải, thêm hoặc xóa
+bởi người ngoài phạm vi ticket. Response từ chối không làm lộ metadata hay nội
+dung file.
+
+```powershell
+python -m pytest .\tests\functional\test_cv050_security_access.py -v
+python -m pytest
+```
+
