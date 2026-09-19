@@ -387,3 +387,19 @@ python -m pytest
 
 Kết quả mong đợi: `285 passed`. CV046 không đổi database schema; Alembic head
 vẫn là `20260904_0012`
+
+## 17. Functional Test luồng ticket bình thường CV047
+
+CV047 bổ sung functional test độc lập cho luồng nghiệp vụ chính:
+
+```text
+Tạo -> Phân công -> Phản hồi -> Xử lý -> Đóng -> Đánh giá
+```
+
+Bài test không chỉ kiểm tra HTTP response mà còn đối soát chuỗi status history,
+notification của Requester, audit log, KPI dashboard và kết quả SLA.
+
+```powershell
+python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
+python -m pytest
+```
