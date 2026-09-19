@@ -403,3 +403,18 @@ notification của Requester, audit log, KPI dashboard và kết quả SLA.
 python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
 python -m pytest
 ```
+
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV047_HUONG_DAN.md` và
+`evidence/CV047_TEST_EVIDENCE.md`.
+
+## 18. SLA Test ticket sắp hạn và quá hạn CV048
+
+CV048 bổ sung functional test cho deadline và các ngưỡng SLA. Kịch bản kiểm tra
+ticket sắp hạn ở 85%, ticket quá hạn ở 160%, event warning/overdue/escalation,
+notification, audit log, tính idempotent của worker và kết quả `BREACHED` khi
+Processor phản hồi sau deadline.
+
+```powershell
+python -m pytest .\tests\functional\test_cv048_sla_deadlines.py -v
+python -m pytest
+```
