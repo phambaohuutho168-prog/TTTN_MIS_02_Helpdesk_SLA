@@ -446,3 +446,17 @@ python -m pytest .\tests\functional\test_cv050_security_access.py -v
 python -m pytest
 ```
 
+
+
+## 21. Validation Test và Negative Test CV051
+
+CV051 bổ sung năm negative test độc lập cho invalid data, invalid state,
+duplicate, not found và system error. Test đối soát response contract, request
+ID, tính atomicity và bảo đảm lỗi 500 không rò rỉ chi tiết nội bộ.
+
+```powershell
+python -m pytest .\tests\functional\test_cv051_negative_cases.py -v
+python -m pytest
+```
+
+
