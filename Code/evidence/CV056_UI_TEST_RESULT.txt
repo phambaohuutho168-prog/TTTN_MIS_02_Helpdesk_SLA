@@ -1,0 +1,8 @@
+CV056 COMPLETE RESPONSIVE UI TEST RESULT
+CV056 UI tests: 5/5 passed
+CV056 failures/errors/skipped: 0/0/0
+Regression tests: 308/308 passed
+Regression failures/errors/skipped: 0/0/0
+UI exit code: 0
+Regression exit code: 0
+Result: PASSED - UI COMPLETE
