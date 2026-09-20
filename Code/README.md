@@ -367,7 +367,7 @@ feature/dashboard-kpi-cv043
 feat(dashboard): add scoped KPI and SLA performance APIs
 ```
 
-
+Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
 
 ## 16. Tích hợp end-to-end Tuần 4 CV046
 
@@ -404,7 +404,8 @@ python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
 python -m pytest
 ```
 
-
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV047_HUONG_DAN.md` và
+`evidence/CV047_TEST_EVIDENCE.md`.
 
 ## 18. SLA Test ticket sắp hạn và quá hạn CV048
 
@@ -418,7 +419,8 @@ python -m pytest .\tests\functional\test_cv048_sla_deadlines.py -v
 python -m pytest
 ```
 
-
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV048_HUONG_DAN.md` và
+`evidence/CV048_TEST_EVIDENCE.md`.
 
 ## 19. Workflow Test đóng và mở lại ticket CV049
 
@@ -432,7 +434,8 @@ python -m pytest .\tests\functional\test_cv049_close_reopen_workflow.py -v
 python -m pytest
 ```
 
-
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV049_HUONG_DAN.md` và
+`evidence/CV049_TEST_EVIDENCE.md`.
 
 ## 20. Security Test sai quyền và truy cập trái phép CV050
 
@@ -446,7 +449,8 @@ python -m pytest .\tests\functional\test_cv050_security_access.py -v
 python -m pytest
 ```
 
-
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV050_HUONG_DAN.md` và
+`evidence/CV050_SECURITY_TEST_EVIDENCE.md`.
 
 ## 21. Validation Test và Negative Test CV051
 
@@ -459,4 +463,81 @@ python -m pytest .\tests\functional\test_cv051_negative_cases.py -v
 python -m pytest
 ```
 
+Hướng dẫn và bằng chứng thực chạy nằm tại `CV051_HUONG_DAN.md` và
+`evidence/CV051_NEGATIVE_TEST_EVIDENCE.md`.
 
+## 22. Automated business-rule test suite CV052
+
+CV052 gom các functional, SLA, workflow, security và negative test quan trọng
+của CV047–CV051 vào marker `business_rule`. Runner tự chạy suite, xuất JUnit
+XML, lưu transcript và tính tỷ lệ pass.
+
+```powershell
+python .\scripts\run_cv052_automated_tests.py
+python -m pytest
+```
+
+Hướng dẫn và bằng chứng nằm tại `CV052_HUONG_DAN.md` và
+`evidence/CV052_AUTOMATED_TEST_EVIDENCE.md`.
+
+## 23. User Acceptance Test ba vai trò CV053
+
+CV053 nghiệm thu các tác vụ chính dưới góc nhìn `REQUESTER`, `PROCESSOR` và
+`ADMIN`. Ba kịch bản kiểm tra việc tạo/theo dõi ticket, xử lý ticket được giao,
+và điều phối/giám sát của quản trị viên. UAT record ghi rõ người test, từng bước,
+kết quả, defect log, phản hồi và phần ký xác nhận.
+
+```powershell
+python .\scripts\run_cv053_uat.py
+python -m pytest
+```
+
+Hướng dẫn nằm tại `CV053_HUONG_DAN.md`; biên bản nghiệm thu tại
+`evidence/CV053_UAT_RECORD.md`. Kết quả xác nhận: `3/3` UAT accepted và toàn
+bộ `298/298` regression test passed.
+
+## 24. Đánh giá KPI và kết quả hệ thống CV054
+
+CV054 dùng 10 ticket mô phỏng cố định để tính đủ 10 KPI của CV008 và so sánh
+với các ngưỡng được công bố riêng cho phiên đánh giá. Báo cáo lưu công thức,
+tử số/mẫu số, kết quả thực tế, mục tiêu, trạng thái và khuyến nghị.
+
+```powershell
+python .\scripts\run_cv054_evaluation.py
+python -m pytest
+```
+
+Hướng dẫn nằm tại `CV054_HUONG_DAN.md`; bảng KPI chính thức tại
+`evidence/CV054_KPI_EVALUATION.md`. Kết quả: `8/10` KPI đạt, `2/2` test CV054
+passed và toàn bộ `300/300` regression test passed.
+
+## 25. Sửa lỗi High và Release Candidate CV055
+
+CV055 sửa ba lỗi High về độ chính xác dashboard: SLA tổng thể theo ticket,
+thời gian giải quyết theo `resolved_at` và reopen theo thời điểm sự kiện. Mỗi lỗi
+có regression test riêng; runner chỉ quyết định `GO` khi không còn Critical/High
+đang mở và toàn bộ test đều pass.
+
+```powershell
+python .\scripts\run_cv055_release_candidate.py
+```
+
+Hướng dẫn nằm tại `CV055_HUONG_DAN.md`, defect log tại
+`evidence/CV055_DEFECT_LOG.md` và ghi chú RC tại
+`RELEASE_CANDIDATE_CV055.md`. Kết quả xác nhận: Critical/High đang mở `0/0`,
+high-priority regression `3/3` passed, full regression `303/303` passed và
+quyết định `GO - RELEASE CANDIDATE`.
+
+## 26. Hoàn thiện UI/UX và responsive CV056
+
+CV056 hoàn thiện KPI Dashboard với trạng thái loading, success, failure, empty,
+denied và data; bổ sung retry/reset, skeleton, chú giải tám trạng thái ticket,
+điều hướng mobile bằng bàn phím và responsive từ 320 px đến desktop lớn.
+
+```powershell
+python .\scripts\run_cv056_ui_tests.py
+```
+
+Hướng dẫn nằm tại `CV056_HUONG_DAN.md`; checklist và test evidence nằm trong
+thư mục `evidence` với tiền tố `CV056_`. Kết quả xác nhận: test CV056 `5/5`,
+toàn bộ kiểm tra UI trực tiếp `17/17` và full regression `308/308` đều passed.
