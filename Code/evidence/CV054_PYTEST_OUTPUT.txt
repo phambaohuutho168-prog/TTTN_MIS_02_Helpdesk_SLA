@@ -1,0 +1,13 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Hi!!\OneDrive\Tài liệu\GitHub\TTTN_MIS_02_Helpdesk_SLA\Code
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 300 items / 298 deselected / 2 selected
+
+tests\evaluation\test_kpi_evaluation.py ..                               [100%]
+
+- generated xml file: C:\Users\Hi!!\OneDrive\Tài liệu\GitHub\TTTN_MIS_02_Helpdesk_SLA\Code\evidence\CV054_JUNIT.xml -
+====================== 2 passed, 298 deselected in 0.66s ======================
