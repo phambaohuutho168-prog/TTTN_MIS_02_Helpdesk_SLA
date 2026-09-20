@@ -84,6 +84,7 @@ async def _create_and_assign_ticket(
     return ticket_id
 
 
+@pytest.mark.business_rule
 async def test_cv048_near_due_overdue_escalation_and_breach(
     client,
     credentials,

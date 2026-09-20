@@ -6,6 +6,8 @@ Bao phủ invalid data, invalid state, duplicate, not found và system error.
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import func, select
 
+import pytest
+
 from app.main import app
 from app.models.audit_log import AuditLog
 from app.models.category import Category
@@ -49,7 +51,7 @@ def _assert_error_contract(
         assert response.headers["x-request-id"] == body["meta"]["request_id"]
     return body
 
-
+@pytest.mark.business_rule
 async def test_cv051_invalid_data_is_rejected_without_persistence(
     client,
     credentials,
@@ -87,7 +89,7 @@ async def test_cv051_invalid_data_is_rejected_without_persistence(
         count_after = await session.scalar(select(func.count(Ticket.ticket_id)))
     assert count_after == count_before == 0
 
-
+@pytest.mark.business_rule
 async def test_cv051_invalid_state_is_rejected_atomically(
     client,
     credentials,
@@ -145,7 +147,7 @@ async def test_cv051_invalid_state_is_rejected_atomically(
     assert history_after == history_before
     assert audit_after == audit_before
 
-
+@pytest.mark.business_rule
 async def test_cv051_duplicate_data_is_rejected_without_new_record(
     client,
     admin_credentials,
@@ -173,7 +175,7 @@ async def test_cv051_duplicate_data_is_rejected_without_new_record(
         count_after = await session.scalar(select(func.count(Category.category_id)))
     assert count_after == count_before == 2
 
-
+@pytest.mark.business_rule
 async def test_cv051_missing_resource_returns_standard_not_found(
     client,
     credentials,
@@ -190,7 +192,7 @@ async def test_cv051_missing_resource_returns_standard_not_found(
     )
     assert body["errors"] == []
 
-
+@pytest.mark.business_rule
 async def test_cv051_system_error_is_logged_but_response_is_sanitized(
     client,
     credentials,
