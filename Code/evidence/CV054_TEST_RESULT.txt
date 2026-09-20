@@ -1,0 +1,11 @@
+CV054 KPI EVALUATION TEST RESULT
+KPI passed: 8/10
+KPI achievement rate: 80.00%
+KPI conclusion: ĐẠT CÓ ĐIỀU KIỆN
+Tests: 2
+Passed: 2
+Failures: 0
+Errors: 0
+Skipped: 0
+Exit code: 0
+Result: PASSED
