@@ -1,0 +1,10 @@
+CV055 RELEASE CANDIDATE RESULT
+Open Critical defects: 0
+Open High defects: 0
+High-priority tests: 3/3 passed
+High-priority failures/errors/skipped: 0/0/0
+Regression tests: 303/303 passed
+Regression failures/errors/skipped: 0/0/0
+High-priority exit code: 0
+Regression exit code: 0
+Release decision: GO - RELEASE CANDIDATE
