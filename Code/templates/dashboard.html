@@ -35,7 +35,7 @@
             <a class="back-link" href="/">← Quay về trang hệ thống</a>
         </form>
 
-        <section id="access-denied-state" class="login-card access-denied-state" role="alert" hidden>
+        <section id="access-denied-state" class="login-card access-denied-state" role="alert" data-ui-state="denied" hidden>
             <span class="access-denied-icon" aria-hidden="true">!</span>
             <p class="eyebrow">KHÔNG CÓ QUYỀN</p>
             <h1>Không thể mở dashboard</h1>
@@ -132,15 +132,40 @@
                     </div>
                 </form>
 
-                <div id="dashboard-success" class="alert alert--success" role="status" aria-live="polite" hidden></div>
-                <div id="dashboard-alert" class="alert alert--error" role="alert" hidden></div>
-                <div id="loading-state" class="loading-state" role="status" aria-live="polite" hidden>
+                <div id="dashboard-success" class="alert alert--success feedback-banner" role="status" aria-live="polite" data-ui-state="success" hidden>
+                    <span class="feedback-icon" aria-hidden="true">✓</span>
+                    <div><strong>Cập nhật thành công</strong><p id="dashboard-success-message"></p></div>
+                    <button id="dismiss-success" class="feedback-close" type="button" aria-label="Đóng thông báo thành công">×</button>
+                </div>
+                <div id="dashboard-alert" class="alert alert--error feedback-banner" role="alert" tabindex="-1" data-ui-state="failure" hidden>
+                    <span class="feedback-icon" aria-hidden="true">!</span>
+                    <div><strong>Không thể tải dữ liệu</strong><p id="dashboard-error-message"></p></div>
+                    <button id="retry-dashboard" class="button button--danger-outline" type="button">Thử lại</button>
+                </div>
+                <div id="loading-state" class="loading-state" role="status" aria-live="polite" data-ui-state="loading" hidden>
                     <span class="spinner" aria-hidden="true"></span>
-                    Đang tải dữ liệu dashboard…
+                    <span><strong>Đang tải dữ liệu</strong><small>Vui lòng chờ trong giây lát…</small></span>
                 </div>
                 <p id="dashboard-announcer" class="sr-only" aria-live="polite"></p>
 
                 <section id="dashboard-content" aria-label="Các chỉ số dashboard">
+                    <section class="status-legend" aria-labelledby="status-legend-title">
+                        <div>
+                            <p class="eyebrow">CHÚ GIẢI</p>
+                            <h2 id="status-legend-title">Trạng thái ticket</h2>
+                        </div>
+                        <div class="status-chip-list" aria-label="Danh sách trạng thái ticket">
+                            <span class="status-chip status-chip--new" data-ticket-status="NEW">Mới</span>
+                            <span class="status-chip status-chip--assigned" data-ticket-status="ASSIGNED">Đã phân công</span>
+                            <span class="status-chip status-chip--progress" data-ticket-status="IN_PROGRESS">Đang xử lý</span>
+                            <span class="status-chip status-chip--pending" data-ticket-status="PENDING_INFO">Chờ thông tin</span>
+                            <span class="status-chip status-chip--resolved" data-ticket-status="RESOLVED">Đã xử lý</span>
+                            <span class="status-chip status-chip--closed" data-ticket-status="CLOSED">Đã đóng</span>
+                            <span class="status-chip status-chip--reopened" data-ticket-status="REOPENED">Đã mở lại</span>
+                            <span class="status-chip status-chip--rejected" data-ticket-status="REJECTED">Bị từ chối</span>
+                        </div>
+                    </section>
+
                     <div class="kpi-grid">
                         <article class="kpi-card kpi-card--blue">
                             <div class="kpi-icon" aria-hidden="true">▤</div>
@@ -168,10 +193,11 @@
                         </article>
                     </div>
 
-                    <div id="empty-state" class="empty-state" hidden>
+                    <div id="empty-state" class="empty-state" data-ui-state="empty" hidden>
                         <span aria-hidden="true">⌕</span>
                         <h2>Không có dữ liệu phù hợp</h2>
                         <p>Hãy mở rộng khoảng thời gian hoặc thay đổi bộ lọc.</p>
+                        <button id="empty-reset-filters" class="button button--primary" type="button">Xóa bộ lọc</button>
                     </div>
 
                     <div class="dashboard-grid">

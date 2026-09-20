@@ -11,7 +11,7 @@ const STATUS_COLORS = Object.freeze({
     NEW: "#2670ed",
     ASSIGNED: "#7553d6",
     IN_PROGRESS: "#df7b24",
-    WAITING_REQUESTER: "#d3a018",
+    PENDING_INFO: "#d3a018",
     RESOLVED: "#16865c",
     CLOSED: "#273f68",
     REJECTED: "#bf2c3a",
@@ -24,6 +24,7 @@ const state = {
     user: readStoredUser(),
     loading: false,
     refreshPromise: null,
+    successTimer: null,
 };
 
 const elements = {};
@@ -39,6 +40,13 @@ function initialize() {
     elements.logoutButton.addEventListener("click", handleLogout);
     elements.menuButton.addEventListener("click", toggleMobileNavigation);
     elements.deniedBackToLogin.addEventListener("click", () => showLogin());
+    elements.retryDashboard.addEventListener("click", loadDashboard);
+    elements.emptyResetFilters.addEventListener("click", resetFilters);
+    elements.dismissSuccess.addEventListener("click", () => showDashboardSuccess(""));
+    for (const link of elements.mobileNav.querySelectorAll("a")) {
+        link.addEventListener("click", closeMobileNavigation);
+    }
+    document.addEventListener("keydown", handleGlobalKeydown);
 
     if (state.accessToken && state.user) {
         startDashboard();
@@ -53,7 +61,8 @@ function cacheElements() {
         "login-error", "access-denied-state", "access-denied-message", "denied-back-to-login",
         "dashboard-shell", "dashboard-filters", "filter-from", "filter-to",
         "filter-category", "filter-priority", "filter-assignee", "reset-filters",
-        "dashboard-success", "dashboard-alert", "loading-state", "dashboard-announcer", "dashboard-content",
+        "dashboard-success", "dashboard-success-message", "dismiss-success", "dashboard-alert",
+        "dashboard-error-message", "retry-dashboard", "loading-state", "dashboard-announcer", "dashboard-content",
         "empty-state", "last-updated", "scope-description", "user-initials", "user-name",
         "user-role", "logout-button", "menu-button", "mobile-nav", "kpi-open",
         "kpi-open-note", "kpi-reopened", "kpi-reopened-note", "kpi-response",
@@ -61,6 +70,7 @@ function cacheElements() {
         "kpi-satisfaction-note", "kpi-total", "kpi-total-note", "status-total",
         "status-breakdown", "sla-ring", "sla-ring-value", "sla-response-rate",
         "sla-resolution-rate", "sla-excluded", "priority-breakdown", "category-breakdown",
+        "empty-reset-filters",
     ];
     for (const id of ids) {
         elements[toCamelCase(id)] = document.getElementById(id);
@@ -594,6 +604,19 @@ function toggleMobileNavigation() {
     elements.menuButton.setAttribute("aria-label", willOpen ? "Đóng điều hướng" : "Mở điều hướng");
 }
 
+function closeMobileNavigation() {
+    elements.mobileNav.hidden = true;
+    elements.menuButton.setAttribute("aria-expanded", "false");
+    elements.menuButton.setAttribute("aria-label", "Mở điều hướng");
+}
+
+function handleGlobalKeydown(event) {
+    if (event.key === "Escape" && !elements.mobileNav.hidden) {
+        closeMobileNavigation();
+        elements.menuButton.focus();
+    }
+}
+
 function setLoginBusy(busy) {
     elements.loginButton.disabled = busy;
     elements.loginButton.textContent = busy ? "Đang đăng nhập…" : "Đăng nhập";
@@ -603,7 +626,9 @@ function setDashboardBusy(busy) {
     state.loading = busy;
     elements.loadingState.hidden = !busy;
     elements.dashboardContent.setAttribute("aria-busy", String(busy));
+    elements.dashboardContent.classList.toggle("is-loading", busy);
     for (const button of elements.dashboardFilters.querySelectorAll("button")) button.disabled = busy;
+    elements.retryDashboard.disabled = busy;
 }
 
 function setLoginError(message) {
@@ -612,12 +637,22 @@ function setLoginError(message) {
 }
 
 function showDashboardError(message) {
-    elements.dashboardAlert.textContent = message;
+    elements.dashboardErrorMessage.textContent = message;
     elements.dashboardAlert.hidden = !message;
-    if (message) showDashboardSuccess("");
+    if (message) {
+        showDashboardSuccess("");
+        window.setTimeout(() => elements.dashboardAlert.focus(), 0);
+    }
 }
 
 function showDashboardSuccess(message) {
-    elements.dashboardSuccess.textContent = message;
+    if (state.successTimer) window.clearTimeout(state.successTimer);
+    elements.dashboardSuccessMessage.textContent = message;
     elements.dashboardSuccess.hidden = !message;
+    if (message) {
+        state.successTimer = window.setTimeout(() => {
+            elements.dashboardSuccess.hidden = true;
+            state.successTimer = null;
+        }, 5000);
+    }
 }
