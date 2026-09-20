@@ -135,7 +135,7 @@ async def _mutation_counts(session_factory, ticket_id):
         )
     return int(history_count or 0), int(audit_count or 0), int(sla_count or 0)
 
-
+@pytest.mark.business_rule
 async def test_cv049_close_and_reopen_workflow(
     client,
     credentials,

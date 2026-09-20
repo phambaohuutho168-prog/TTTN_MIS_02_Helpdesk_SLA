@@ -46,6 +46,7 @@ async def cv047_runtime_configuration(session_factory, seeded_users):
         await session.commit()
 
 
+@pytest.mark.business_rule
 async def test_cv047_normal_ticket_flow(
     client,
     credentials,

@@ -5,7 +5,13 @@ configfile: pytest.ini
 testpaths: tests
 plugins: anyio-4.14.2, asyncio-1.4.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 295 items / 295 deselected / 0 selected
+collected 300 items / 290 deselected / 10 selected
+
+tests\functional\test_close_reopen_workflow.py .                         [ 10%]
+tests\functional\test_negative_cases.py .....                            [ 60%]
+tests\functional\test_normal_ticket_flow.py .                            [ 70%]
+tests\functional\test_security_access.py ..                              [ 90%]
+tests\functional\test_sla_deadlines.py .                                 [100%]
 
 - generated xml file: C:\Users\Hi!!\OneDrive\Tài liệu\GitHub\TTTN_MIS_02_Helpdesk_SLA\Code\evidence\CV052_JUNIT.xml -
-=========================== 295 deselected in 0.76s ===========================
+===================== 10 passed, 290 deselected in 9.14s ======================

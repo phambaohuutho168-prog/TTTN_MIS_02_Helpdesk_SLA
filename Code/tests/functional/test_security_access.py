@@ -77,6 +77,7 @@ async def cv050_security_configuration(session_factory):
     }
 
 
+@pytest.mark.business_rule
 async def test_cv050_api_and_ui_role_boundaries(
     client,
     credentials,
@@ -210,7 +211,7 @@ async def test_cv050_api_and_ui_role_boundaries(
     assert 'if (dashboardRole() === "ADMIN")' in dashboard_script
     assert "/admin/users?role_code=PROCESSOR" in dashboard_script
 
-
+@pytest.mark.business_rule
 async def test_cv050_attachment_cannot_be_accessed_illegally(
     client,
     credentials,
