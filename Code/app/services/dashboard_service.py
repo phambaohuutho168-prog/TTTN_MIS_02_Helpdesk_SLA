@@ -61,6 +61,32 @@ def _sla_summary(result_codes: list[str]) -> SLAResultSummary:
     )
 
 
+def _overall_sla_results(
+    rows: list[tuple[int, datetime, str, str]],
+) -> list[tuple[datetime, str]]:
+    """Return one overall result per ticket that completed both SLA types."""
+    grouped: dict[int, dict[str, object]] = {}
+    for ticket_id, created_at, sla_type, result_code in rows:
+        if result_code not in {"MET", "BREACHED"}:
+            continue
+        ticket = grouped.setdefault(
+            ticket_id,
+            {"created_at": created_at, "RESPONSE": [], "RESOLUTION": []},
+        )
+        ticket[sla_type].append(result_code)
+
+    results = []
+    for ticket in grouped.values():
+        response_codes = ticket["RESPONSE"]
+        resolution_codes = ticket["RESOLUTION"]
+        if not response_codes or not resolution_codes:
+            continue
+        all_codes = [*response_codes, *resolution_codes]
+        overall = "MET" if all(code == "MET" for code in all_codes) else "BREACHED"
+        results.append((ticket["created_at"], overall))
+    return results
+
+
 def _period(query: DashboardQuery) -> DashboardPeriod:
     return DashboardPeriod(
         date_from=query.date_from,
@@ -78,6 +104,12 @@ async def get_dashboard_overview(
         query,
         current_user_id=current_user.user_id,
         role_codes=set(current_user.role_codes),
+    )
+    reopened_conditions = dashboard_repository.ticket_conditions(
+        query,
+        current_user_id=current_user.user_id,
+        role_codes=set(current_user.role_codes),
+        include_created_period=False,
     )
     status_rows = await dashboard_repository.status_counts(
         session,
@@ -97,7 +129,9 @@ async def get_dashboard_overview(
     )
     reopened = await dashboard_repository.reopened_ticket_count(
         session,
-        conditions=conditions,
+        conditions=reopened_conditions,
+        date_from=query.date_from,
+        date_to=query.date_to,
     )
     scores = await dashboard_repository.rating_scores(
         session,
@@ -107,6 +141,7 @@ async def get_dashboard_overview(
         session,
         conditions=conditions,
     )
+    overall_sla_rows = _overall_sla_results(sla_rows)
 
     by_status = [
         StatusCount(
@@ -176,9 +211,7 @@ async def get_dashboard_overview(
         first_response_sample_size=first_response_samples,
         average_resolution_minutes=resolution_average,
         resolution_sample_size=resolution_samples,
-        sla_compliance=_sla_summary(
-            [result_code for _created, _sla_type, result_code in sla_rows]
-        ),
+        sla_compliance=_sla_summary([result for _created, result in overall_sla_rows]),
         satisfaction=SatisfactionSummary(
             rated_tickets=len(scores),
             average_score=(round(sum(scores) / len(scores), 2) if scores else None),
@@ -205,11 +238,12 @@ async def get_sla_performance(
         session,
         conditions=conditions,
     )
-    eligible = [row for row in rows if row[2] in {"MET", "BREACHED"}]
-    response_codes = [row[2] for row in eligible if row[1] == "RESPONSE"]
-    resolution_codes = [row[2] for row in eligible if row[1] == "RESOLUTION"]
+    eligible = [row for row in rows if row[3] in {"MET", "BREACHED"}]
+    response_codes = [row[3] for row in eligible if row[2] == "RESPONSE"]
+    resolution_codes = [row[3] for row in eligible if row[2] == "RESOLUTION"]
+    overall_rows = _overall_sla_results(rows)
     trend_codes: dict = defaultdict(list)
-    for created_at, _sla_type, result_code in eligible:
+    for created_at, result_code in overall_rows:
         trend_codes[_as_utc(created_at).date()].append(result_code)
     trend = []
     for day in sorted(trend_codes):
@@ -227,9 +261,9 @@ async def get_sla_performance(
         period=_period(query),
         response=_sla_summary(response_codes),
         resolution=_sla_summary(resolution_codes),
-        overall=_sla_summary(response_codes + resolution_codes),
+        overall=_sla_summary([result_code for _created, result_code in overall_rows]),
         excluded_not_applicable=sum(
-            1 for _created, _sla_type, result_code in rows
+            1 for _ticket_id, _created, _sla_type, result_code in rows
             if result_code == "NOT_APPLICABLE"
         ),
         trend=trend,

@@ -12,6 +12,7 @@ from app.models.role import Role
 from app.models.sla_policy import SLAPolicy
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
+from app.models.ticket_resolution import TicketResolution
 from app.models.ticket_sla import TicketSLA
 from app.models.ticket_status import TicketStatus
 from app.models.ticket_status_history import TicketStatusHistory
@@ -199,8 +200,24 @@ async def dashboard_data(session_factory, seeded_users):
                 resolution_minutes=100,
             ),
         }
+        tickets["met"].closed_at += timedelta(minutes=30)
+        tickets["breached"].closed_at += timedelta(minutes=60)
+        tickets["old"].closed_at += timedelta(minutes=50)
         session.add_all(tickets.values())
         await session.flush()
+
+        session.add_all(
+            [
+                TicketResolution(
+                    ticket_id=tickets[key].ticket_id,
+                    resolved_by=seeded_users["processor_user_id"],
+                    cycle_no=1,
+                    resolution_note="Kết quả xử lý dùng để kiểm thử KPI.",
+                    resolved_at=tickets[key].created_at + timedelta(minutes=minutes),
+                )
+                for key, minutes in (("met", 180), ("breached", 300), ("old", 100))
+            ]
+        )
 
         session.add_all(
             [
@@ -228,6 +245,16 @@ async def dashboard_data(session_factory, seeded_users):
                 changed_by=seeded_users["active_user_id"],
                 reason="Mở lại để kiểm thử KPI.",
                 changed_at=tickets["met"].created_at + timedelta(hours=1),
+            )
+        )
+        session.add(
+            TicketStatusHistory(
+                ticket_id=tickets["old"].ticket_id,
+                from_status_code="CLOSED",
+                to_status_code="REOPENED",
+                changed_by=seeded_users["active_user_id"],
+                reason="Ticket cũ nhưng được mở lại trong kỳ báo cáo.",
+                changed_at=now - timedelta(days=1),
             )
         )
         session.add_all(
@@ -386,17 +413,17 @@ async def test_admin_overview_returns_required_kpis(
         "open": 1,
         "closed": 2,
         "rejected": 1,
-        "reopened": 1,
+        "reopened": 2,
     }
     assert data["average_first_response_minutes"] == 70.0
     assert data["first_response_sample_size"] == 3
     assert data["average_resolution_minutes"] == 240.0
     assert data["resolution_sample_size"] == 2
     assert data["sla_compliance"] == {
-        "met": 3,
-        "breached": 2,
-        "total": 5,
-        "compliance_rate": 60.0,
+        "met": 1,
+        "breached": 1,
+        "total": 2,
+        "compliance_rate": 50.0,
     }
     assert data["satisfaction"]["rated_tickets"] == 2
     assert data["satisfaction"]["average_score"] == 4.0
@@ -485,7 +512,7 @@ async def test_department_filter_uses_current_assignee_department(
     )
     data = response.json()["data"]
     assert data["ticket_counts"]["total"] == 2
-    assert data["ticket_counts"]["reopened"] == 1
+    assert data["ticket_counts"]["reopened"] == 2
 
 
 async def test_admin_can_filter_by_current_assignee(
@@ -551,9 +578,14 @@ async def test_sla_performance_splits_types_and_excludes_not_applicable(
         "total": 2,
         "compliance_rate": 50.0,
     }
-    assert data["overall"]["compliance_rate"] == 60.0
+    assert data["overall"] == {
+        "met": 1,
+        "breached": 1,
+        "total": 2,
+        "compliance_rate": 50.0,
+    }
     assert data["excluded_not_applicable"] == 2
-    assert sum(item["total"] for item in data["trend"]) == 5
+    assert sum(item["total"] for item in data["trend"]) == 2
 
 
 async def test_processor_sla_performance_is_scoped(
@@ -568,9 +600,9 @@ async def test_processor_sla_performance_is_scoped(
     )
     data = response.json()["data"]
     assert data["overall"] == {
-        "met": 3,
+        "met": 1,
         "breached": 0,
-        "total": 3,
+        "total": 1,
         "compliance_rate": 100.0,
     }
     assert data["excluded_not_applicable"] == 0

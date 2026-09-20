@@ -8,6 +8,7 @@ from app.models.priority import Priority
 from app.models.rating import Rating
 from app.models.ticket import Ticket
 from app.models.ticket_assignment import TicketAssignment
+from app.models.ticket_resolution import TicketResolution
 from app.models.ticket_sla import TicketSLA
 from app.models.ticket_status import TicketStatus
 from app.models.ticket_status_history import TicketStatusHistory
@@ -45,13 +46,14 @@ def ticket_conditions(
     *,
     current_user_id: int,
     role_codes: set[str],
+    include_created_period: bool = True,
 ):
     conditions = []
     if "ADMIN" not in role_codes:
         conditions.append(_current_assignment_scope(current_user_id))
-    if query.date_from is not None:
+    if include_created_period and query.date_from is not None:
         conditions.append(Ticket.created_at >= query.date_from)
-    if query.date_to is not None:
+    if include_created_period and query.date_to is not None:
         conditions.append(Ticket.created_at <= query.date_to)
     if query.category_id is not None:
         conditions.append(Ticket.category_id == query.category_id)
@@ -136,12 +138,25 @@ async def ticket_duration_rows(
     *,
     conditions,
 ) -> list[tuple[datetime, datetime | None, datetime | None]]:
+    latest_resolution = (
+        select(
+            TicketResolution.ticket_id.label("ticket_id"),
+            func.max(TicketResolution.resolved_at).label("resolved_at"),
+        )
+        .group_by(TicketResolution.ticket_id)
+        .subquery()
+    )
     result = await session.execute(
         select(
             Ticket.created_at,
             Ticket.first_response_at,
-            Ticket.closed_at,
-        ).where(*conditions)
+            latest_resolution.c.resolved_at,
+        )
+        .outerjoin(
+            latest_resolution,
+            latest_resolution.c.ticket_id == Ticket.ticket_id,
+        )
+        .where(*conditions)
     )
     return list(result.tuples().all())
 
@@ -150,7 +165,14 @@ async def reopened_ticket_count(
     session: AsyncSession,
     *,
     conditions,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ) -> int:
+    event_conditions = [TicketStatusHistory.to_status_code == "REOPENED"]
+    if date_from is not None:
+        event_conditions.append(TicketStatusHistory.changed_at >= date_from)
+    if date_to is not None:
+        event_conditions.append(TicketStatusHistory.changed_at <= date_to)
     value = await session.scalar(
         select(func.count(func.distinct(Ticket.ticket_id)))
         .join(
@@ -159,7 +181,7 @@ async def reopened_ticket_count(
         )
         .where(
             *conditions,
-            TicketStatusHistory.to_status_code == "REOPENED",
+            *event_conditions,
         )
     )
     return int(value or 0)
@@ -182,9 +204,10 @@ async def sla_result_rows(
     session: AsyncSession,
     *,
     conditions,
-) -> list[tuple[datetime, str, str]]:
+) -> list[tuple[int, datetime, str, str]]:
     result = await session.execute(
         select(
+            Ticket.ticket_id,
             Ticket.created_at,
             TicketSLA.sla_type,
             TicketSLA.result,
@@ -196,6 +219,6 @@ async def sla_result_rows(
         )
     )
     return [
-        (created_at, sla_type, result_code)
-        for created_at, sla_type, result_code in result.tuples().all()
+        (ticket_id, created_at, sla_type, result_code)
+        for ticket_id, created_at, sla_type, result_code in result.tuples().all()
     ]
