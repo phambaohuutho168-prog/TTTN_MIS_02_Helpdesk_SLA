@@ -120,7 +120,7 @@ trong phạm vi UAT đã thực hiện.
 
 | Tệp | Nội dung |
 | --- | --- |
-| `tests/uat/test_cv053_three_roles_uat.py` | Ba kịch bản UAT có thể chạy lại |
-| `evidence/CV053_UAT_TEST_RESULT.txt` | Kết quả tổng hợp và pass rate |
-| `evidence/CV053_PYTEST_OUTPUT.txt` | Transcript pytest |
-| `evidence/CV053_JUNIT.xml` | Báo cáo JUnit |
+| `tests/uat/test_three_roles_uat.py` | Ba kịch bản UAT có thể chạy lại |
+| `evidence/three_roles_uat_test_result.txt` | Kết quả tổng hợp và pass rate |
+| `evidence/three_roles_uat_pytest_output.txt` | Transcript pytest |
+| `evidence/three_roles_uat_junit.xml` | Báo cáo JUnit |

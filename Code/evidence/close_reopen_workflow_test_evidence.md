@@ -8,7 +8,7 @@
 | Loại kiểm thử | Workflow Functional Test + Regression Test |
 | Môi trường | Python 3.12.14, pytest 9.1.1 |
 | Database test | SQLite in-memory, cô lập theo test |
-| File test | `tests/functional/test_cv049_close_reopen_workflow.py` |
+| File test | `tests/functional/test_close_reopen_workflow.py` |
 
 ## Bằng chứng chức năng
 
@@ -53,14 +53,14 @@ liên kết đúng `ticket_sla_id` của cycle 2.
 Lệnh:
 
 ```powershell
-python -m pytest .\tests\functional\test_cv049_close_reopen_workflow.py -v
+python -m pytest .\tests\functional\test_close_reopen_workflow.py -v
 ```
 
 Kết quả:
 
 ```text
 collected 1 item
-tests/functional/test_cv049_close_reopen_workflow.py . [100%]
+tests/functional/test_close_reopen_workflow.py . [100%]
 1 passed in 1.22s
 ```
 

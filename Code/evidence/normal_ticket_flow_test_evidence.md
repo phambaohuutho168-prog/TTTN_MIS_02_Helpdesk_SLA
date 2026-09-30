@@ -8,7 +8,7 @@
 | Loại kiểm thử | Functional Test + Regression Test |
 | Môi trường | Python 3.12.14, pytest 9.1.1 |
 | Database test | SQLite in-memory, cô lập theo test |
-| File test | `tests/functional/test_cv047_normal_ticket_flow.py` |
+| File test | `tests/functional/test_normal_ticket_flow.py` |
 
 ## Bằng chứng luồng nghiệp vụ
 
@@ -45,14 +45,14 @@ TICKET_RATED
 Lệnh:
 
 ```powershell
-python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
+python -m pytest .\tests\functional\test_normal_ticket_flow.py -v
 ```
 
 Kết quả:
 
 ```text
 collected 1 item
-tests/functional/test_cv047_normal_ticket_flow.py . [100%]
+tests/functional/test_normal_ticket_flow.py . [100%]
 1 passed in 0.84s
 ```
 

@@ -8,7 +8,7 @@
 | Loại kiểm thử | SLA Functional Test + Regression Test |
 | Môi trường | Python 3.12.14, pytest 9.1.1 |
 | Database test | SQLite in-memory, cô lập theo test |
-| File test | `tests/functional/test_cv048_sla_deadlines.py` |
+| File test | `tests/functional/test_sla_deadlines.py` |
 
 ## Dữ liệu kiểm thử
 
@@ -53,14 +53,14 @@ Mỗi event SLA tạo notification cho đúng Processor đang được phân cô
 Lệnh:
 
 ```powershell
-python -m pytest .\tests\functional\test_cv048_sla_deadlines.py -v
+python -m pytest .\tests\functional\test_sla_deadlines.py -v
 ```
 
 Kết quả:
 
 ```text
 collected 1 item
-tests/functional/test_cv048_sla_deadlines.py . [100%]
+tests/functional/test_sla_deadlines.py . [100%]
 1 passed in 0.84s
 ```
 

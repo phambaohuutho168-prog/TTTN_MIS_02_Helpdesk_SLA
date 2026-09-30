@@ -8,7 +8,7 @@
 | Loại kiểm thử | Validation/Negative Test + Regression Test |
 | Môi trường | Python 3.12.14, pytest 9.1.1 |
 | Database test | SQLite in-memory, cô lập theo test |
-| File test | `tests/functional/test_cv051_negative_cases.py` |
+| File test | `tests/functional/test_negative_cases.py` |
 
 ## Bằng chứng năm nhóm lỗi
 
@@ -86,14 +86,14 @@ Với lỗi validation, nghiệp vụ và not found, header `X-Request-ID` trùn
 Lệnh:
 
 ```powershell
-python -m pytest .\tests\functional\test_cv051_negative_cases.py -v
+python -m pytest .\tests\functional\test_negative_cases.py -v
 ```
 
 Kết quả:
 
 ```text
 collected 5 items
-tests/functional/test_cv051_negative_cases.py ..... [100%]
+tests/functional/test_negative_cases.py ..... [100%]
 5 passed in 1.90s
 ```
 

@@ -32,13 +32,13 @@
 Runner tự động:
 
 ```powershell
-python .\scripts\run_cv052_automated_tests.py
+python .\scripts\run_automated_tests.py
 ```
 
 Lệnh pytest tương đương:
 
 ```powershell
-python -m pytest -m business_rule -v --junitxml=evidence/CV052_JUNIT.xml
+python -m pytest -m business_rule -v --junitxml=evidence/automated_business_rule_junit.xml
 ```
 
 ## Kết quả thực chạy
@@ -57,11 +57,11 @@ Result: PASSED
 Pytest xác nhận:
 
 ```text
-tests/functional/test_cv047_normal_ticket_flow.py .          [ 10%]
-tests/functional/test_cv048_sla_deadlines.py .               [ 20%]
-tests/functional/test_cv049_close_reopen_workflow.py .       [ 30%]
-tests/functional/test_cv050_security_access.py ..            [ 50%]
-tests/functional/test_cv051_negative_cases.py .....          [100%]
+tests/functional/test_normal_ticket_flow.py .          [ 10%]
+tests/functional/test_sla_deadlines.py .               [ 20%]
+tests/functional/test_close_reopen_workflow.py .       [ 30%]
+tests/functional/test_security_access.py ..            [ 50%]
+tests/functional/test_negative_cases.py .....          [100%]
 10 passed, 285 deselected in 7.15s
 ```
 
@@ -69,9 +69,9 @@ tests/functional/test_cv051_negative_cases.py .....          [100%]
 
 | File | Trạng thái |
 | --- | --- |
-| `evidence/CV052_JUNIT.xml` | Đã tạo, dùng cho CI/CD hoặc công cụ đọc JUnit |
-| `evidence/CV052_PYTEST_OUTPUT.txt` | Đã lưu transcript pytest |
-| `evidence/CV052_AUTOMATED_TEST_RESULT.txt` | Đã lưu số lượng và pass rate |
+| `evidence/automated_business_rule_junit.xml` | Đã tạo, dùng cho CI/CD hoặc công cụ đọc JUnit |
+| `evidence/automated_business_rule_pytest_output.txt` | Đã lưu transcript pytest |
+| `evidence/automated_business_rule_test_result.txt` | Đã lưu số lượng và pass rate |
 
 ## Regression toàn dự án
 

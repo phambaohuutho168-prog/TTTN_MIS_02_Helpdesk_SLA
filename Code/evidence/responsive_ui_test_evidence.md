@@ -33,7 +33,7 @@ python -m pytest -m ui_complete -v
 Kết quả:
 
 ```text
-tests/ui/test_cv056_complete_responsive_ui.py ..... [100%]
+tests/ui/test_complete_responsive_ui.py ..... [100%]
 5 passed, 303 deselected in 1.55s
 ```
 

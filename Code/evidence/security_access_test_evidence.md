@@ -9,7 +9,7 @@
 | Môi trường | Python 3.12.14, pytest 9.1.1 |
 | Database test | SQLite in-memory, cô lập theo test |
 | Attachment storage | Thư mục tạm cô lập theo test |
-| File test | `tests/functional/test_cv050_security_access.py` |
+| File test | `tests/functional/test_security_access.py` |
 
 ## Bằng chứng phân quyền API và UI
 
@@ -66,14 +66,14 @@ tồn tại, đúng nội dung gốc.
 Lệnh:
 
 ```powershell
-python -m pytest .\tests\functional\test_cv050_security_access.py -v
+python -m pytest .\tests\functional\test_security_access.py -v
 ```
 
 Kết quả:
 
 ```text
 collected 2 items
-tests/functional/test_cv050_security_access.py .. [100%]
+tests/functional/test_security_access.py .. [100%]
 2 passed in 1.53s
 ```
 

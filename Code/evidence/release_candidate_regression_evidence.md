@@ -24,7 +24,7 @@ python -m pytest -m release_candidate -v
 Kết quả:
 
 ```text
-tests/regression/test_cv055_high_priority_fixes.py ... [100%]
+tests/regression/test_high_priority_fixes.py ... [100%]
 3 passed, 300 deselected in 0.70s
 ```
 
@@ -76,9 +76,9 @@ Release Candidate CV055.
 
 | File | Nội dung |
 | --- | --- |
-| `CV055_DEFECT_LOG.md` | Defect log và trạng thái đóng lỗi |
-| `CV055_RELEASE_CANDIDATE_RESULT.txt` | Kết luận tự động GO/NO-GO |
-| `CV055_HIGH_PRIORITY_OUTPUT.txt` | Transcript test defect High |
-| `CV055_HIGH_PRIORITY_JUNIT.xml` | JUnit test defect High |
-| `CV055_REGRESSION_OUTPUT.txt` | Transcript full regression |
-| `CV055_REGRESSION_JUNIT.xml` | JUnit full regression |
+| `release_candidate_defect_log.md` | Defect log và trạng thái đóng lỗi |
+| `release_candidate_result.txt` | Kết luận tự động GO/NO-GO |
+| `release_candidate_high_priority_output.txt` | Transcript test defect High |
+| `release_candidate_high_priority_junit.xml` | JUnit test defect High |
+| `release_candidate_regression_output.txt` | Transcript full regression |
+| `release_candidate_regression_junit.xml` | JUnit full regression |

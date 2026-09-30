@@ -47,4 +47,4 @@
 | Session token không lưu `localStorage` | PASS |
 
 Checklist trên được bảo vệ bởi
-`tests/ui/test_cv056_complete_responsive_ui.py` và các test dashboard UI hiện có.
+`tests/ui/test_complete_responsive_ui.py` và các test dashboard UI hiện có.

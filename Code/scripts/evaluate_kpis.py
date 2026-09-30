@@ -11,8 +11,8 @@ from typing import Any, Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = PROJECT_ROOT / "data" / "kpi_simulated_data.json"
-JSON_RESULT_PATH = PROJECT_ROOT / "evidence" / "CV054_KPI_RESULT.json"
-MARKDOWN_PATH = PROJECT_ROOT / "evidence" / "CV054_KPI_EVALUATION.md"
+JSON_RESULT_PATH = PROJECT_ROOT / "evidence" / "kpi_evaluation_result.json"
+MARKDOWN_PATH = PROJECT_ROOT / "evidence" / "kpi_evaluation.md"
 
 OPEN_STATUSES = {"NEW", "ASSIGNED", "IN_PROGRESS", "PENDING_INFO", "REOPENED"}
 
@@ -311,9 +311,9 @@ tương đương **{summary['achievement_rate']:.2f}%**. Hệ thống được �
 | Tệp | Vai trò |
 | --- | --- |
 | `data/kpi_simulated_data.json` | Dữ liệu nguồn mô phỏng cố định |
-| `scripts/evaluate_cv054_kpis.py` | Công thức tính, so sánh ngưỡng và sinh báo cáo |
-| `evidence/CV054_KPI_RESULT.json` | Kết quả máy đọc được |
-| `tests/evaluation/test_cv054_kpi_evaluation.py` | Kiểm thử công thức và tính tái lập |
+| `scripts/evaluate_kpis.py` | Công thức tính, so sánh ngưỡng và sinh báo cáo |
+| `evidence/kpi_evaluation_result.json` | Kết quả máy đọc được |
+| `tests/evaluation/test_kpi_evaluation.py` | Kiểm thử công thức và tính tái lập |
 
 ## 7. Xác nhận kiểm thử
 

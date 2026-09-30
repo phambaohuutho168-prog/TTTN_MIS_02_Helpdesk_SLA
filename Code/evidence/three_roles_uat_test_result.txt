@@ -1,6 +1,6 @@
 CV053 ROLE-BASED USER ACCEPTANCE TEST RESULT
-Generated at (UTC): 2026-09-20T02:03:21.007284Z
-Command: python -m pytest -m uat -v --junitxml=evidence/CV053_JUNIT.xml
+Generated at (UTC): 2026-09-30T21:07:41.923542Z
+Command: python -m pytest -m uat -v --junitxml=evidence/three_roles_uat_junit.xml
 Tests: 3
 Passed: 3
 Failures: 0

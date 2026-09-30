@@ -13,9 +13,9 @@ from evaluate_kpis import evaluate_file, main as generate_kpi_report
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
-JUNIT_PATH = EVIDENCE_DIR / "CV054_JUNIT.xml"
-OUTPUT_PATH = EVIDENCE_DIR / "CV054_PYTEST_OUTPUT.txt"
-RESULT_PATH = EVIDENCE_DIR / "CV054_TEST_RESULT.txt"
+JUNIT_PATH = EVIDENCE_DIR / "kpi_evaluation_junit.xml"
+OUTPUT_PATH = EVIDENCE_DIR / "kpi_evaluation_pytest_output.txt"
+RESULT_PATH = EVIDENCE_DIR / "kpi_evaluation_test_result.txt"
 
 
 def _totals(path: Path) -> dict[str, int]:
@@ -39,7 +39,7 @@ def main() -> int:
         "-m",
         "kpi_evaluation",
         "-v",
-        "--junitxml=evidence/CV054_JUNIT.xml",
+        "--junitxml=evidence/kpi_evaluation_junit.xml",
     ]
     environment = os.environ.copy()
     environment["PYTHONUTF8"] = "1"

@@ -1,46 +1,139 @@
 # Helpdesk Request and SLA Management System
 
-## CV045 - Dữ liệu mô phỏng
+Hệ thống quản lý yêu cầu hỗ trợ và SLA được xây dựng bằng FastAPI. Dự án bao
+phủ quy trình từ tạo ticket, phân công, xử lý, theo dõi SLA, thông báo, đánh giá
+đến Dashboard KPI và kiểm thử nghiệm thu.
 
-Chạy `python -m scripts.seed_demo_data` sau khi cấu hình các biến
-`SEED_ADMIN_*` và `SEED_DEMO_PASSWORD` trong `.env`. Script tự bảo đảm dữ liệu
-nền rồi tạo đúng sáu ticket demo: bình thường, gần hạn, quá hạn, đã đóng, mở lại
-và bị từ chối. Mã ticket cố định giúp chạy lại an toàn mà không tạo bản ghi
-trùng. Chi tiết tài khoản, trạng thái và cách kiểm tra nằm trong
-`CV045_HUONG_DAN.md`.
-
-## CV044 - Giao diện KPI dashboard
-
-Giao diện responsive tại `http://127.0.0.1:8000/dashboard` sử dụng trực tiếp
-hai API KPI của CV043. Quản trị viên xem KPI toàn hệ thống và có thể lọc theo
-người xử lý; nhân viên xử lý chỉ xem phạm vi ticket đang được phân công cho mình.
-
-Bộ lọc hỗ trợ khoảng thời gian, danh mục, mức ưu tiên và người xử lý. Giao diện
-phân biệt rõ trạng thái đang tải, lỗi, không có dữ liệu và giá trị chưa đủ mẫu
-(hiển thị `—` thay vì số 0 giả). Access token chỉ được giữ trong
-`sessionStorage` và được làm mới một lần qua refresh token khi API trả về 401.
-
-Chạy ứng dụng rồi mở dashboard:
-
-```powershell
-python -m uvicorn app.main:app --reload
-```
-
-Mã nguồn CV023–CV043 của đề tài thực tập tốt nghiệp: môi trường, xác thực,
-RBAC, quản trị tài khoản/vai trò, ticket, danh mục/ưu tiên, attachment, danh
-sách/bộ lọc, chi tiết/lịch sử, phân công, workflow, trao đổi, audit log và SLA.
+Đề tài được triển khai theo 56 công việc, từ **CV001 đến CV056**. Mã `CVxxx`
+chỉ dùng để theo dõi công việc trong kế hoạch; tên thư mục và tên file sử dụng
+nội dung nghiệp vụ, không sử dụng mã công việc. Phần lập trình CV023–CV056 hiện
+có **308 automated test Passed**.
 
 ## Công nghệ
 
-- Python 3.11+, FastAPI và Pydantic v2
+- Python 3.11+
+- FastAPI, Pydantic v2 và Uvicorn
 - SQLAlchemy 2.x AsyncIO và Alembic
-- PostgreSQL và Redis
-- JWT Bearer; Access Token 15 phút; Refresh Token 7 ngày có rotation
-- Argon2id qua `pwdlib`
+- PostgreSQL 16 và Redis 7
+- JWT Bearer Authentication
+- Argon2id thông qua `pwdlib`
+- Pytest và Pytest AsyncIO
+- HTML, CSS và JavaScript cho KPI Dashboard
 
-## 1. Chuẩn bị trên Windows PowerShell
+## Phạm vi CV001–CV056
 
-Mở Terminal tại thư mục `Code`:
+### Tuần 1 – Khởi động và phân tích nghiệp vụ
+
+| Công việc | Nội dung | Kết quả |
+| --- | --- | --- |
+| CV001 | Khởi động đề tài và repository | Cấu trúc lưu trữ, quy tắc làm việc và quản lý phiên bản |
+| CV002 | Xác định phạm vi đề tài | Phạm vi trong/ngoài hệ thống và quy trình nghiệp vụ cốt lõi |
+| CV003 | Xác định stakeholder và vai trò | Requester, Processor và Admin |
+| CV004 | Phân tích bài toán, mục tiêu và giá trị | Problem statement, mục tiêu và giá trị kỳ vọng |
+| CV005 | Khảo sát quy trình hiện tại | Mô tả quy trình As-Is |
+| CV006 | Phân tích nguyên nhân vấn đề | Nhóm nguyên nhân, điểm nghẽn và rủi ro vận hành |
+| CV007 | Đề xuất quy trình tương lai | Mô tả quy trình To-Be có hệ thống hỗ trợ |
+| CV008 | Xây dựng KPI | Bộ KPI phản hồi, SLA, xử lý, mở lại và hài lòng |
+| CV009 | Xác định business rules | Quy tắc ticket, phân công, trạng thái, SLA và quyền |
+| CV010 | Phân tích Use Case | Use Case tổng quát cho ba vai trò |
+| CV011 | Xây dựng backlog | User Story và Acceptance Criteria |
+
+### Tuần 2 – Thiết kế hệ thống
+
+| Công việc | Nội dung | Kết quả |
+| --- | --- | --- |
+| CV012 | Thiết kế kiến trúc tổng thể | Kiến trúc client, server, database và các thành phần tích hợp |
+| CV013 | Thiết kế phân quyền | Ma trận RBAC cho Requester, Processor và Admin |
+| CV014 | Thiết kế vòng đời ticket | State machine và các transition hợp lệ |
+| CV015 | Thiết kế SLA | Quy tắc SLA phản hồi và SLA xử lý |
+| CV016 | Thiết kế escalation | Ngưỡng cảnh báo, quá hạn và leo thang |
+| CV017 | Thiết kế ERD | Mô hình dữ liệu người dùng, ticket, SLA, audit và rating |
+| CV018 | Xây dựng Data Dictionary | Khóa, kiểu dữ liệu, bắt buộc, ràng buộc và ý nghĩa nghiệp vụ |
+| CV019 | Thiết kế API và mã lỗi | Endpoint, quyền, request/response và error contract |
+| CV020 | Thiết kế Wireframe Requester | Tạo, theo dõi, trao đổi, mở lại và đánh giá ticket |
+| CV021 | Thiết kế Wireframe Processor/Admin | Hàng đợi, phân công, SLA, workflow, Dashboard và quản trị |
+| CV022 | Lập RTM và Test Plan | Traceability Matrix, phạm vi và kế hoạch kiểm thử |
+
+### Tuần 3 – Lập trình chức năng cốt lõi
+
+| Công việc | Nội dung | Kết quả |
+| --- | --- | --- |
+| CV023 | Khởi tạo dự án | Cấu hình, database, healthcheck và Docker Compose |
+| CV024 | Authentication | Login, current user, refresh token và logout |
+| CV025 | Authorization | RBAC và dependency kiểm tra quyền phía server |
+| CV026 | Quản trị tài khoản và vai trò | API User, Role và gán/gỡ vai trò |
+| CV027 | Tạo ticket | Validation, mã ticket, trạng thái ban đầu và audit |
+| CV028 | Danh mục và mức ưu tiên | Category, Priority và các ràng buộc dữ liệu |
+| CV029 | Attachment | Upload, kiểm tra MIME/kích thước và kiểm soát truy cập |
+| CV030 | Danh sách ticket | Tìm kiếm, lọc, phân trang và giới hạn phạm vi dữ liệu |
+| CV031 | Chi tiết và lịch sử | Ticket detail, status history và timeline |
+| CV032 | Phân công | Phân công, tái phân công và lịch sử người xử lý |
+| CV033 | Workflow | Các transition từ NEW đến CLOSED/REJECTED |
+| CV034 | Trao đổi và kết quả xử lý | Comment công khai/nội bộ và solution note |
+| CV035 | Audit log | Nhật ký bất biến và khả năng truy vết hành động |
+
+### Tuần 4 – SLA, báo cáo và tích hợp
+
+| Công việc | Nội dung | Kết quả |
+| --- | --- | --- |
+| CV036 | SLA engine | Tạo và cập nhật Response/Resolution SLA runtime |
+| CV037 | Trạng thái SLA | On track, near due, overdue, met và not applicable |
+| CV038 | Cảnh báo và escalation | Event, notification, audit và idempotency |
+| CV039 | Đóng ticket | Business rules, actor đóng và tự động đóng sau 72 giờ |
+| CV040 | Mở lại ticket | Cửa sổ 72 giờ và Resolution SLA cycle mới |
+| CV041 | Đánh giá hài lòng | CSAT 1–5, một đánh giá cho mỗi ticket |
+| CV042 | Thông báo | Hộp thư cá nhân và đánh dấu đã đọc |
+| CV043 | API KPI Dashboard | KPI tổng quan và hiệu suất SLA theo phạm vi quyền |
+| CV044 | Giao diện KPI Dashboard | Bộ lọc, KPI, trạng thái giao diện và responsive |
+| CV045 | Dữ liệu mô phỏng | Sáu tình huống ticket cố định và seed idempotent |
+| CV046 | Tích hợp end-to-end | Luồng tạo, phân công, xử lý, đóng, đánh giá và đối soát |
+
+### Tuần 5 – Kiểm thử và đánh giá
+
+| Công việc | Nội dung | Kết quả |
+| --- | --- | --- |
+| CV047 | Functional Test luồng bình thường | Tạo, phân công, phản hồi, xử lý, đóng và đánh giá |
+| CV048 | SLA Test | Gần hạn, quá hạn, cảnh báo, escalation và breach |
+| CV049 | Workflow Test | Đóng, mở lại, rollback và SLA cycle |
+| CV050 | Security Test | RBAC, giả mạo quyền và bảo vệ attachment |
+| CV051 | Validation/Negative Test | Invalid data/state, duplicate, not found và system error |
+| CV052 | Automated Business-Rule Test | Suite tự động, JUnit, transcript và pass rate |
+| CV053 | User Acceptance Test | Kịch bản Requester, Processor và Admin |
+| CV054 | Đánh giá KPI | Tính 10 KPI từ dữ liệu mô phỏng và so sánh mục tiêu |
+| CV055 | Sửa lỗi và regression | Đóng lỗi High và xác nhận Release Candidate |
+| CV056 | Hoàn thiện UI/UX | Loading, success, failure, empty, denied và responsive |
+
+## Cấu trúc thư mục
+
+```text
+Code/
+├── alembic/                  # Migration database
+├── app/
+│   ├── api/                  # Router và dependency
+│   ├── core/                 # Config, security, RBAC, SLA, error contract
+│   ├── database/             # PostgreSQL/Redis connection
+│   ├── models/               # SQLAlchemy models
+│   ├── repositories/         # Data-access layer
+│   ├── schemas/              # Pydantic request/response
+│   ├── services/             # Business logic
+│   └── static/               # CSS và JavaScript
+├── data/                     # Dữ liệu KPI mô phỏng
+├── evidence/                 # Test evidence, JUnit và biên bản
+├── scripts/                  # Seed, worker và test runner
+├── templates/                # Trang chính và KPI Dashboard
+├── tests/                    # Automated test
+├── docker-compose.yml
+├── pytest.ini
+├── requirements.txt
+└── README.md
+```
+
+Không đưa `.env`, `.venv`, `.pytest_cache`, `__pycache__` hoặc file `*.pyc`
+vào GitHub và gói ZIP bàn giao.
+
+## 1. Chuẩn bị môi trường trên Windows
+
+Mở PowerShell tại thư mục `Code`:
 
 ```powershell
 py -m venv .venv
@@ -57,10 +150,14 @@ Copy-Item .env.example .env
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Mở `.env`, thay `SECRET_KEY` và tất cả giá trị `CHANGE_ME` bằng giá trị chỉ
-dùng trên máy cục bộ. Không commit `.env`.
+Mở `.env` và thực hiện các việc sau:
 
-## 3. Chạy PostgreSQL, Redis và migration
+- thay `SECRET_KEY` bằng chuỗi ngẫu nhiên vừa tạo;
+- thay tất cả giá trị `CHANGE_ME`;
+- cấu hình tài khoản PostgreSQL và tài khoản seed;
+- chỉ lưu `.env` trên máy cục bộ.
+
+## 3. Khởi động PostgreSQL, Redis và migration
 
 Yêu cầu Docker Desktop đang hoạt động:
 
@@ -71,14 +168,25 @@ python -m alembic upgrade head
 python -m alembic current
 ```
 
-Hai service phải ở trạng thái `healthy`; Alembic phải trả về
-`20260904_0012 (head)`.
+Kết quả mong đợi:
 
-Tạo dữ liệu ban đầu sau khi đã đặt các biến `SEED_ADMIN_*` trong `.env`:
+- `postgres` và `redis` ở trạng thái `healthy`;
+- Alembic trả `20260904_0012 (head)`.
+
+Tạo dữ liệu nền:
 
 ```powershell
 python -m scripts.seed_initial_data
 ```
+
+Tạo sáu ticket demo của CV045:
+
+```powershell
+python -m scripts.seed_demo_data
+```
+
+Script tạo các trường hợp bình thường, gần hạn, quá hạn, đã đóng, mở lại và bị
+từ chối. Mã ticket cố định giúp chạy lại mà không tạo trùng dữ liệu.
 
 ## 4. Chạy ứng dụng
 
@@ -86,212 +194,96 @@ python -m scripts.seed_initial_data
 python -m uvicorn app.main:app --reload
 ```
 
-- Trang chính: <http://127.0.0.1:8000/>
-- Swagger: <http://127.0.0.1:8000/docs>
-- Liveness: <http://127.0.0.1:8000/api/v1/health/live>
-- Readiness: <http://127.0.0.1:8000/api/v1/health/ready>
+| Thành phần | Địa chỉ |
+| --- | --- |
+| Trang chính | <http://127.0.0.1:8000/> |
+| KPI Dashboard | <http://127.0.0.1:8000/dashboard> |
+| Swagger | <http://127.0.0.1:8000/docs> |
+| Liveness | <http://127.0.0.1:8000/api/v1/health/live> |
+| Readiness | <http://127.0.0.1:8000/api/v1/health/ready> |
 
-## 5. API Workflow CV033
+## 5. Vai trò và phạm vi truy cập
 
-| ID | Phương thức và endpoint | Transition | Quyền chính |
+| Vai trò | Quyền chính |
+| --- | --- |
+| Requester | Tạo và theo dõi ticket của mình, bổ sung thông tin, mở lại, đóng và đánh giá |
+| Processor | Xem ticket được phân công, phản hồi và thực hiện workflow xử lý |
+| Admin | Quản trị người dùng/danh mục, phân công, giám sát, xem audit và KPI toàn hệ thống |
+
+Quyền được kiểm tra từ database tại thời điểm xử lý request. Hệ thống không tin
+role header do phía client tự gửi.
+
+## 6. Workflow ticket
+
+| ID | Endpoint | Transition | Quyền chính |
 | --- | --- | --- | --- |
-| WF-01 | `POST /api/v1/tickets/{ticket_id}/start` | `ASSIGNED -> IN_PROGRESS` | Processor đang được phân công hoặc Admin |
-| WF-02 | `POST /api/v1/tickets/{ticket_id}/request-info` | `IN_PROGRESS -> PENDING_INFO` | Processor đang được phân công hoặc Admin |
-| WF-03 | `POST /api/v1/tickets/{ticket_id}/provide-info` | `PENDING_INFO -> IN_PROGRESS` | Requester sở hữu ticket |
-| WF-04 | `POST /api/v1/tickets/{ticket_id}/resolve` | `IN_PROGRESS -> RESOLVED` | Processor đang được phân công hoặc Admin |
+| WF-01 | `POST /api/v1/tickets/{ticket_id}/start` | `ASSIGNED -> IN_PROGRESS` | Processor được giao hoặc Admin |
+| WF-02 | `POST /api/v1/tickets/{ticket_id}/request-info` | `IN_PROGRESS -> PENDING_INFO` | Processor được giao hoặc Admin |
+| WF-03 | `POST /api/v1/tickets/{ticket_id}/provide-info` | `PENDING_INFO -> IN_PROGRESS` | Requester sở hữu |
+| WF-04 | `POST /api/v1/tickets/{ticket_id}/resolve` | `IN_PROGRESS -> RESOLVED` | Processor được giao hoặc Admin |
 | WF-05 | `POST /api/v1/tickets/{ticket_id}/close` | `RESOLVED -> CLOSED` | Requester sở hữu hoặc Admin |
 | WF-06 | `POST /api/v1/tickets/{ticket_id}/reopen` | `RESOLVED -> REOPENED` | Requester sở hữu, trong 72 giờ |
-| WF-07 | `POST /api/v1/tickets/{ticket_id}/resume` | `REOPENED -> IN_PROGRESS` | Processor đang được phân công hoặc Admin |
-| WF-08 | `POST /api/v1/tickets/{ticket_id}/reject` | `NEW -> REJECTED` | Chỉ Admin |
+| WF-07 | `POST /api/v1/tickets/{ticket_id}/resume` | `REOPENED -> IN_PROGRESS` | Processor được giao hoặc Admin |
+| WF-08 | `POST /api/v1/tickets/{ticket_id}/reject` | `NEW -> REJECTED` | Admin |
 
-Mỗi transition hợp lệ cập nhật ticket, tạo `ticket_status_history` và ghi
-`audit_logs` trong cùng transaction. WF-02/WF-03 ghi nhận khoảng dừng SLA;
-WF-04 hoàn tất chu kỳ SLA hiện tại; WF-07 tạo chu kỳ Resolution SLA mới;
-WF-08 kết thúc các SLA còn chạy. `CLOSED` và `REJECTED` là trạng thái cuối.
+Mỗi transition hợp lệ cập nhật ticket, status history và audit log trong cùng
+transaction. `CLOSED` và `REJECTED` là trạng thái cuối.
 
-Tự động đóng ticket `RESOLVED` quá 72 giờ bằng tác nhân hệ thống:
+Tự động đóng ticket `RESOLVED` quá 72 giờ:
 
 ```powershell
 python -m scripts.auto_close_resolved
 ```
 
-## 6. SLA engine CV036
+## 7. SLA
 
-Khi tạo ticket, hệ thống chọn phiên bản SLA policy đang hiệu lực theo mức ưu
-tiên và tạo hai runtime: `RESPONSE` và `RESOLUTION`. Mốc phản hồi được lưu khi
-người xử lý hiện tại gửi phản hồi công khai đầu tiên; mốc hoàn tất được lưu khi
-ticket chuyển sang `RESOLVED`. Resolution SLA dừng trong `PENDING_INFO`, tiếp
-tục sau khi requester bổ sung thông tin và tạo chu kỳ mới khi ticket mở lại.
+Khi tạo ticket, hệ thống tạo hai runtime SLA:
 
-Rule mặc định do `scripts.seed_initial_data` tạo (đơn vị: phút):
+- `RESPONSE`: thời gian phản hồi đầu tiên;
+- `RESOLUTION`: thời gian hoàn tất xử lý.
 
 | Ưu tiên | Phản hồi | Xử lý |
 | --- | ---: | ---: |
-| P1 | 15 | 240 |
-| P2 | 30 | 480 |
-| P3 | 60 | 1440 |
-| P4 | 240 | 2880 |
+| P1 | 15 phút | 240 phút |
+| P2 | 30 phút | 480 phút |
+| P3 | 60 phút | 1.440 phút |
+| P4 | 240 phút | 2.880 phút |
 
-Xem SLA của ticket bằng endpoint có kiểm tra phạm vi truy cập:
+Resolution SLA dừng trong `PENDING_INFO`, tiếp tục khi Requester bổ sung thông
+tin và tạo cycle mới sau khi ticket được mở lại.
 
-```text
-GET /api/v1/tickets/{ticket_id}/sla
-```
+Các trạng thái hiển thị:
 
-`due_at`/`base_due_at` là deadline gốc theo policy; `effective_due_at` là
-deadline hiệu lực sau các khoảng pause đã hoàn tất. Hệ thống đang tính theo
-phút lịch UTC vì chưa có lịch làm việc/ngày nghỉ trong mô hình dữ liệu hiện tại.
+| Mã | Ý nghĩa |
+| --- | --- |
+| `ON_TRACK` | Còn hạn |
+| `NEAR_DUE` | Sắp quá hạn |
+| `OVERDUE` | Quá hạn |
+| `MET` | Hoàn tất đúng SLA |
+| `NOT_APPLICABLE` | Không áp dụng |
 
-## 7. Trạng thái SLA CV037
-
-SLA-01 và phần `sla_summary` trong chi tiết ticket trả về `status` cho từng
-runtime cùng `overall_status` của ticket. Giao diện dùng cùng `code` và
-`css_class`, nên màu sắc không bị lệch với business rule phía server.
-
-| Mã | Nhãn giao diện | Điều kiện |
-| --- | --- | --- |
-| `ON_TRACK` | Còn hạn | Chưa đạt `warning_percent` |
-| `NEAR_DUE` | Sắp quá hạn | Đạt ngưỡng cảnh báo nhưng chưa trễ deadline |
-| `OVERDUE` | Quá hạn | Đã trễ deadline hoặc kết quả là `BREACHED` |
-| `MET` | Đúng SLA | Runtime hoàn tất trong deadline hiệu lực |
-| `NOT_APPLICABLE` | Không áp dụng | SLA không áp dụng cho ticket |
-
-`runtime_status=PAUSED` vẫn được giữ riêng; trạng thái hiển thị được đóng băng
-tại thời điểm pause. Trang chủ `/` có bộ badge màu minh họa bốn trạng thái
-chính.
-
-## 8. Cảnh báo và escalation CV038
-
-Worker SLA tạo tối đa một event cho mỗi runtime và loại ngưỡng:
-`WARNING`, `OVERDUE`, `ESCALATED`. Khóa duy nhất trong database bảo đảm chạy
-lặp hoặc nhiều worker đồng thời không tạo event và notification trùng.
-
-- `WARNING`: đạt `warning_percent` của policy (mặc định 80%).
-- `OVERDUE`: thời gian còn lại âm, tức đã qua deadline hiệu lực.
-- `ESCALATED`: P1 ngay khi quá hạn; P2–P4 khi đạt `escalation_percent`
-  (mặc định 150%).
-
-Mỗi event gửi notification cho Processor đang được phân công (nếu có) và
-toàn bộ Admin đang hoạt động, đồng thời ghi audit log. Worker không tự thay đổi
-người xử lý.
-
-Chạy một lượt worker:
+Chạy worker cảnh báo và escalation:
 
 ```powershell
 python -m scripts.process_sla_escalations
 ```
 
-Tra cứu event đã phát sinh (Admin xem tất cả; Processor chỉ xem ticket đang
-được phân công):
+Worker tạo các event `WARNING`, `OVERDUE` và `ESCALATED`, đồng thời gửi
+notification và ghi audit. Cơ chế idempotent ngăn tạo trùng event khi chạy lại.
+
+## 8. Rating và notification
+
+Requester có thể đánh giá một lần khi ticket ở `RESOLVED` hoặc `CLOSED`:
 
 ```text
-GET /api/v1/sla/breaches
+POST /api/v1/tickets/{ticket_id}/rating
+GET  /api/v1/tickets/{ticket_id}/rating
 ```
 
-API hỗ trợ lọc theo `state`, `sla_type`, `ticket_id`, khoảng `triggered_at` và
-phân trang.
+Điểm hợp lệ từ 1 đến 5. Database có check constraint và unique constraint theo
+`ticket_id`.
 
-## 9. Đóng ticket theo business rules CV039
-
-Endpoint `POST /api/v1/tickets/{ticket_id}/close` chỉ chấp nhận ticket đang ở
-`RESOLVED` và đã có bản ghi cách xử lý (`ticket_resolutions`). Requester sở hữu
-ticket có thể xác nhận đóng; Admin có thể đóng thay nhưng bắt buộc nhập lý do.
-Processor không có quyền đóng ticket.
-
-Khi thành công, hệ thống thực hiện nguyên tử trong cùng transaction:
-
-- chuyển trạng thái `RESOLVED -> CLOSED`;
-- lưu `closed_by` và `closed_at` (đóng tự động có `closed_by = null`);
-- thêm lịch sử trạng thái;
-- thêm audit log với người đóng, thời điểm đóng và lý do.
-
-Ticket đã đóng không thể đóng lại, trao đổi thêm hoặc tải attachment mới. Worker
-tự động đóng sau 72 giờ cũng chỉ xử lý ticket có cách xử lý hợp lệ và vẫn bảo
-đảm idempotent.
-
-Payload của Requester:
-
-```json
-{}
-```
-
-Payload của Admin:
-
-```json
-{
-  "reason": "Admin xác nhận kết quả xử lý hợp lệ."
-}
-```
-
-## 10. Mở lại ticket theo business rules CV040
-
-Endpoint `POST /api/v1/tickets/{ticket_id}/reopen` chỉ dành cho Requester sở
-hữu ticket, áp dụng khi ticket đang `RESOLVED` và chưa quá 72 giờ kể từ
-`resolved_at` gần nhất. Body bắt buộc có `reason` từ 5 đến 2.000 ký tự.
-
-Luồng mở lại tuân theo thiết kế hai bước:
-
-1. WF-06 chuyển `RESOLVED -> REOPENED`, giữ nguyên resolution và SLA cycle cũ,
-   đồng thời ghi history/audit với actor, lý do, mốc thời gian và cycle dự kiến.
-2. WF-07 do Processor đang được phân công hoặc Admin thực hiện, chuyển
-   `REOPENED -> IN_PROGRESS`, tạo Resolution SLA cycle kế tiếp và ghi audit
-   `SLA_RUNTIME_CREATED` trong cùng transaction.
-
-Ticket `CLOSED`, ticket ngoài quyền sở hữu, quá cửa sổ 72 giờ hoặc thiếu bản
-ghi resolution đều bị từ chối mà không làm thay đổi history, audit hay SLA.
-
-Payload WF-06:
-
-```json
-{
-  "reason": "Sự cố vẫn tái diễn sau kết quả xử lý trước."
-}
-```
-
-## 11. Đánh giá mức hài lòng CV041
-
-Requester sở hữu ticket có thể gửi một đánh giá CSAT qua
-`POST /api/v1/tickets/{ticket_id}/rating` khi ticket ở `RESOLVED` hoặc
-`CLOSED`. Điểm bắt buộc từ 1 đến 5; nhận xét là tùy chọn, tối đa 2.000 ký tự.
-Mỗi ticket chỉ có một đánh giá và không hỗ trợ sửa/xóa nhằm giữ nguyên bằng
-chứng phản hồi.
-
-Hệ thống bảo vệ quy tắc ở cả ba lớp:
-
-- Pydantic kiểm tra miền điểm, độ dài và field lạ;
-- service kiểm tra vai trò Requester, quyền sở hữu và trạng thái ticket;
-- database có check `score BETWEEN 1 AND 5` và unique theo `ticket_id` để
-  chống gửi trùng, kể cả khi có request đồng thời.
-
-Tạo thành công sẽ ghi audit `TICKET_RATED`. Người thuộc phạm vi ticket có thể
-xem đánh giá qua `GET /api/v1/tickets/{ticket_id}/rating`; ticket chưa được
-đánh giá trả về `RATING_NOT_FOUND`, không tạo điểm giả bằng 0.
-
-Payload mẫu:
-
-```json
-{
-  "score": 5,
-  "comment": "Nhân viên hỗ trợ nhanh và hướng dẫn rõ ràng."
-}
-```
-
-## 12. Thông báo trong hệ thống CV042
-
-Module thông báo cung cấp hộp thư cá nhân và phát notification trong cùng
-transaction với nghiệp vụ nguồn. Nội dung chỉ chứa mã ticket và mô tả chung,
-không sao chép comment, resolution note, mật khẩu hoặc dữ liệu nhạy cảm.
-
-Các thời điểm phát thông báo:
-
-- phân công/tái phân công: gửi cho Processor mới;
-- phản hồi công khai: gửi cho bên còn lại của cuộc trao đổi;
-- đổi trạng thái: gửi cho Requester và Processor hiện tại, loại trừ người vừa
-  thực hiện hành động;
-- SLA `WARNING`, `OVERDUE`, `ESCALATED`: tiếp tục dùng cơ chế idempotent của
-  worker CV038 để gửi cho Processor hiện tại và Admin hoạt động.
-
-API:
+API notification:
 
 ```text
 GET   /api/v1/notifications
@@ -299,245 +291,200 @@ PATCH /api/v1/notifications/{notification_id}/read
 PATCH /api/v1/notifications/read-all
 ```
 
-Danh sách chỉ trả thông báo của người đăng nhập, hỗ trợ `is_read`, `type`,
-`page`, `page_size`, sắp xếp mới nhất trước và trả `deep_link` đến ticket.
-Đánh dấu đã đọc là idempotent; người dùng không thể đọc hoặc cập nhật thông
-báo của tài khoản khác.
+Người dùng chỉ được đọc và cập nhật notification của chính mình.
 
-CV042 dùng bảng `notifications` đã có từ migration `20260904_0010`, nên không
-tạo migration mới và Alembic head vẫn là `20260904_0012`.
+## 9. KPI Dashboard
 
-## 13. API KPI Dashboard CV043
-
-Dashboard cung cấp hai endpoint chỉ dành cho Admin và Processor:
+API dành cho Admin và Processor:
 
 ```text
 GET /api/v1/dashboard/overview
 GET /api/v1/dashboard/sla-performance
 ```
 
-Admin xem toàn bộ dữ liệu; Processor chỉ xem ticket hiện đang được phân công
-cho chính mình. Hai API cùng hỗ trợ bộ lọc `from`, `to`, `category_id`,
-`priority_id`, `department_id` và `assignee_id`. Mốc thời gian phải là ISO
-8601 có múi giờ.
+Admin xem dữ liệu toàn hệ thống. Processor chỉ xem các ticket đang được phân
+công cho mình. Bộ lọc hỗ trợ thời gian, danh mục, mức ưu tiên, phòng ban và
+người xử lý.
 
-RPT-01 trả số ticket tổng/mở/đóng/từ chối/mở lại, phân bố theo trạng thái,
-danh mục và ưu tiên, thời gian phản hồi đầu tiên trung bình, thời gian xử lý
-trung bình, tỷ lệ đúng SLA và điểm hài lòng. Số ticket mở lại được tính theo
-ticket từng có lịch sử chuyển đến `REOPENED`, không đếm trùng một ticket.
+Dashboard tại `/dashboard` có các trạng thái:
 
-RPT-02 tách kết quả SLA `RESPONSE` và `RESOLUTION`, đồng thời trả tỷ lệ tổng và
-xu hướng theo ngày. Chỉ `MET` và `BREACHED` nằm trong mẫu số; runtime chưa hoàn
-tất và `NOT_APPLICABLE` bị loại. Khi không có mẫu hợp lệ, rate trả `null` thay
-vì số 0 gây hiểu nhầm.
+- loading;
+- success;
+- failure;
+- empty;
+- access denied;
+- data.
 
-CV043 chỉ tổng hợp từ dữ liệu hiện có, không thay đổi database schema và
-Alembic head vẫn là `20260904_0012`.
+Access token được lưu trong `sessionStorage`, không dùng `localStorage`.
 
-## 14. Chạy kiểm thử
+## 10. Chạy toàn bộ kiểm thử
 
 ```powershell
-python -m pytest .\tests\workflow\test_reopen_ticket.py -v
-python -m pytest .\tests\ratings\test_rating.py -v
-python -m pytest .\tests\notifications\test_notifications.py -v
-python -m pytest .\tests\dashboard\test_dashboard.py -v
-python -m pytest .\tests\workflow\test_close_ticket.py -v
-python -m pytest .\tests\sla\test_escalation.py -v
 python -m pytest
+```
+
+Kết quả hiện tại:
+
+```text
+308 passed
+```
+
+Các nhóm test chính:
+
+| Phạm vi | Số test |
+| --- | ---: |
+| CV023–CV043 | 264 |
+| CV044 Dashboard UI | 12 |
+| CV045 Seed demo | 6 |
+| CV046 Integration | 3 |
+| CV047–CV051 Functional/Security/Negative | 10 |
+| CV053 Automated UAT | 3 |
+| CV054 KPI evaluation | 2 |
+| CV055 High-priority regression | 3 |
+| CV056 UI completion | 5 |
+| **Tổng cộng hiện tại** | **308** |
+
+CV052 sử dụng lại 10 test CV047–CV051 thông qua marker `business_rule`, nên
+không làm tăng tổng số test.
+
+## 11. Kiểm thử CV047–CV051
+
+```powershell
+python -m pytest .\tests\functional\test_normal_ticket_flow.py -v
+python -m pytest .\tests\functional\test_sla_deadlines.py -v
+python -m pytest .\tests\functional\test_close_reopen_workflow.py -v
+python -m pytest .\tests\functional\test_security_access.py -v
+python -m pytest .\tests\functional\test_negative_cases.py -v
+```
+
+| CV | Nội dung | Kết quả mong đợi |
+| --- | --- | ---: |
+| CV047 | Luồng tạo đến đánh giá | 1 passed |
+| CV048 | Gần hạn, quá hạn, escalation và breach | 1 passed |
+| CV049 | Đóng, mở lại và SLA cycle | 1 passed |
+| CV050 | RBAC, UI gate và attachment access | 2 passed |
+| CV051 | Invalid data/state, duplicate, not found và system error | 5 passed |
+
+## 12. Runner CV052–CV056
+
+### CV052 – Automated Business Rules
+
+```powershell
+python .\scripts\run_automated_tests.py
+```
+
+Kết quả mong đợi: `10/10 passed`.
+
+### CV053 – Automated UAT ba vai trò
+
+```powershell
+python .\scripts\run_uat.py
+```
+
+Kết quả mong đợi: `3/3 accepted`.
+
+Automated UAT không thay thế phiên UAT thủ công. Biên bản UAT trong thư mục
+`evidence` chỉ hoàn tất khi người kiểm thử thực tế xác nhận, ghi ngày và ký tên.
+
+### CV054 – Đánh giá KPI
+
+```powershell
+python .\scripts\run_evaluation.py
+```
+
+Kết quả hiện tại:
+
+- `8/10` KPI đạt;
+- `2/2` automated test passed;
+- kết luận: **ĐẠT CÓ ĐIỀU KIỆN**.
+
+Hai KPI chưa đạt:
+
+- KPI05 – tỷ lệ đáp ứng SLA tổng thể: 75%, mục tiêu từ 80%;
+- KPI08 – tỷ lệ ticket mở lại: 12,5%, mục tiêu không quá 10%.
+
+### CV055 – Release Candidate
+
+```powershell
+python .\scripts\run_release_candidate.py
+```
+
+Điều kiện `GO - RELEASE CANDIDATE`:
+
+- không còn Critical/High đang mở trong defect log thuộc thư mục `evidence`;
+- `3/3` high-priority regression test passed;
+- full regression passed.
+
+### CV056 – UI/UX và responsive
+
+```powershell
+python .\scripts\run_ui_tests.py
 ```
 
 Kết quả mong đợi:
 
-- CV043: `16 passed`.
-- Toàn bộ CV023–CV043: `264 passed`.
+- `5/5` CV056 UI contract test passed;
+- full regression `308/308 passed`;
+- kết luận `PASSED - UI COMPLETE`.
 
-## 15. Kiểm tra secret trước khi commit
+Test tự động kiểm tra cấu trúc HTML/CSS/JavaScript. Trước khi bàn giao vẫn cần
+mở Chrome và kiểm tra hiển thị thực tế tại 320, 390, 560, 768, 900 và 1.180 px.
+
+## 13. Test evidence
+
+Thư mục `evidence` lưu các nhóm bằng chứng sau:
+
+- kết quả Functional Test luồng ticket bình thường;
+- kết quả SLA, workflow, security và negative test;
+- JUnit, transcript và pass rate của automated business-rule suite;
+- biên bản UAT ba vai trò;
+- bảng đánh giá KPI và dữ liệu kết quả;
+- defect log và regression evidence của Release Candidate;
+- checklist và test evidence của UI/UX responsive.
+
+Tên file bằng chứng phải mô tả đúng nội dung, không dùng mã `CVxxx` làm tên
+file. Mã công việc chỉ được ghi bên trong tài liệu để đối chiếu với kế hoạch.
+
+## 14. Kiểm tra trước khi commit hoặc đóng gói
+
+Kiểm tra secret:
 
 ```powershell
 git check-ignore .env
 git ls-files | Select-String -Pattern '(^|/)\.env$|\.db$|\.sqlite$'
 ```
 
-Lệnh thứ hai không được trả về `.env` hoặc database local.
+Lệnh thứ hai không được trả về `.env` hoặc database cục bộ.
 
-Branch và commit đề xuất:
-
-```text
-feature/dashboard-kpi-cv043
-feat(dashboard): add scoped KPI and SLA performance APIs
-```
-
-Hướng dẫn thao tác chi tiết nằm trong `CV043_HUONG_DAN.md`.
-
-## 16. Tích hợp end-to-end Tuần 4 CV046
-
-CV046 chuẩn hóa validation và các lỗi router 404/405/413 theo cùng response
-envelope, giữ `X-Request-ID` để truy vết. Dashboard có đủ state thành công,
-thất bại, rỗng và không quyền; lỗi validation đầu tiên được hiển thị kèm tên
-field và lỗi kết nối có thông báo dễ hiểu.
-
-Kiểm thử tích hợp chạy luồng thật từ tạo ticket, phân công, bắt đầu xử lý,
-phản hồi, resolve, đóng và đánh giá; sau đó kiểm tra status history,
-notification, audit, SLA và KPI dashboard.
+Kiểm tra file không cần thiết:
 
 ```powershell
-python -m pytest .\tests\integration\test_week4_end_to_end.py -v
-python -m pytest
+Get-ChildItem -Recurse -Force | Where-Object {
+    $_.FullName -match '\\.venv|__pycache__|\\.pytest_cache|\.pyc$'
+}
 ```
 
-Kết quả mong đợi: `285 passed`. CV046 không đổi database schema; Alembic head
-vẫn là `20260904_0012`
+Không đưa các file trên vào gói ZIP nộp bài. Giữ `.env.example` để người khác
+biết các biến cần cấu hình nhưng không để lộ secret thật.
 
-## 17. Functional Test luồng ticket bình thường CV047
+## 15. Giới hạn kiểm thử
 
-CV047 bổ sung functional test độc lập cho luồng nghiệp vụ chính:
+Automated test sử dụng SQLite in-memory và session store giả để bảo đảm chạy
+nhanh, cô lập. Trước khi nộp cần thực hiện thêm:
 
-```text
-Tạo -> Phân công -> Phản hồi -> Xử lý -> Đóng -> Đánh giá
-```
+1. chạy migration trên PostgreSQL 16;
+2. kiểm tra Redis 7 và refresh-token rotation;
+3. chạy seed dữ liệu thật;
+4. smoke test các API chính trên Swagger;
+5. UAT thủ công ba vai trò;
+6. kiểm tra responsive trên trình duyệt.
 
-Bài test không chỉ kiểm tra HTTP response mà còn đối soát chuỗi status history,
-notification của Requester, audit log, KPI dashboard và kết quả SLA.
+## Trạng thái hiện tại
 
-```powershell
-python -m pytest .\tests\functional\test_cv047_normal_ticket_flow.py -v
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV047_HUONG_DAN.md` và
-`evidence/CV047_TEST_EVIDENCE.md`.
-
-## 18. SLA Test ticket sắp hạn và quá hạn CV048
-
-CV048 bổ sung functional test cho deadline và các ngưỡng SLA. Kịch bản kiểm tra
-ticket sắp hạn ở 85%, ticket quá hạn ở 160%, event warning/overdue/escalation,
-notification, audit log, tính idempotent của worker và kết quả `BREACHED` khi
-Processor phản hồi sau deadline.
-
-```powershell
-python -m pytest .\tests\functional\test_cv048_sla_deadlines.py -v
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV048_HUONG_DAN.md` và
-`evidence/CV048_TEST_EVIDENCE.md`.
-
-## 19. Workflow Test đóng và mở lại ticket CV049
-
-CV049 kiểm thử việc đóng ticket và các business rule mở lại: ticket đã đóng bị
-chặn, ticket quá cửa sổ 72 giờ bị rollback, ticket `RESOLVED` hợp lệ chuyển sang
-`REOPENED`, và khi Processor resume thì hệ thống tạo resolution SLA cycle mới.
-Test đồng thời đối soát status history và audit context.
-
-```powershell
-python -m pytest .\tests\functional\test_cv049_close_reopen_workflow.py -v
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV049_HUONG_DAN.md` và
-`evidence/CV049_TEST_EVIDENCE.md`.
-
-## 20. Security Test sai quyền và truy cập trái phép CV050
-
-CV050 kiểm thử ma trận RBAC của Requester, Processor và Admin tại API/UI, ngăn
-giả mạo role header, đồng thời xác minh attachment không bị tải, thêm hoặc xóa
-bởi người ngoài phạm vi ticket. Response từ chối không làm lộ metadata hay nội
-dung file.
-
-```powershell
-python -m pytest .\tests\functional\test_cv050_security_access.py -v
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV050_HUONG_DAN.md` và
-`evidence/CV050_SECURITY_TEST_EVIDENCE.md`.
-
-## 21. Validation Test và Negative Test CV051
-
-CV051 bổ sung năm negative test độc lập cho invalid data, invalid state,
-duplicate, not found và system error. Test đối soát response contract, request
-ID, tính atomicity và bảo đảm lỗi 500 không rò rỉ chi tiết nội bộ.
-
-```powershell
-python -m pytest .\tests\functional\test_cv051_negative_cases.py -v
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng thực chạy nằm tại `CV051_HUONG_DAN.md` và
-`evidence/CV051_NEGATIVE_TEST_EVIDENCE.md`.
-
-## 22. Automated business-rule test suite CV052
-
-CV052 gom các functional, SLA, workflow, security và negative test quan trọng
-của CV047–CV051 vào marker `business_rule`. Runner tự chạy suite, xuất JUnit
-XML, lưu transcript và tính tỷ lệ pass.
-
-```powershell
-python .\scripts\run_cv052_automated_tests.py
-python -m pytest
-```
-
-Hướng dẫn và bằng chứng nằm tại `CV052_HUONG_DAN.md` và
-`evidence/CV052_AUTOMATED_TEST_EVIDENCE.md`.
-
-## 23. User Acceptance Test ba vai trò CV053
-
-CV053 nghiệm thu các tác vụ chính dưới góc nhìn `REQUESTER`, `PROCESSOR` và
-`ADMIN`. Ba kịch bản kiểm tra việc tạo/theo dõi ticket, xử lý ticket được giao,
-và điều phối/giám sát của quản trị viên. UAT record ghi rõ người test, từng bước,
-kết quả, defect log, phản hồi và phần ký xác nhận.
-
-```powershell
-python .\scripts\run_cv053_uat.py
-python -m pytest
-```
-
-Hướng dẫn nằm tại `CV053_HUONG_DAN.md`; biên bản nghiệm thu tại
-`evidence/CV053_UAT_RECORD.md`. Kết quả xác nhận: `3/3` UAT accepted và toàn
-bộ `298/298` regression test passed.
-
-## 24. Đánh giá KPI và kết quả hệ thống CV054
-
-CV054 dùng 10 ticket mô phỏng cố định để tính đủ 10 KPI của CV008 và so sánh
-với các ngưỡng được công bố riêng cho phiên đánh giá. Báo cáo lưu công thức,
-tử số/mẫu số, kết quả thực tế, mục tiêu, trạng thái và khuyến nghị.
-
-```powershell
-python .\scripts\run_cv054_evaluation.py
-python -m pytest
-```
-
-Hướng dẫn nằm tại `CV054_HUONG_DAN.md`; bảng KPI chính thức tại
-`evidence/CV054_KPI_EVALUATION.md`. Kết quả: `8/10` KPI đạt, `2/2` test CV054
-passed và toàn bộ `300/300` regression test passed.
-
-## 25. Sửa lỗi High và Release Candidate CV055
-
-CV055 sửa ba lỗi High về độ chính xác dashboard: SLA tổng thể theo ticket,
-thời gian giải quyết theo `resolved_at` và reopen theo thời điểm sự kiện. Mỗi lỗi
-có regression test riêng; runner chỉ quyết định `GO` khi không còn Critical/High
-đang mở và toàn bộ test đều pass.
-
-```powershell
-python .\scripts\run_cv055_release_candidate.py
-```
-
-Hướng dẫn nằm tại `CV055_HUONG_DAN.md`, defect log tại
-`evidence/CV055_DEFECT_LOG.md` và ghi chú RC tại
-`RELEASE_CANDIDATE_CV055.md`. Kết quả xác nhận: Critical/High đang mở `0/0`,
-high-priority regression `3/3` passed, full regression `303/303` passed và
-quyết định `GO - RELEASE CANDIDATE`.
-
-## 26. Hoàn thiện UI/UX và responsive CV056
-
-CV056 hoàn thiện KPI Dashboard với trạng thái loading, success, failure, empty,
-denied và data; bổ sung retry/reset, skeleton, chú giải tám trạng thái ticket,
-điều hướng mobile bằng bàn phím và responsive từ 320 px đến desktop lớn.
-
-```powershell
-python .\scripts\run_cv056_ui_tests.py
-```
-
-Hướng dẫn nằm tại `CV056_HUONG_DAN.md`; checklist và test evidence nằm trong
-thư mục `evidence` với tiền tố `CV056_`. Kết quả xác nhận: test CV056 `5/5`,
-toàn bộ kiểm tra UI trực tiếp `17/17` và full regression `308/308` đều passed.
+- Phân tích và thiết kế CV001–CV022: hoàn thành.
+- Source code và kiểm thử CV023–CV056: hoàn thành.
+- Automated regression: `308/308 passed`.
+- KPI: `8/10`, đạt có điều kiện.
+- UAT: automated test đạt; cần chữ ký xác nhận thực tế.
+- UI: Dashboard đã hoàn thiện state và responsive contract; cần kiểm tra trình
+  duyệt trước khi bàn giao.

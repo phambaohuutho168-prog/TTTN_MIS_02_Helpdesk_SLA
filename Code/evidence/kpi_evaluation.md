@@ -59,9 +59,9 @@ tương đương **80.00%**. Hệ thống được đánh giá
 | Tệp | Vai trò |
 | --- | --- |
 | `data/kpi_simulated_data.json` | Dữ liệu nguồn mô phỏng cố định |
-| `scripts/evaluate_cv054_kpis.py` | Công thức tính, so sánh ngưỡng và sinh báo cáo |
-| `evidence/CV054_KPI_RESULT.json` | Kết quả máy đọc được |
-| `tests/evaluation/test_cv054_kpi_evaluation.py` | Kiểm thử công thức và tính tái lập |
+| `scripts/evaluate_kpis.py` | Công thức tính, so sánh ngưỡng và sinh báo cáo |
+| `evidence/kpi_evaluation_result.json` | Kết quả máy đọc được |
+| `tests/evaluation/test_kpi_evaluation.py` | Kiểm thử công thức và tính tái lập |
 
 ## 7. Xác nhận kiểm thử
 
