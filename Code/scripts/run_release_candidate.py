@@ -11,11 +11,12 @@ import xml.etree.ElementTree as ET
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
-HIGH_JUNIT = EVIDENCE_DIR / "CV055_HIGH_PRIORITY_JUNIT.xml"
-HIGH_OUTPUT = EVIDENCE_DIR / "CV055_HIGH_PRIORITY_OUTPUT.txt"
-REGRESSION_JUNIT = EVIDENCE_DIR / "CV055_REGRESSION_JUNIT.xml"
-REGRESSION_OUTPUT = EVIDENCE_DIR / "CV055_REGRESSION_OUTPUT.txt"
-RESULT_PATH = EVIDENCE_DIR / "CV055_RELEASE_CANDIDATE_RESULT.txt"
+HIGH_JUNIT = EVIDENCE_DIR / "release_candidate_high_priority_junit.xml"
+HIGH_OUTPUT = EVIDENCE_DIR / "release_candidate_high_priority_output.txt"
+REGRESSION_JUNIT = EVIDENCE_DIR / "release_candidate_regression_junit.xml"
+REGRESSION_OUTPUT = EVIDENCE_DIR / "release_candidate_regression_output.txt"
+RESULT_PATH = EVIDENCE_DIR / "release_candidate_result.txt"
+DEFECT_LOG_PATH = EVIDENCE_DIR / "release_candidate_defect_log.md"
 
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -54,6 +55,43 @@ def _totals(path: Path) -> dict[str, int]:
 def _fallback() -> dict[str, int]:
     return {"tests": 0, "passed": 0, "failures": 0, "errors": 1, "skipped": 0}
 
+def _open_defect_counts(path: Path) -> dict[str, int]:
+    """Đọc số defect Critical và High đang mở từ bảng tổng hợp."""
+
+    if not path.is_file():
+        raise ValueError(f"Không tìm thấy defect log: {path}")
+
+    counts: dict[str, int] = {}
+
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        if not line.lstrip().startswith("|"):
+            continue
+
+        cells = [
+            cell.strip().strip("*")
+            for cell in line.strip().strip("|").split("|")
+        ]
+
+        if len(cells) != 4:
+            continue
+
+        severity = cells[0]
+        if severity not in {"Critical", "High"}:
+            continue
+
+        try:
+            counts[severity] = int(cells[3])
+        except ValueError as exc:
+            raise ValueError(
+                f"Số defect đang mở của mức {severity} không hợp lệ."
+            ) from exc
+
+    if set(counts) != {"Critical", "High"}:
+        raise ValueError(
+            "Defect log thiếu dòng tổng hợp Critical hoặc High."
+        )
+
+    return counts
 
 def main() -> int:
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -64,7 +102,7 @@ def main() -> int:
         "-m",
         "release_candidate",
         "-v",
-        "--junitxml=evidence/CV055_HIGH_PRIORITY_JUNIT.xml",
+        "--junitxml=evidence/release_candidate_high_priority_junit.xml",
     ]
     high = _run(high_command)
     HIGH_OUTPUT.write_text(_transcript(high), encoding="utf-8")
@@ -73,7 +111,7 @@ def main() -> int:
         sys.executable,
         "-m",
         "pytest",
-        "--junitxml=evidence/CV055_REGRESSION_JUNIT.xml",
+        "--junitxml=evidence/release_candidate_regression_junit.xml",
     ]
     regression = _run(regression_command)
     REGRESSION_OUTPUT.write_text(_transcript(regression), encoding="utf-8")
@@ -82,12 +120,22 @@ def main() -> int:
     regression_totals = (
         _totals(REGRESSION_JUNIT) if REGRESSION_JUNIT.is_file() else _fallback()
     )
-    accepted = high.returncode == 0 and regression.returncode == 0
+    open_defects = _open_defect_counts(DEFECT_LOG_PATH)
+
+    open_defects = _open_defect_counts(DEFECT_LOG_PATH)
+
+    accepted = (
+        high.returncode == 0
+        and regression.returncode == 0
+        and open_defects["Critical"] == 0
+        and open_defects["High"] == 0
+    )
+
     result = "\n".join(
         [
             "CV055 RELEASE CANDIDATE RESULT",
-            "Open Critical defects: 0",
-            "Open High defects: 0",
+            f"Open Critical defects: {open_defects['Critical']}",
+            f"Open High defects: {open_defects['High']}",
             f"High-priority tests: {high_totals['passed']}/{high_totals['tests']} passed",
             f"High-priority failures/errors/skipped: {high_totals['failures']}/{high_totals['errors']}/{high_totals['skipped']}",
             f"Regression tests: {regression_totals['passed']}/{regression_totals['tests']} passed",

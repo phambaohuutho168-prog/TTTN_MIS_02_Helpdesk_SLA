@@ -11,11 +11,11 @@ import xml.etree.ElementTree as ET
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
-UI_JUNIT = EVIDENCE_DIR / "CV056_UI_JUNIT.xml"
-UI_OUTPUT = EVIDENCE_DIR / "CV056_UI_TEST_OUTPUT.txt"
-REGRESSION_JUNIT = EVIDENCE_DIR / "CV056_REGRESSION_JUNIT.xml"
-REGRESSION_OUTPUT = EVIDENCE_DIR / "CV056_REGRESSION_OUTPUT.txt"
-RESULT_PATH = EVIDENCE_DIR / "CV056_UI_TEST_RESULT.txt"
+UI_JUNIT = EVIDENCE_DIR / "responsive_ui_junit.xml"
+UI_OUTPUT = EVIDENCE_DIR / "responsive_ui_test_output.txt"
+REGRESSION_JUNIT = EVIDENCE_DIR / "responsive_ui_regression_junit.xml"
+REGRESSION_OUTPUT = EVIDENCE_DIR / "responsive_ui_regression_output.txt"
+RESULT_PATH = EVIDENCE_DIR / "responsive_ui_test_result.txt"
 
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -65,7 +65,7 @@ def main() -> int:
             "-m",
             "ui_complete",
             "-v",
-            "--junitxml=evidence/CV056_UI_JUNIT.xml",
+            "--junitxml=evidence/responsive_ui_junit.xml",
         ]
     )
     _write_output(UI_OUTPUT, ui)
@@ -74,7 +74,7 @@ def main() -> int:
             sys.executable,
             "-m",
             "pytest",
-            "--junitxml=evidence/CV056_REGRESSION_JUNIT.xml",
+            "--junitxml=evidence/responsive_ui_regression_junit.xml",
         ]
     )
     _write_output(REGRESSION_OUTPUT, regression)

@@ -1,0 +1,17 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\UTH\HK9\Thực tập tốt nghiệp\TTTN_MIS_02_Helpdesk_SLA\Code
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 308 items / 298 deselected / 10 selected
+
+tests\functional\test_close_reopen_workflow.py .                         [ 10%]
+tests\functional\test_negative_cases.py .....                            [ 60%]
+tests\functional\test_normal_ticket_flow.py .                            [ 70%]
+tests\functional\test_security_access.py ..                              [ 90%]
+tests\functional\test_sla_deadlines.py .                                 [100%]
+
+- generated xml file: D:\UTH\HK9\Thực tập tốt nghiệp\TTTN_MIS_02_Helpdesk_SLA\Code\evidence\automated_business_rule_junit.xml -
+===================== 10 passed, 298 deselected in 11.47s =====================

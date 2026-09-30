@@ -12,9 +12,9 @@ import xml.etree.ElementTree as ET
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
-JUNIT_PATH = EVIDENCE_DIR / "CV053_JUNIT.xml"
-OUTPUT_PATH = EVIDENCE_DIR / "CV053_PYTEST_OUTPUT.txt"
-RESULT_PATH = EVIDENCE_DIR / "CV053_UAT_TEST_RESULT.txt"
+JUNIT_PATH = EVIDENCE_DIR / "three_roles_uat_junit.xml"
+OUTPUT_PATH = EVIDENCE_DIR / "three_roles_uat_pytest_output.txt"
+RESULT_PATH = EVIDENCE_DIR / "three_roles_uat_test_result.txt"
 
 
 def _suite_totals(path: Path) -> dict[str, int]:
@@ -42,7 +42,7 @@ def main() -> int:
         "-m",
         "uat",
         "-v",
-        "--junitxml=evidence/CV053_JUNIT.xml",
+        "--junitxml=evidence/three_roles_uat_junit.xml",
     ]
     environment = os.environ.copy()
     environment["PYTHONUTF8"] = "1"
@@ -72,7 +72,7 @@ def main() -> int:
         [
             "CV053 ROLE-BASED USER ACCEPTANCE TEST RESULT",
             f"Generated at (UTC): {generated_at}",
-            "Command: python -m pytest -m uat -v --junitxml=evidence/CV053_JUNIT.xml",
+            "Command: python -m pytest -m uat -v --junitxml=evidence/three_roles_uat_junit.xml",
             f"Tests: {totals['tests']}",
             f"Passed: {totals['passed']}",
             f"Failures: {totals['failures']}",
