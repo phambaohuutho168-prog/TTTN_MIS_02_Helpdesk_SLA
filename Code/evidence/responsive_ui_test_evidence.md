@@ -4,10 +4,11 @@
 
 | Hạng mục | Kết quả |
 | --- | --- |
-| Ngày kiểm thử | 19/09/2026 |
+| Ngày kiểm thử | 01/10/2026 |
 | UI contract test CV056 | **5/5 passed** |
 | Existing dashboard UI test | **12/12 passed** |
 | Tổng kiểm tra UI trực tiếp | **17/17 passed** |
+| Kiểm thử thủ công trình duyệt | **9/9 ảnh minh chứng - PASSED** |
 | Full regression | **308/308 passed** |
 | Failed/Error/Skipped | **0/0/0** |
 | Kết luận | **PASSED - UI COMPLETE** |
@@ -71,7 +72,29 @@ Kết quả:
 | Responsive | 5 breakpoint từ 320 px đến desktop | ĐẠT |
 | Accessibility | Keyboard, focus, ARIA, reduced motion/contrast | ĐẠT |
 
-## 6. Kết luận
+## 6. Kiểm thử thủ công trên trình duyệt
+
+Kiểm thử được thực hiện ngày 01/10/2026 trên Chrome, với ứng dụng FastAPI
+kết nối PostgreSQL và Redis đang ở trạng thái healthy. Giao diện được kiểm tra
+ở chế độ desktop và mobile 357 × 667 px.
+
+| Kịch bản | Chế độ | Minh chứng | Kết quả |
+| --- | --- | --- | --- |
+| Trang trạng thái hệ thống | Desktop | [Xem ảnh](ui_screenshots/desktop_system_status.png) | PASS |
+| Trang đăng nhập KPI | Desktop | [Xem ảnh](ui_screenshots/desktop_dashboard_login.png) | PASS |
+| Dashboard tải dữ liệu thành công | Desktop | [Xem ảnh](ui_screenshots/desktop_dashboard_success.png) | PASS |
+| Form đăng nhập responsive | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_dashboard_login.png) | PASS |
+| Trạng thái đang xử lý | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_loading_state.png) | PASS |
+| Sai thông tin đăng nhập | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_invalid_login.png) | PASS |
+| Dashboard đăng nhập thành công | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_dashboard_success.png) | PASS |
+| Thẻ KPI và trạng thái thiếu dữ liệu | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_kpi_cards.png) | PASS |
+| Requester không có quyền truy cập | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_access_denied.png) | PASS |
+
+Kết quả quan sát: giao diện không xuất hiện thanh cuộn ngang, không chồng lấn
+nội dung, các điều khiển vẫn sử dụng được và các trạng thái loading, success,
+failure, empty và access denied đều có phản hồi rõ ràng.
+
+## 7. Kết luận
 
 CV056 đạt yêu cầu. Dashboard cung cấp đầy đủ trạng thái phản hồi, thao tác phục
 hồi, chú giải nghiệp vụ, responsive và accessibility cơ bản. Toàn bộ 308 test
