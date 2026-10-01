@@ -28,6 +28,9 @@
         elements.filterReset.addEventListener("click", resetFilters);
         elements.pagePrevious.addEventListener("click", showPreviousPage);
         elements.pageNext.addEventListener("click", showNextPage);
+        elements.createToggle.addEventListener("click", toggleCreateForm);
+    elements.createCancel.addEventListener("click", cancelCreateTicket);
+    elements.createForm.addEventListener("submit", handleCreateTicket);
     }
 
     function cacheElements() {
@@ -48,9 +51,21 @@
         elements.pagePrevious = document.getElementById("ticket-page-previous");
         elements.pageNext = document.getElementById("ticket-page-next");
         elements.pageInformation = document.getElementById("ticket-page-information");
+        elements.createSection = document.getElementById("ticket-create-section");
+        elements.createToggle = document.getElementById("ticket-create-toggle");
+        elements.createForm = document.getElementById("ticket-create-form");
+        elements.createTitle = document.getElementById("ticket-create-title-input");
+        elements.createCategory = document.getElementById("ticket-create-category");
+        elements.createPriority = document.getElementById("ticket-create-priority");
+        elements.createDescription = document.getElementById("ticket-create-description");
+        elements.createSubmit = document.getElementById("ticket-create-submit");
+        elements.createCancel = document.getElementById("ticket-create-cancel");
+        elements.createError = document.getElementById("ticket-create-error");
+        elements.portalMessage = document.getElementById("portal-message");
     }
 
     async function startTicketWorkspace() {
+        configureCreateTicketSection();
         listState.page = 1;
         clearListError();
 
@@ -91,6 +106,21 @@
             "priority_id",
             (item) => `${item.priority_code} · ${item.priority_name}`,
             "Tất cả ưu tiên",
+        );
+        populateSelect(
+            elements.createCategory,
+            categories,
+            "category_id",
+            "category_name",
+            "Chọn danh mục",
+        );
+
+        populateSelect(
+            elements.createPriority,
+            priorities,
+            "priority_id",
+            (item) => `${item.priority_code} · ${item.priority_name}`,
+            "Chọn mức ưu tiên",
         );
     }
 
@@ -315,6 +345,120 @@
         elements.listError.hidden = true;
     }
 
+    function currentPrimaryRole() {
+        const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);
+
+        if (!storedUser) return null;
+
+        try {
+            const user = JSON.parse(storedUser);
+            const roles = new Set(
+                (user.roles || []).map((role) => role.role_code),
+            );
+
+            if (roles.has("ADMIN")) return "ADMIN";
+            if (roles.has("PROCESSOR")) return "PROCESSOR";
+            if (roles.has("REQUESTER")) return "REQUESTER";
+        } catch (_error) {
+            return null;
+        }
+
+        return null;
+    }
+
+    function configureCreateTicketSection() {
+        const isRequester = currentPrimaryRole() === "REQUESTER";
+
+        elements.createSection.hidden = !isRequester;
+        closeCreateForm();
+    }
+
+    function toggleCreateForm() {
+        const shouldOpen = elements.createForm.hidden;
+
+        elements.createForm.hidden = !shouldOpen;
+        elements.createToggle.setAttribute(
+            "aria-expanded",
+            String(shouldOpen),
+        );
+        elements.createToggle.textContent = shouldOpen
+            ? "Đóng biểu mẫu"
+            : "Tạo ticket mới";
+
+        if (shouldOpen) {
+            window.setTimeout(() => elements.createTitle.focus(), 0);
+        }
+    }
+
+    function closeCreateForm() {
+        elements.createForm.hidden = true;
+        elements.createToggle.setAttribute("aria-expanded", "false");
+        elements.createToggle.textContent = "Tạo ticket mới";
+        clearCreateError();
+    }
+
+    function cancelCreateTicket() {
+        elements.createForm.reset();
+        closeCreateForm();
+    }
+
+    async function handleCreateTicket(event) {
+        event.preventDefault();
+        clearCreateError();
+
+        setCreateBusy(true);
+
+        try {
+            const ticket = await apiRequest("/tickets", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title: elements.createTitle.value.trim(),
+                    description: elements.createDescription.value.trim(),
+                    category_id: Number(elements.createCategory.value),
+                    priority_id: Number(elements.createPriority.value),
+                }),
+            });
+
+            elements.createForm.reset();
+            closeCreateForm();
+
+            elements.portalMessage.textContent = ticket?.ticket_code
+                ? `Đã tạo ticket ${ticket.ticket_code} thành công.`
+                : "Đã tạo ticket thành công.";
+            elements.portalMessage.hidden = false;
+
+            listState.page = 1;
+            await loadTickets();
+        } catch (error) {
+            showCreateError(error.message);
+        } finally {
+            setCreateBusy(false);
+        }
+    }
+
+    function setCreateBusy(busy) {
+        for (const control of elements.createForm.elements) {
+            control.disabled = busy;
+        }
+
+        elements.createSubmit.textContent = busy
+            ? "Đang gửi..."
+            : "Gửi yêu cầu";
+    }
+
+    function showCreateError(message) {
+        elements.createError.textContent = message;
+        elements.createError.hidden = false;
+    }
+
+    function clearCreateError() {
+        elements.createError.textContent = "";
+        elements.createError.hidden = true;
+    }
+
     async function apiRequest(path, options = {}, retry = true) {
         const headers = new Headers(options.headers || {});
         const accessToken = sessionStorage.getItem(STORAGE_KEYS.accessToken);
@@ -390,10 +534,12 @@
                 STORAGE_KEYS.refreshToken,
                 payload.data.refresh_token,
             );
+            if (payload.data.user) {
             sessionStorage.setItem(
                 STORAGE_KEYS.user,
                 JSON.stringify(payload.data.user),
             );
+        }
 
             return true;
         } catch (_error) {

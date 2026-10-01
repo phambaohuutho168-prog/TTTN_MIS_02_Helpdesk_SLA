@@ -93,6 +93,95 @@
                 Đăng nhập thành công.
             </div>
 
+        <section
+    id="ticket-create-section"
+    class="workspace-card ticket-create-card"
+    aria-labelledby="ticket-create-title"
+    hidden
+>
+    <header class="section-heading">
+        <div>
+            <h2 id="ticket-create-title">Tạo yêu cầu hỗ trợ</h2>
+            <p>Mô tả vấn đề để bộ phận phụ trách tiếp nhận và xử lý.</p>
+        </div>
+
+        <button
+            id="ticket-create-toggle"
+            class="button button--primary"
+            type="button"
+            aria-expanded="false"
+            aria-controls="ticket-create-form"
+        >
+            Tạo ticket mới
+        </button>
+    </header>
+
+    <form id="ticket-create-form" hidden>
+        <div
+            id="ticket-create-error"
+            class="alert alert--error"
+            role="alert"
+            hidden
+        ></div>
+
+        <div class="ticket-create-grid">
+            <div class="field-group field-group--full">
+                <label for="ticket-create-title-input">Tiêu đề</label>
+                <input
+                    id="ticket-create-title-input"
+                    type="text"
+                    minlength="5"
+                    maxlength="255"
+                    required
+                >
+            </div>
+
+            <div class="field-group">
+                <label for="ticket-create-category">Danh mục</label>
+                <select id="ticket-create-category" required>
+                    <option value="">Chọn danh mục</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="ticket-create-priority">Mức ưu tiên</label>
+                <select id="ticket-create-priority" required>
+                    <option value="">Chọn mức ưu tiên</option>
+                </select>
+            </div>
+
+            <div class="field-group field-group--full">
+                <label for="ticket-create-description">Mô tả chi tiết</label>
+                <textarea
+                    id="ticket-create-description"
+                    rows="6"
+                    minlength="10"
+                    maxlength="10000"
+                    required
+                ></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button
+                id="ticket-create-submit"
+                class="button button--primary"
+                type="submit"
+            >
+                Gửi yêu cầu
+            </button>
+
+            <button
+                id="ticket-create-cancel"
+                class="button button--secondary"
+                type="button"
+            >
+                Hủy
+            </button>
+        </div>
+    </form>
+</section>
+
            <section class="workspace-card" aria-labelledby="ticket-list-title">
     <header class="section-heading">
         <div>

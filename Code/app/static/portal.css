@@ -531,3 +531,58 @@ h1 {
         justify-content: space-between;
     }
 }
+.ticket-create-card {
+    margin-bottom: 20px;
+}
+
+.ticket-create-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.field-group--full {
+    grid-column: 1 / -1;
+}
+
+.field-group textarea {
+    width: 100%;
+    min-height: 140px;
+    padding: 12px;
+    border: 1px solid #bac4d4;
+    border-radius: 10px;
+    background: #fff;
+    font: inherit;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.field-group textarea:focus {
+    border-color: #2457d6;
+    outline: 3px solid rgb(36 87 214 / 15%);
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+    .ticket-create-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .field-group--full {
+        grid-column: auto;
+    }
+
+    .ticket-create-card .section-heading {
+        flex-direction: column;
+    }
+
+    .ticket-create-card .section-heading .button {
+        width: 100%;
+    }
+}
