@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cổng hỗ trợ | {{ app_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='portal.css') }}">
+    <script defer src="{{ url_for('static', path='portal.js') }}"></script>
+</head>
+<body>
+    <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
+
+    <header class="site-header">
+        <a class="brand" href="/portal">
+            <strong>HELPDESK</strong>
+            <span>SLA Management</span>
+        </a>
+
+        <nav aria-label="Điều hướng chính">
+            <a href="/portal">Ticket</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/docs">API</a>
+        </nav>
+
+        <div id="session-navigation" class="session-navigation" hidden>
+            <div class="user-summary">
+                <strong id="current-user-name">—</strong>
+                <span id="current-user-role">—</span>
+            </div>
+            <button id="logout-button" class="button button--secondary" type="button">
+                Đăng xuất
+            </button>
+        </div>
+    </header>
+
+    <main id="portal-main" class="page-container">
+        <section id="auth-panel" class="auth-layout">
+            <div class="welcome-card">
+                <p class="eyebrow">CỔNG HỖ TRỢ DOANH NGHIỆP</p>
+                <h1>Quản lý yêu cầu hỗ trợ</h1>
+                <p>
+                    Tạo và theo dõi ticket, trao đổi với bộ phận xử lý,
+                    kiểm soát SLA và truy vết toàn bộ quá trình hỗ trợ.
+                </p>
+            </div>
+
+            <form id="login-form" class="login-card">
+                <div>
+                    <p class="eyebrow">ĐĂNG NHẬP</p>
+                    <h2>Chào mừng bạn quay lại</h2>
+                    <p>Sử dụng tài khoản được cấp để truy cập hệ thống.</p>
+                </div>
+
+                <div id="login-error" class="alert alert--error" role="alert" hidden></div>
+
+                <label for="login-email">Email</label>
+                <input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    autocomplete="username"
+                    maxlength="254"
+                    required
+                >
+
+                <label for="login-password">Mật khẩu</label>
+                <input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    minlength="8"
+                    maxlength="128"
+                    required
+                >
+
+                <button id="login-button" class="button button--primary" type="submit">
+                    Đăng nhập
+                </button>
+            </form>
+        </section>
+
+        <section id="portal-shell" hidden>
+            <div class="portal-heading">
+                <div>
+                    <p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p>
+                    <h1 id="portal-title">Danh sách ticket</h1>
+                    <p id="portal-description">Đang tải phạm vi làm việc...</p>
+                </div>
+                <span id="role-badge" class="role-badge">—</span>
+            </div>
+
+            <div id="portal-message" class="alert alert--success" role="status">
+                Đăng nhập thành công.
+            </div>
+
+            <section class="workspace-card">
+                <h2 id="workspace-title">Không gian làm việc đã sẵn sàng</h2>
+                <p id="workspace-description">
+                    Các chức năng ticket sẽ được bổ sung trong bước tiếp theo.
+                </p>
+            </section>
+        </section>
+    </main>
+</body>
+</html>
