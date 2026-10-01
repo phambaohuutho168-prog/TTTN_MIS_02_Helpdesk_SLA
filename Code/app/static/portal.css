@@ -738,3 +738,60 @@ h1 {
 .ticket-assignment-section .alert {
     margin-bottom: 16px;
 }
+.ticket-workflow-section {
+    padding-top: 22px;
+    border-top: 1px solid #e1e6ef;
+}
+
+#ticket-workflow-form {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid #dbe3f0;
+    border-radius: 14px;
+    background: #f8faff;
+}
+
+#ticket-workflow-form .alert {
+    margin-bottom: 16px;
+}
+
+.field-help {
+    margin: 0;
+    color: #647086;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.button--success {
+    color: #fff;
+    background: #16815d;
+}
+
+.button--success:hover {
+    background: #106849;
+}
+
+.button--warning {
+    color: #7a3d00;
+    background: #ffdfad;
+}
+
+.button--warning:hover {
+    background: #ffd18a;
+}
+
+.button--danger {
+    color: #fff;
+    background: #bd2c3b;
+}
+
+.button--danger:hover {
+    background: #992331;
+}
+
+@media (max-width: 640px) {
+    .ticket-detail-actions .button,
+    #ticket-workflow-form .button {
+        width: 100%;
+    }
+}

@@ -15,7 +15,95 @@
         totalPages: 0,
         loading: false,
         detailTicketId: null,
+        workflowAction: null,
     };
+
+    const WORKFLOW_ACTIONS = Object.freeze({
+        START: {
+            label: "Bắt đầu xử lý",
+            endpoint: "start",
+            payloadKey: "reason",
+            inputLabel: "Ghi chú bắt đầu xử lý",
+            help: "Không bắt buộc. Tối đa 1.000 ký tự.",
+            required: false,
+            minLength: 0,
+            maxLength: 1000,
+            buttonClass: "button--primary",
+            successMessage: "Đã bắt đầu xử lý ticket.",
+        },
+        REQUEST_INFO: {
+            label: "Yêu cầu bổ sung",
+            endpoint: "request-info",
+            payloadKey: "content",
+            inputLabel: "Thông tin cần bổ sung",
+            help: "Nêu rõ nội dung người gửi cần cung cấp.",
+            required: true,
+            minLength: 1,
+            maxLength: 4000,
+            buttonClass: "button--warning",
+            successMessage: "Đã gửi yêu cầu bổ sung thông tin.",
+        },
+        RESOLVE: {
+            label: "Hoàn tất xử lý",
+            endpoint: "resolve",
+            payloadKey: "resolution_note",
+            inputLabel: "Kết quả xử lý",
+            help: "Mô tả cách xử lý, tối thiểu 5 ký tự.",
+            required: true,
+            minLength: 5,
+            maxLength: 8000,
+            buttonClass: "button--success",
+            successMessage: "Đã ghi nhận kết quả xử lý.",
+        },
+        RESUME: {
+            label: "Tiếp tục xử lý",
+            endpoint: "resume",
+            payloadKey: "reason",
+            inputLabel: "Ghi chú tiếp tục xử lý",
+            help: "Không bắt buộc. SLA xử lý mới sẽ được khởi tạo.",
+            required: false,
+            minLength: 0,
+            maxLength: 1000,
+            buttonClass: "button--primary",
+            successMessage: "Đã tiếp tục xử lý ticket.",
+        },
+        PROVIDE_INFO: {
+            label: "Bổ sung thông tin",
+            endpoint: "provide-info",
+            payloadKey: "content",
+            inputLabel: "Thông tin bổ sung",
+            help: "Cung cấp nội dung mà bộ phận xử lý yêu cầu.",
+            required: true,
+            minLength: 1,
+            maxLength: 4000,
+            buttonClass: "button--primary",
+            successMessage: "Đã bổ sung thông tin cho ticket.",
+        },
+        CLOSE: {
+            label: "Xác nhận đóng ticket",
+            endpoint: "close",
+            payloadKey: "reason",
+            inputLabel: "Ghi chú đóng ticket",
+            help: "Không bắt buộc đối với Người gửi yêu cầu.",
+            required: false,
+            minLength: 0,
+            maxLength: 1000,
+            buttonClass: "button--success",
+            successMessage: "Đã đóng ticket thành công.",
+        },
+        REOPEN: {
+            label: "Mở lại ticket",
+            endpoint: "reopen",
+            payloadKey: "reason",
+            inputLabel: "Lý do mở lại",
+            help: "Nêu rõ vấn đề chưa được giải quyết, tối thiểu 5 ký tự.",
+            required: true,
+            minLength: 5,
+            maxLength: 2000,
+            buttonClass: "button--warning",
+            successMessage: "Đã mở lại ticket.",
+        },
+    });
 
     const elements = {};
 
@@ -35,6 +123,8 @@
         elements.detailClose.addEventListener("click", closeTicketDetail);
         elements.detailDialog.addEventListener("click", handleDetailBackdropClick);
         elements.assignmentForm.addEventListener("submit",handleTicketAssignment,);
+        elements.workflowForm.addEventListener("submit",handleWorkflowSubmit,);
+        elements.workflowCancel.addEventListener("click",closeWorkflowForm,);
     }
 
     function cacheElements() {
@@ -90,6 +180,15 @@
         elements.assignmentReason = document.getElementById("ticket-assignment-reason",);
         elements.assignmentSubmit = document.getElementById("ticket-assignment-submit",);
         elements.assignmentError = document.getElementById("ticket-assignment-error",);
+        elements.workflowSection = document.getElementById("ticket-workflow-section",);
+        elements.workflowTitle = document.getElementById("ticket-workflow-title",);
+        elements.workflowForm = document.getElementById("ticket-workflow-form",);
+        elements.workflowError = document.getElementById("ticket-workflow-error",);
+        elements.workflowInputLabel = document.getElementById("ticket-workflow-input-label",);
+        elements.workflowInput = document.getElementById("ticket-workflow-input",);
+        elements.workflowHelp = document.getElementById("ticket-workflow-help",);
+        elements.workflowSubmit = document.getElementById("ticket-workflow-submit",);
+        elements.workflowCancel = document.getElementById("ticket-workflow-cancel",);
     }
 
     async function startTicketWorkspace() {
@@ -403,9 +502,11 @@
                 throw new Error("Không nhận được dữ liệu chi tiết ticket.");
             }
 
-            listState.detailTicketId = ticket.ticket_id;
-            renderTicketDetail(ticket);
-            await configureAssignmentSection(ticket);
+        listState.detailTicketId = ticket.ticket_id;
+        renderTicketDetail(ticket);
+        configureWorkflowSection(ticket);
+        await configureAssignmentSection(ticket);
+
         } catch (error) {
             elements.detailLoading.hidden = true;
             elements.detailContent.hidden = true;
@@ -424,6 +525,8 @@
         elements.assignmentSection.hidden = true;
         elements.assignmentForm.reset();
         clearAssignmentError();
+        elements.workflowSection.hidden = true;
+        closeWorkflowForm();
     }
 
     function renderTicketDetail(ticket) {
@@ -606,6 +709,154 @@
     function clearAssignmentError() {
         elements.assignmentError.textContent = "";
         elements.assignmentError.hidden = true;
+    }
+    function configureWorkflowSection(ticket) {
+        const role = currentPrimaryRole();
+        const status = ticket.status.status_code;
+        const actionCodes = [];
+
+        if (role === "ADMIN" || role === "PROCESSOR") {
+            if (status === "ASSIGNED") {
+                actionCodes.push("START");
+            } else if (status === "IN_PROGRESS") {
+                actionCodes.push("REQUEST_INFO", "RESOLVE");
+            } else if (status === "REOPENED") {
+                actionCodes.push("RESUME");
+            }
+        }
+       if (role === "REQUESTER") {
+            if (status === "PENDING_INFO") {
+                actionCodes.push("PROVIDE_INFO");
+            } else if (status === "RESOLVED") {
+                actionCodes.push("CLOSE", "REOPEN");
+            }
+        }
+
+        elements.detailActions.replaceChildren();
+        closeWorkflowForm();
+
+        elements.workflowSection.hidden = actionCodes.length === 0;
+
+        for (const actionCode of actionCodes) {
+            const action = WORKFLOW_ACTIONS[actionCode];
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className =
+                `button ${action.buttonClass}`;
+            button.textContent = action.label;
+            button.addEventListener(
+                "click",
+                () => openWorkflowForm(actionCode),
+            );
+
+            elements.detailActions.append(button);
+        }
+    }
+
+    function openWorkflowForm(actionCode) {
+        const action = WORKFLOW_ACTIONS[actionCode];
+
+        if (!action) return;
+
+        listState.workflowAction = actionCode;
+        clearWorkflowError();
+
+        elements.workflowTitle.textContent = action.label;
+        elements.workflowInputLabel.textContent = action.inputLabel;
+        elements.workflowHelp.textContent = action.help;
+        elements.workflowInput.required = action.required;
+        elements.workflowInput.minLength = action.minLength;
+        elements.workflowInput.maxLength = action.maxLength;
+        elements.workflowInput.value = "";
+        elements.workflowSubmit.textContent = action.label;
+        elements.workflowForm.hidden = false;
+
+        window.setTimeout(() => elements.workflowInput.focus(), 0);
+    }
+
+    function closeWorkflowForm() {
+        listState.workflowAction = null;
+        elements.workflowForm.reset();
+        elements.workflowForm.hidden = true;
+        elements.workflowTitle.textContent = "Thao tác ticket";
+        clearWorkflowError();
+    }
+
+    async function handleWorkflowSubmit(event) {
+        event.preventDefault();
+        clearWorkflowError();
+
+        const ticketId = listState.detailTicketId;
+        const action = WORKFLOW_ACTIONS[listState.workflowAction];
+        const value = elements.workflowInput.value.trim();
+
+        if (!ticketId || !action) {
+            showWorkflowError("Không xác định được thao tác workflow.");
+            return;
+        }
+
+        if (action.required && value.length < action.minLength) {
+            showWorkflowError(
+                `Nội dung phải có ít nhất ${action.minLength} ký tự.`,
+            );
+            return;
+        }
+
+        const payload = {
+            [action.payloadKey]: value || null,
+        };
+
+        setWorkflowBusy(true);
+
+        try {
+            const updatedTicket = await apiRequest(
+                `/tickets/${ticketId}/${action.endpoint}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                },
+            );
+
+            elements.portalMessage.textContent = action.successMessage;
+            elements.portalMessage.hidden = false;
+
+            renderTicketDetail(updatedTicket);
+            configureWorkflowSection(updatedTicket);
+            await configureAssignmentSection(updatedTicket);
+            await loadTickets();
+        } catch (error) {
+            showWorkflowError(error.message);
+        } finally {
+            setWorkflowBusy(false);
+        }
+    }
+
+    function setWorkflowBusy(busy) {
+        elements.workflowInput.disabled = busy;
+        elements.workflowSubmit.disabled = busy;
+        elements.workflowCancel.disabled = busy;
+
+        for (const button of elements.detailActions.querySelectorAll("button")) {
+            button.disabled = busy;
+        }
+
+        if (busy) {
+            elements.workflowSubmit.textContent = "Đang xử lý...";
+        }
+    }
+
+    function showWorkflowError(message) {
+        elements.workflowError.textContent = message;
+        elements.workflowError.hidden = false;
+    }
+
+    function clearWorkflowError() {
+        elements.workflowError.textContent = "";
+        elements.workflowError.hidden = true;
     }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);

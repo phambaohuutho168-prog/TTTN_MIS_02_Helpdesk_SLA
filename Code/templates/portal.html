@@ -176,7 +176,66 @@
                     </form>
                 </section>
 
-                <div id="ticket-detail-actions" class="ticket-detail-actions"></div>
+                <section
+                    id="ticket-workflow-section"
+                    class="ticket-detail-section ticket-workflow-section"
+                    aria-labelledby="ticket-workflow-title"
+                    hidden
+                >
+                    <h3 id="ticket-workflow-title">Thao tác ticket</h3>
+
+                    <div
+                        id="ticket-detail-actions"
+                        class="ticket-detail-actions"
+                    ></div>
+
+                    <form id="ticket-workflow-form" hidden>
+                        <div
+                            id="ticket-workflow-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div class="field-group">
+                            <label
+                                id="ticket-workflow-input-label"
+                                for="ticket-workflow-input"
+                            >
+                                Nội dung
+                            </label>
+
+                            <textarea
+                                id="ticket-workflow-input"
+                                rows="5"
+                                maxlength="8000"
+                            ></textarea>
+
+                            <p
+                                id="ticket-workflow-help"
+                                class="field-help"
+                            ></p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-workflow-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Xác nhận
+                            </button>
+
+                            <button
+                                id="ticket-workflow-cancel"
+                                class="button button--secondary"
+                                type="button"
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </form>
+                </section>
             </div>
         </article>
     </dialog>
