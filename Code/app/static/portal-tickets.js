@@ -14,6 +14,7 @@
         pageSize: 20,
         totalPages: 0,
         loading: false,
+        detailTicketId: null,
     };
 
     const elements = {};
@@ -33,6 +34,7 @@
         elements.createForm.addEventListener("submit", handleCreateTicket);
         elements.detailClose.addEventListener("click", closeTicketDetail);
         elements.detailDialog.addEventListener("click", handleDetailBackdropClick);
+        elements.assignmentForm.addEventListener("submit",handleTicketAssignment,);
     }
 
     function cacheElements() {
@@ -82,6 +84,12 @@
         elements.detailResponseDeadline = document.getElementById("ticket-detail-response-deadline",);
         elements.detailResolutionDeadline = document.getElementById("ticket-detail-resolution-deadline",);
         elements.detailActions = document.getElementById("ticket-detail-actions");
+        elements.assignmentSection = document.getElementById("ticket-assignment-section",);
+        elements.assignmentForm = document.getElementById("ticket-assignment-form",);
+        elements.assignmentAssignee = document.getElementById("ticket-assignment-assignee",);
+        elements.assignmentReason = document.getElementById("ticket-assignment-reason",);
+        elements.assignmentSubmit = document.getElementById("ticket-assignment-submit",);
+        elements.assignmentError = document.getElementById("ticket-assignment-error",);
     }
 
     async function startTicketWorkspace() {
@@ -395,7 +403,9 @@
                 throw new Error("Không nhận được dữ liệu chi tiết ticket.");
             }
 
+            listState.detailTicketId = ticket.ticket_id;
             renderTicketDetail(ticket);
+            await configureAssignmentSection(ticket);
         } catch (error) {
             elements.detailLoading.hidden = true;
             elements.detailContent.hidden = true;
@@ -410,6 +420,10 @@
         elements.detailError.textContent = "";
         elements.detailContent.hidden = true;
         elements.detailActions.replaceChildren();
+        listState.detailTicketId = null;
+        elements.assignmentSection.hidden = true;
+        elements.assignmentForm.reset();
+        clearAssignmentError();
     }
 
     function renderTicketDetail(ticket) {
@@ -483,6 +497,115 @@
         if (event.target === elements.detailDialog) {
             closeTicketDetail();
         }
+    }
+        async function configureAssignmentSection(ticket) {
+        const canAdminister =
+            (ticket.permissions || []).includes("ADMINISTER_TICKET");
+
+        elements.assignmentSection.hidden = !canAdminister;
+
+        if (!canAdminister) return;
+
+        elements.assignmentForm.reset();
+        clearAssignmentError();
+        setAssignmentBusy(true);
+
+        try {
+            const users = await apiRequest(
+                "/admin/users" +
+                "?role_code=PROCESSOR" +
+                "&is_active=true" +
+                "&page=1&page_size=100",
+            );
+
+            populateSelect(
+                elements.assignmentAssignee,
+                users?.items || [],
+                "user_id",
+                (user) => `${user.full_name} · ${user.email}`,
+                "Chọn người xử lý",
+            );
+
+            if (ticket.current_assignee) {
+                elements.assignmentAssignee.value =
+                    String(ticket.current_assignee.user_id);
+                elements.assignmentSubmit.textContent =
+                    "Cập nhật phân công";
+            } else {
+                elements.assignmentSubmit.textContent =
+                    "Xác nhận phân công";
+            }
+        } catch (error) {
+            showAssignmentError(error.message);
+        } finally {
+            setAssignmentBusy(false);
+        }
+    }
+
+    async function handleTicketAssignment(event) {
+        event.preventDefault();
+        clearAssignmentError();
+
+        const ticketId = listState.detailTicketId;
+        const assigneeId = Number(elements.assignmentAssignee.value);
+
+        if (!ticketId) {
+            showAssignmentError("Không xác định được ticket cần phân công.");
+            return;
+        }
+
+        if (!Number.isInteger(assigneeId) || assigneeId <= 0) {
+            showAssignmentError("Vui lòng chọn người xử lý.");
+            return;
+        }
+
+        setAssignmentBusy(true);
+
+        try {
+            await apiRequest(`/tickets/${ticketId}/assignment`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    assignee_id: assigneeId,
+                    reason:
+                        elements.assignmentReason.value.trim() || null,
+                }),
+            });
+
+            elements.portalMessage.textContent =
+                "Đã phân công người xử lý thành công.";
+            elements.portalMessage.hidden = false;
+
+            closeTicketDetail();
+            listState.page = 1;
+            await loadTickets();
+        } catch (error) {
+            showAssignmentError(error.message);
+        } finally {
+            setAssignmentBusy(false);
+        }
+    }
+
+    function setAssignmentBusy(busy) {
+        elements.assignmentAssignee.disabled = busy;
+        elements.assignmentReason.disabled = busy;
+        elements.assignmentSubmit.disabled = busy;
+
+        if (busy) {
+            elements.assignmentSubmit.textContent = "Đang xử lý...";
+        }
+    }
+
+    function showAssignmentError(message) {
+        elements.assignmentError.textContent = message;
+        elements.assignmentError.hidden = false;
+    }
+
+    function clearAssignmentError() {
+        elements.assignmentError.textContent = "";
+        elements.assignmentError.hidden = true;
     }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);

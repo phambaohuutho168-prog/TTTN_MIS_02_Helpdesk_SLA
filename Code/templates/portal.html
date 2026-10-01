@@ -125,6 +125,57 @@
                     </dl>
                 </section>
 
+                <section
+                    id="ticket-assignment-section"
+                    class="ticket-detail-section ticket-assignment-section"
+                    aria-labelledby="ticket-assignment-title"
+                    hidden
+                >
+                    <h3 id="ticket-assignment-title">Phân công người xử lý</h3>
+
+                    <form id="ticket-assignment-form">
+                        <div
+                            id="ticket-assignment-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div class="ticket-create-grid">
+                            <div class="field-group">
+                                <label for="ticket-assignment-assignee">
+                                    Người xử lý
+                                </label>
+                                <select id="ticket-assignment-assignee" required>
+                                    <option value="">Chọn người xử lý</option>
+                                </select>
+                            </div>
+
+                            <div class="field-group">
+                                <label for="ticket-assignment-reason">
+                                    Lý do phân công
+                                </label>
+                                <input
+                                    id="ticket-assignment-reason"
+                                    type="text"
+                                    maxlength="1000"
+                                    placeholder="Ví dụ: Phân công theo chuyên môn"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-assignment-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Xác nhận phân công
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
                 <div id="ticket-detail-actions" class="ticket-detail-actions"></div>
             </div>
         </article>

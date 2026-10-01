@@ -723,3 +723,18 @@ h1 {
         grid-template-columns: 1fr;
     }
 }
+.ticket-assignment-section {
+    padding-top: 22px;
+    border-top: 1px solid #e1e6ef;
+}
+
+.ticket-assignment-section form {
+    padding: 18px;
+    border: 1px solid #dbe3f0;
+    border-radius: 14px;
+    background: #f8faff;
+}
+
+.ticket-assignment-section .alert {
+    margin-bottom: 16px;
+}
