@@ -128,6 +128,7 @@
         elements.workflowCancel.addEventListener("click",closeWorkflowForm,);
         elements.commentForm.addEventListener("submit",handleCommentSubmit,);
         elements.attachmentForm.addEventListener("submit",handleAttachmentUpload,);
+        elements.ratingForm.addEventListener("submit",handleRatingSubmit,);
     }
 
     function cacheElements() {
@@ -208,6 +209,19 @@
         elements.attachmentError = document.getElementById("ticket-attachment-error",);
         elements.attachmentFile = document.getElementById("ticket-attachment-file",);
         elements.attachmentSubmit = document.getElementById("ticket-attachment-submit",);
+        elements.ratingSection = document.getElementById("ticket-rating-section",);
+elements.ratingLoading = document.getElementById("ticket-rating-loading",);
+elements.ratingError = document.getElementById("ticket-rating-error",);
+elements.ratingEmpty = document.getElementById("ticket-rating-empty",);
+elements.ratingResult = document.getElementById("ticket-rating-result",);
+elements.ratingResultStars = document.getElementById("ticket-rating-result-stars",);
+elements.ratingResultScore = document.getElementById("ticket-rating-result-score",);
+elements.ratingResultComment = document.getElementById("ticket-rating-result-comment",);
+elements.ratingResultAuthor = document.getElementById("ticket-rating-result-author",);
+elements.ratingResultCreatedAt = document.getElementById("ticket-rating-result-created-at",);
+elements.ratingForm = document.getElementById("ticket-rating-form",);
+elements.ratingComment = document.getElementById("ticket-rating-comment",);
+elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
     }
 
     async function startTicketWorkspace() {
@@ -532,6 +546,7 @@
             await Promise.all([
                 configureAssignmentSection(ticket),
                 loadTicketComments(ticket),
+                loadTicketRating(ticket),
             ]);
         } catch (error) {
             elements.detailLoading.hidden = true;
@@ -556,6 +571,7 @@
         listState.detailTicket = null;
         resetConversation();
         resetTicketAttachments();
+        resetTicketRating();
     }
 
     function renderTicketDetail(ticket) {
@@ -853,7 +869,9 @@
             configureWorkflowSection(updatedTicket);
             await Promise.all([
                 configureAssignmentSection(updatedTicket),
-                loadTicketComments(updatedTicket),]);
+                loadTicketComments(updatedTicket),
+                loadTicketRating(updatedTicket),
+            ]);
             await loadTickets();
         } catch (error) {
             showWorkflowError(error.message);
@@ -1258,12 +1276,17 @@
             if (!response.ok) {
                 const payload = await parseResponse(response);
 
-                throw new Error(
+                const requestError = new Error(
                     errorMessage(
                         payload,
-                        `Không thể tải tệp (${response.status}).`,
+                        `Yêu cầu thất bại (${response.status}).`,
                     ),
                 );
+
+                requestError.status = response.status;
+                requestError.code = payload?.code || null;
+
+                throw requestError;
             }
 
             const blob = await response.blob();
@@ -1304,6 +1327,181 @@
     function clearAttachmentError() {
         elements.attachmentError.textContent = "";
         elements.attachmentError.hidden = true;
+    }
+    function resetTicketRating() {
+        elements.ratingSection.hidden = true;
+        elements.ratingLoading.hidden = true;
+
+        elements.ratingError.textContent = "";
+        elements.ratingError.hidden = true;
+
+        elements.ratingEmpty.textContent = "Ticket chưa có đánh giá.";
+        elements.ratingEmpty.hidden = true;
+
+        elements.ratingResult.hidden = true;
+        elements.ratingResultStars.textContent = "";
+        elements.ratingResultScore.textContent = "";
+        elements.ratingResultComment.textContent = "";
+        elements.ratingResultAuthor.textContent = "";
+        elements.ratingResultCreatedAt.textContent = "";
+        elements.ratingResultCreatedAt.removeAttribute("datetime");
+
+        elements.ratingForm.hidden = true;
+        elements.ratingForm.reset();
+
+        setRatingBusy(false);
+    }
+
+    async function loadTicketRating(ticket) {
+        resetTicketRating();
+
+        elements.ratingSection.hidden = false;
+        elements.ratingLoading.hidden = false;
+
+        try {
+            const rating = await apiRequest(
+                `/tickets/${ticket.ticket_id}/rating`,
+            );
+
+            renderTicketRating(rating);
+        } catch (error) {
+            if (
+                error.status === 404 &&
+                error.code === "RATING_NOT_FOUND"
+            ) {
+                renderUnratedTicket(ticket);
+                return;
+            }
+
+            elements.ratingLoading.hidden = true;
+            showRatingError(error.message);
+        }
+    }
+
+    function renderUnratedTicket(ticket) {
+        const role = currentPrimaryRole();
+        const status = ticket.status.status_code;
+        const canRate =
+            role === "REQUESTER" &&
+            ["RESOLVED", "CLOSED"].includes(status);
+
+        elements.ratingLoading.hidden = true;
+        elements.ratingResult.hidden = true;
+        elements.ratingEmpty.hidden = false;
+        elements.ratingForm.hidden = !canRate;
+
+        if (canRate) {
+            elements.ratingEmpty.textContent =
+                "Ticket chưa có đánh giá. Hãy chia sẻ trải nghiệm hỗ trợ.";
+            return;
+        }
+
+        if (role === "REQUESTER") {
+            elements.ratingEmpty.textContent =
+                "Bạn có thể đánh giá khi ticket đã được giải quyết hoặc đóng.";
+            return;
+        }
+
+        elements.ratingEmpty.textContent =
+            "Người gửi yêu cầu chưa đánh giá ticket này.";
+    }
+
+    function renderTicketRating(rating) {
+        const score = Number(rating.score);
+
+        elements.ratingSection.hidden = false;
+        elements.ratingLoading.hidden = true;
+        elements.ratingError.hidden = true;
+        elements.ratingEmpty.hidden = true;
+        elements.ratingForm.hidden = true;
+        elements.ratingResult.hidden = false;
+
+        elements.ratingResultStars.textContent =
+            "★".repeat(score) + "☆".repeat(5 - score);
+        elements.ratingResultScore.textContent = `${score}/5`;
+
+        elements.ratingResultComment.textContent =
+            rating.comment || "Không có nhận xét.";
+
+        elements.ratingResultAuthor.textContent =
+            rating.rated_by?.full_name || "Người gửi yêu cầu";
+
+        elements.ratingResultCreatedAt.textContent =
+            formatDateTime(rating.created_at);
+        elements.ratingResultCreatedAt.dateTime = rating.created_at;
+    }
+
+    async function handleRatingSubmit(event) {
+        event.preventDefault();
+        clearRatingError();
+
+        const ticket = listState.detailTicket;
+        const selectedScore = elements.ratingForm.querySelector(
+            'input[name="ticket-rating-score"]:checked',
+        );
+
+        if (!ticket) {
+            showRatingError("Không xác định được ticket.");
+            return;
+        }
+
+        if (!selectedScore) {
+            showRatingError("Vui lòng chọn mức đánh giá từ 1 đến 5 sao.");
+            return;
+        }
+
+        const score = Number(selectedScore.value);
+        const comment = elements.ratingComment.value.trim();
+
+        setRatingBusy(true);
+
+        try {
+            const rating = await apiRequest(
+                `/tickets/${ticket.ticket_id}/rating`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        score,
+                        comment: comment || null,
+                    }),
+                },
+            );
+
+            elements.portalMessage.textContent =
+                "Cảm ơn bạn đã gửi đánh giá.";
+            elements.portalMessage.hidden = false;
+
+            renderTicketRating(rating);
+        } catch (error) {
+            showRatingError(error.message);
+        } finally {
+            setRatingBusy(false);
+        }
+    }
+
+    function setRatingBusy(busy) {
+        for (const control of elements.ratingForm.elements) {
+            control.disabled = busy;
+        }
+
+        elements.ratingSubmit.textContent = busy
+            ? "Đang gửi..."
+            : "Gửi đánh giá";
+    }
+
+    function showRatingError(message) {
+        elements.ratingSection.hidden = false;
+        elements.ratingLoading.hidden = true;
+        elements.ratingError.textContent = message;
+        elements.ratingError.hidden = false;
+    }
+
+    function clearRatingError() {
+        elements.ratingError.textContent = "";
+        elements.ratingError.hidden = true;
     }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);
@@ -1456,9 +1654,17 @@
                 window.location.reload();
             }
 
-            throw new Error(
-                errorMessage(payload, `Yêu cầu thất bại (${response.status}).`),
+            const requestError = new Error(
+                errorMessage(
+                    payload,
+                    `Yêu cầu thất bại (${response.status}).`,
+                ),
             );
+
+            requestError.status = response.status;
+            requestError.code = payload?.code || null;
+
+            throw requestError;
         }
 
         return payload?.data;

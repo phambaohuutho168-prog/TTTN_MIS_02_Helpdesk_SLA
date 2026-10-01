@@ -971,3 +971,144 @@ h1 {
         width: 100%;
     }
 }
+.ticket-rating-section {
+    padding-left: 16px;
+    border-left: 6px solid #f2a900;
+}
+
+.rating-fieldset {
+    min-width: 0;
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+}
+
+.rating-fieldset legend {
+    margin-bottom: 10px;
+    color: #3d4960;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.rating-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.rating-option {
+    position: relative;
+    display: inline-grid;
+    cursor: pointer;
+}
+
+.rating-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.rating-option span {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    color: #c7ced9;
+    font-size: 32px;
+    line-height: 1;
+    border-radius: 8px;
+    transition:
+        color 150ms ease,
+        background-color 150ms ease;
+}
+
+.rating-option:hover span,
+.rating-option:has(~ .rating-option:hover) span {
+    color: #f2a900;
+    background: #fff8dc;
+}
+
+.rating-option:has(input:checked) span,
+.rating-option:has(~ .rating-option input:checked) span {
+    color: #f2a900;
+}
+
+.rating-option input:focus-visible + span {
+    outline: 3px solid rgb(36 87 214 / 22%);
+    outline-offset: 2px;
+}
+
+#ticket-rating-comment {
+    width: 100%;
+    min-height: 110px;
+    padding: 11px 12px;
+    resize: vertical;
+    color: #172033;
+    background: #fff;
+    border: 1px solid #bac4d4;
+    border-radius: 10px;
+    font: inherit;
+}
+
+#ticket-rating-comment:focus {
+    border-color: #2457d6;
+    outline: 3px solid rgb(36 87 214 / 15%);
+}
+
+.rating-result {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    background: #fffaf0;
+    border: 1px solid #f1d993;
+    border-radius: 14px;
+}
+
+.rating-result-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.rating-result-stars {
+    color: #f2a900;
+    font-size: 25px;
+    letter-spacing: 3px;
+}
+
+.rating-result-score {
+    color: #6c5200;
+    font-size: 18px;
+}
+
+.rating-result-comment {
+    margin: 0;
+    color: #303b50;
+    white-space: pre-wrap;
+}
+
+.rating-result-meta {
+    margin: 0;
+    color: #647086;
+    font-size: 13px;
+}
+
+@media (max-width: 480px) {
+    .rating-options {
+        justify-content: space-between;
+    }
+
+    .rating-option span {
+        width: 40px;
+        height: 40px;
+        font-size: 29px;
+    }
+
+    .rating-result-summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+}

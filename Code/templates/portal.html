@@ -188,6 +188,156 @@
                     </form>
                 </section>
                 <section
+                    id="ticket-rating-section"
+                    class="ticket-detail-section ticket-rating-section"
+                    aria-labelledby="ticket-rating-title"
+                    hidden
+                >
+                    <header class="section-heading">
+                        <div>
+                            <h3 id="ticket-rating-title">Đánh giá mức độ hài lòng</h3>
+                            <p>Ghi nhận chất lượng hỗ trợ sau khi ticket được giải quyết.</p>
+                        </div>
+                    </header>
+
+                    <div
+                        id="ticket-rating-loading"
+                        class="loading-panel"
+                        hidden
+                    >
+                        Đang tải đánh giá...
+                    </div>
+
+                    <div
+                        id="ticket-rating-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="ticket-rating-empty"
+                        class="empty-panel"
+                        hidden
+                    >
+                        Ticket chưa có đánh giá.
+                    </div>
+
+                    <article
+                        id="ticket-rating-result"
+                        class="rating-result"
+                        hidden
+                    >
+                        <div class="rating-result-summary">
+                            <span
+                                id="ticket-rating-result-stars"
+                                class="rating-result-stars"
+                                aria-hidden="true"
+                            ></span>
+
+                            <strong id="ticket-rating-result-score"></strong>
+                        </div>
+
+                        <p
+                            id="ticket-rating-result-comment"
+                            class="rating-result-comment"
+                        ></p>
+
+                        <p class="rating-result-meta">
+                            Đánh giá bởi
+                            <strong id="ticket-rating-result-author"></strong>
+                            vào
+                            <time id="ticket-rating-result-created-at"></time>
+                        </p>
+                    </article>
+
+                    <form id="ticket-rating-form" hidden>
+                        <fieldset class="rating-fieldset">
+                            <legend>Mức độ hài lòng</legend>
+
+                            <div class="rating-options">
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="1"
+                                        aria-label="1 sao"
+                                        required
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="2"
+                                        aria-label="2 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="3"
+                                        aria-label="3 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="4"
+                                        aria-label="4 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="5"
+                                        aria-label="5 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div class="field-group">
+                            <label for="ticket-rating-comment">
+                                Nhận xét
+                            </label>
+
+                            <textarea
+                                id="ticket-rating-comment"
+                                rows="4"
+                                maxlength="2000"
+                                placeholder="Chia sẻ trải nghiệm hỗ trợ của bạn"
+                            ></textarea>
+
+                            <p class="field-help">
+                                Không bắt buộc, tối đa 2.000 ký tự.
+                            </p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-rating-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <section
                     id="ticket-assignment-section"
                     class="ticket-detail-section ticket-assignment-section"
                     aria-labelledby="ticket-assignment-title"
