@@ -795,3 +795,103 @@ h1 {
         width: 100%;
     }
 }
+.ticket-conversation-section {
+    padding-top: 22px;
+    border-top: 1px solid #e1e6ef;
+}
+
+.conversation-list {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.conversation-item {
+    padding: 16px;
+    border: 1px solid #dfe5ef;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.conversation-item--internal {
+    border-color: #e6c98f;
+    background: #fff9ed;
+}
+
+.conversation-item--request-info {
+    border-color: #f0cf91;
+    background: #fffaf0;
+}
+
+.conversation-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+.conversation-author {
+    display: grid;
+    gap: 3px;
+}
+
+.conversation-author strong {
+    color: #172033;
+}
+
+.conversation-meta {
+    color: #647086;
+    font-size: 12px;
+}
+
+.conversation-badge {
+    display: inline-flex;
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: #3d4960;
+    background: #edf1f7;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.conversation-item--internal .conversation-badge {
+    color: #7a4a00;
+    background: #ffe5b2;
+}
+
+.conversation-content {
+    margin: 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+#ticket-comment-form {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid #dbe3f0;
+    border-radius: 14px;
+    background: #f8faff;
+}
+
+#ticket-comment-form .alert {
+    margin-bottom: 16px;
+}
+
+#ticket-comment-visibility-group {
+    margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+    .conversation-item-header {
+        flex-direction: column;
+    }
+
+    #ticket-comment-submit {
+        width: 100%;
+    }
+}

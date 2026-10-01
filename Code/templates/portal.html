@@ -111,7 +111,6 @@
 
                 <section class="ticket-detail-section">
                     <h3>Thông tin SLA</h3>
-
                     <dl class="ticket-detail-grid">
                         <div>
                             <dt>Hạn phản hồi</dt>
@@ -175,6 +174,93 @@
                         </div>
                     </form>
                 </section>
+                <section id="ticket-conversation-section"
+                        class="ticket-detail-section ticket-conversation-section"
+                        aria-labelledby="ticket-conversation-title"
+                    >
+                        <header class="section-heading">
+                            <div>
+                                <h3 id="ticket-conversation-title">Trao đổi</h3>
+                                <p>Theo dõi nội dung trao đổi trong quá trình xử lý.</p>
+                            </div>
+                        </header>
+
+                        <div
+                            id="ticket-conversation-loading"
+                            class="loading-panel"
+                            role="status"
+                        >
+                            Đang tải trao đổi...
+                        </div>
+
+                        <div
+                            id="ticket-conversation-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div
+                            id="ticket-conversation-empty"
+                            class="empty-panel"
+                            hidden
+                        >
+                            Chưa có nội dung trao đổi.
+                        </div>
+
+                        <ol
+                            id="ticket-conversation-list"
+                            class="conversation-list"
+                            aria-label="Lịch sử trao đổi"
+                            hidden
+                        ></ol>
+
+                        <form id="ticket-comment-form" hidden>
+                            <div
+                                id="ticket-comment-error"
+                                class="alert alert--error"
+                                role="alert"
+                                hidden
+                            ></div>
+
+                            <div class="field-group">
+                                <label for="ticket-comment-content">
+                                    Nội dung trao đổi
+                                </label>
+                                <textarea
+                                    id="ticket-comment-content"
+                                    rows="4"
+                                    minlength="1"
+                                    maxlength="4000"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div
+                                id="ticket-comment-visibility-group"
+                                class="field-group"
+                                hidden
+                            >
+                                <label for="ticket-comment-visibility">
+                                    Phạm vi hiển thị
+                                </label>
+                                <select id="ticket-comment-visibility">
+                                    <option value="PUBLIC">Công khai</option>
+                                    <option value="INTERNAL">Nội bộ</option>
+                                </select>
+                            </div>
+
+                            <div class="form-actions">
+                                <button
+                                    id="ticket-comment-submit"
+                                    class="button button--primary"
+                                    type="submit"
+                                >
+                                    Gửi trao đổi
+                                </button>
+                            </div>
+                        </form>
+                    </section>
 
                 <section
                     id="ticket-workflow-section"

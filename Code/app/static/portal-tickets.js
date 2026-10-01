@@ -16,6 +16,7 @@
         loading: false,
         detailTicketId: null,
         workflowAction: null,
+        detailTicket: null,
     };
 
     const WORKFLOW_ACTIONS = Object.freeze({
@@ -125,6 +126,7 @@
         elements.assignmentForm.addEventListener("submit",handleTicketAssignment,);
         elements.workflowForm.addEventListener("submit",handleWorkflowSubmit,);
         elements.workflowCancel.addEventListener("click",closeWorkflowForm,);
+        elements.commentForm.addEventListener("submit",handleCommentSubmit,);
     }
 
     function cacheElements() {
@@ -189,6 +191,16 @@
         elements.workflowHelp = document.getElementById("ticket-workflow-help",);
         elements.workflowSubmit = document.getElementById("ticket-workflow-submit",);
         elements.workflowCancel = document.getElementById("ticket-workflow-cancel",);
+        elements.conversationLoading = document.getElementById("ticket-conversation-loading",);
+        elements.conversationError = document.getElementById("ticket-conversation-error",);
+        elements.conversationEmpty = document.getElementById("ticket-conversation-empty",);
+        elements.conversationList = document.getElementById("ticket-conversation-list",);
+        elements.commentForm = document.getElementById("ticket-comment-form",);
+        elements.commentError = document.getElementById("ticket-comment-error",);
+        elements.commentContent = document.getElementById("ticket-comment-content",);
+        elements.commentVisibilityGroup = document.getElementById("ticket-comment-visibility-group",);
+        elements.commentVisibility = document.getElementById("ticket-comment-visibility",);
+        elements.commentSubmit = document.getElementById("ticket-comment-submit",);
     }
 
     async function startTicketWorkspace() {
@@ -499,14 +511,21 @@
             const ticket = await apiRequest(`/tickets/${ticketId}`);
 
             if (!ticket) {
-                throw new Error("Không nhận được dữ liệu chi tiết ticket.");
+                throw new Error(
+                    "Không nhận được dữ liệu chi tiết ticket.",
+                );
             }
 
-        listState.detailTicketId = ticket.ticket_id;
-        renderTicketDetail(ticket);
-        configureWorkflowSection(ticket);
-        await configureAssignmentSection(ticket);
+            listState.detailTicketId = ticket.ticket_id;
+            listState.detailTicket = ticket;
 
+            renderTicketDetail(ticket);
+            configureWorkflowSection(ticket);
+
+            await Promise.all([
+                configureAssignmentSection(ticket),
+                loadTicketComments(ticket),
+            ]);
         } catch (error) {
             elements.detailLoading.hidden = true;
             elements.detailContent.hidden = true;
@@ -527,6 +546,8 @@
         clearAssignmentError();
         elements.workflowSection.hidden = true;
         closeWorkflowForm();
+        listState.detailTicket = null;
+        resetConversation();
     }
 
     function renderTicketDetail(ticket) {
@@ -826,7 +847,7 @@
 
             renderTicketDetail(updatedTicket);
             configureWorkflowSection(updatedTicket);
-            await configureAssignmentSection(updatedTicket);
+            await Promise.all([configureAssignmentSection(updatedTicket),loadTicketComments(updatedTicket),]);
             await loadTickets();
         } catch (error) {
             showWorkflowError(error.message);
@@ -857,6 +878,202 @@
     function clearWorkflowError() {
         elements.workflowError.textContent = "";
         elements.workflowError.hidden = true;
+    }
+    function resetConversation() {
+        elements.conversationLoading.hidden = false;
+        elements.conversationError.hidden = true;
+        elements.conversationError.textContent = "";
+        elements.conversationEmpty.hidden = true;
+        elements.conversationList.hidden = true;
+        elements.conversationList.replaceChildren();
+        elements.commentForm.hidden = true;
+        elements.commentForm.reset();
+        clearCommentError();
+    }
+
+    async function loadTicketComments(ticket) {
+        resetConversation();
+
+        try {
+            const data = await apiRequest(
+                `/tickets/${ticket.ticket_id}/comments` +
+                "?page=1&page_size=100",
+            );
+
+            renderComments(data?.items || []);
+            configureCommentForm(ticket);
+        } catch (error) {
+            elements.conversationLoading.hidden = true;
+            elements.conversationError.textContent = error.message;
+            elements.conversationError.hidden = false;
+        }
+    }
+
+    function renderComments(comments) {
+        elements.conversationList.replaceChildren();
+
+        const orderedComments = [...comments].sort(
+            (left, right) =>
+                new Date(left.created_at) - new Date(right.created_at),
+        );
+
+        for (const comment of orderedComments) {
+            elements.conversationList.append(
+                createCommentItem(comment),
+            );
+        }
+
+        const hasComments = orderedComments.length > 0;
+
+        elements.conversationLoading.hidden = true;
+        elements.conversationEmpty.hidden = hasComments;
+        elements.conversationList.hidden = !hasComments;
+    }
+
+    function createCommentItem(comment) {
+        const item = document.createElement("li");
+        const header = document.createElement("div");
+        const author = document.createElement("div");
+        const authorName = document.createElement("strong");
+        const meta = document.createElement("span");
+        const badge = document.createElement("span");
+        const content = document.createElement("p");
+
+        item.className = "conversation-item";
+
+        if (comment.visibility === "INTERNAL") {
+            item.classList.add("conversation-item--internal");
+        }
+
+        if (comment.comment_type === "REQUEST_INFO") {
+            item.classList.add("conversation-item--request-info");
+        }
+
+        header.className = "conversation-item-header";
+        author.className = "conversation-author";
+        meta.className = "conversation-meta";
+        badge.className = "conversation-badge";
+        content.className = "conversation-content";
+
+        authorName.textContent = comment.author.full_name;
+        meta.textContent = formatDateTime(comment.created_at);
+        badge.textContent = commentLabel(comment);
+        content.textContent = comment.content;
+
+        author.append(authorName, meta);
+        header.append(author, badge);
+        item.append(header, content);
+
+        return item;
+    }
+
+    function commentLabel(comment) {
+        if (comment.visibility === "INTERNAL") {
+            return "Nội bộ";
+        }
+
+        if (comment.comment_type === "REQUEST_INFO") {
+            return "Yêu cầu bổ sung";
+        }
+
+        return "Công khai";
+    }
+
+    function configureCommentForm(ticket) {
+        const permissions = new Set(ticket.permissions || []);
+        const canComment = permissions.has("ADD_COMMENT");
+        const canCreateInternal =
+            permissions.has("VIEW_INTERNAL_COMMENTS");
+
+        elements.commentForm.hidden = !canComment;
+        elements.commentVisibilityGroup.hidden = !canCreateInternal;
+        elements.commentVisibility.value = "PUBLIC";
+    }
+
+    async function handleCommentSubmit(event) {
+        event.preventDefault();
+        clearCommentError();
+
+        const ticket = listState.detailTicket;
+        const content = elements.commentContent.value.trim();
+
+        if (!ticket) {
+            showCommentError("Không xác định được ticket.");
+            return;
+        }
+
+        if (!content) {
+            showCommentError("Vui lòng nhập nội dung trao đổi.");
+            return;
+        }
+
+        const visibility = elements.commentVisibilityGroup.hidden
+            ? "PUBLIC"
+            : elements.commentVisibility.value;
+
+        setCommentBusy(true);
+
+        try {
+            await apiRequest(`/tickets/${ticket.ticket_id}/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content,
+                    visibility,
+                    comment_type:
+                        visibility === "INTERNAL"
+                            ? "SYSTEM_NOTE"
+                            : "REPLY",
+                }),
+            });
+
+            elements.commentForm.reset();
+            elements.commentVisibility.value = "PUBLIC";
+            elements.portalMessage.textContent =
+                visibility === "INTERNAL"
+                    ? "Đã thêm ghi chú nội bộ."
+                    : "Đã gửi trao đổi.";
+
+            const refreshedTicket = await apiRequest(
+                `/tickets/${ticket.ticket_id}`,
+            );
+
+            listState.detailTicket = refreshedTicket;
+            renderTicketDetail(refreshedTicket);
+            configureWorkflowSection(refreshedTicket);
+
+            await Promise.all([
+                configureAssignmentSection(refreshedTicket),
+                loadTicketComments(refreshedTicket),
+            ]);
+
+            await loadTickets();
+        } catch (error) {
+            showCommentError(error.message);
+        } finally {
+            setCommentBusy(false);
+        }
+    }
+
+    function setCommentBusy(busy) {
+        elements.commentContent.disabled = busy;
+        elements.commentVisibility.disabled = busy;
+        elements.commentSubmit.disabled = busy;
+        elements.commentSubmit.textContent = busy
+            ? "Đang gửi..."
+            : "Gửi trao đổi";
+    }
+
+    function showCommentError(message) {
+        elements.commentError.textContent = message;
+        elements.commentError.hidden = false;
+    }
+
+    function clearCommentError() {
+        elements.commentError.textContent = "";
+        elements.commentError.hidden = true;
     }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);
