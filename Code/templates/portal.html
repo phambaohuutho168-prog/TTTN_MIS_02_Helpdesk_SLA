@@ -34,6 +34,102 @@
         </div>
     </header>
 
+        <dialog
+        id="ticket-detail-dialog"
+        class="ticket-detail-dialog"
+        aria-labelledby="ticket-detail-title"
+    >
+        <article class="ticket-detail-panel">
+            <header class="ticket-detail-header">
+                <div>
+                    <p id="ticket-detail-code" class="eyebrow">TICKET</p>
+                    <h2 id="ticket-detail-title">Chi tiết ticket</h2>
+                </div>
+
+                <button
+                    id="ticket-detail-close"
+                    class="button button--secondary"
+                    type="button"
+                    aria-label="Đóng chi tiết ticket"
+                >
+                    Đóng
+                </button>
+            </header>
+
+            <div
+                id="ticket-detail-loading"
+                class="loading-panel"
+                role="status"
+            >
+                Đang tải chi tiết ticket...
+            </div>
+
+            <div
+                id="ticket-detail-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div id="ticket-detail-content" hidden>
+                <div class="ticket-detail-badges">
+                    <span id="ticket-detail-priority" class="priority-badge">—</span>
+                    <span id="ticket-detail-status" class="status-badge">—</span>
+                </div>
+
+                <dl class="ticket-detail-grid">
+                    <div>
+                        <dt>Danh mục</dt>
+                        <dd id="ticket-detail-category">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Người gửi</dt>
+                        <dd id="ticket-detail-requester">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Người xử lý</dt>
+                        <dd id="ticket-detail-assignee">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Ngày tạo</dt>
+                        <dd id="ticket-detail-created-at">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Cập nhật gần nhất</dt>
+                        <dd id="ticket-detail-updated-at">—</dd>
+                    </div>
+                </dl>
+
+                <section class="ticket-detail-section">
+                    <h3>Mô tả yêu cầu</h3>
+                    <p id="ticket-detail-description">—</p>
+                </section>
+
+                <section class="ticket-detail-section">
+                    <h3>Thông tin SLA</h3>
+
+                    <dl class="ticket-detail-grid">
+                        <div>
+                            <dt>Hạn phản hồi</dt>
+                            <dd id="ticket-detail-response-deadline">—</dd>
+                        </div>
+
+                        <div>
+                            <dt>Hạn xử lý</dt>
+                            <dd id="ticket-detail-resolution-deadline">—</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <div id="ticket-detail-actions" class="ticket-detail-actions"></div>
+            </div>
+        </article>
+    </dialog>
+
     <main id="portal-main" class="page-container">
         <section id="auth-panel" class="auth-layout">
             <div class="welcome-card">

@@ -29,8 +29,10 @@
         elements.pagePrevious.addEventListener("click", showPreviousPage);
         elements.pageNext.addEventListener("click", showNextPage);
         elements.createToggle.addEventListener("click", toggleCreateForm);
-    elements.createCancel.addEventListener("click", cancelCreateTicket);
-    elements.createForm.addEventListener("submit", handleCreateTicket);
+        elements.createCancel.addEventListener("click", cancelCreateTicket);
+        elements.createForm.addEventListener("submit", handleCreateTicket);
+        elements.detailClose.addEventListener("click", closeTicketDetail);
+        elements.detailDialog.addEventListener("click", handleDetailBackdropClick);
     }
 
     function cacheElements() {
@@ -62,6 +64,24 @@
         elements.createCancel = document.getElementById("ticket-create-cancel");
         elements.createError = document.getElementById("ticket-create-error");
         elements.portalMessage = document.getElementById("portal-message");
+        elements.detailDialog = document.getElementById("ticket-detail-dialog");
+        elements.detailClose = document.getElementById("ticket-detail-close");
+        elements.detailLoading = document.getElementById("ticket-detail-loading");
+        elements.detailError = document.getElementById("ticket-detail-error");
+        elements.detailContent = document.getElementById("ticket-detail-content");
+        elements.detailCode = document.getElementById("ticket-detail-code");
+        elements.detailTitle = document.getElementById("ticket-detail-title");
+        elements.detailPriority = document.getElementById("ticket-detail-priority");
+        elements.detailStatus = document.getElementById("ticket-detail-status");
+        elements.detailCategory = document.getElementById("ticket-detail-category");
+        elements.detailRequester = document.getElementById("ticket-detail-requester");
+        elements.detailAssignee = document.getElementById("ticket-detail-assignee");
+        elements.detailCreatedAt = document.getElementById("ticket-detail-created-at");
+        elements.detailUpdatedAt = document.getElementById("ticket-detail-updated-at");
+        elements.detailDescription = document.getElementById("ticket-detail-description");
+        elements.detailResponseDeadline = document.getElementById("ticket-detail-response-deadline",);
+        elements.detailResolutionDeadline = document.getElementById("ticket-detail-resolution-deadline",);
+        elements.detailActions = document.getElementById("ticket-detail-actions");
     }
 
     async function startTicketWorkspace() {
@@ -242,7 +262,7 @@
         const row = document.createElement("tr");
 
         row.append(
-            createCell(ticket.ticket_code, "Mã ticket", "ticket-code"),
+            createTicketCodeCell(ticket),
             createTicketContentCell(ticket),
             createPriorityCell(ticket),
             createStatusCell(ticket),
@@ -254,6 +274,23 @@
         );
 
         return row;
+    }
+
+    function createTicketCodeCell(ticket) {
+        const cell = document.createElement("td");
+        const button = document.createElement("button");
+
+        cell.dataset.label = "Mã ticket";
+        button.type = "button";
+        button.className = "ticket-link";
+        button.textContent = ticket.ticket_code;
+        button.addEventListener(
+            "click",
+            () => openTicketDetail(ticket.ticket_id),
+        );
+
+        cell.append(button);
+        return cell;
     }
 
     function createTicketContentCell(ticket) {
@@ -344,7 +381,109 @@
         elements.listError.textContent = "";
         elements.listError.hidden = true;
     }
+    async function openTicketDetail(ticketId) {
+        resetTicketDetail();
 
+        if (!elements.detailDialog.open) {
+            elements.detailDialog.showModal();
+        }
+
+        try {
+            const ticket = await apiRequest(`/tickets/${ticketId}`);
+
+            if (!ticket) {
+                throw new Error("Không nhận được dữ liệu chi tiết ticket.");
+            }
+
+            renderTicketDetail(ticket);
+        } catch (error) {
+            elements.detailLoading.hidden = true;
+            elements.detailContent.hidden = true;
+            elements.detailError.textContent = error.message;
+            elements.detailError.hidden = false;
+        }
+    }
+
+    function resetTicketDetail() {
+        elements.detailLoading.hidden = false;
+        elements.detailError.hidden = true;
+        elements.detailError.textContent = "";
+        elements.detailContent.hidden = true;
+        elements.detailActions.replaceChildren();
+    }
+
+    function renderTicketDetail(ticket) {
+        elements.detailCode.textContent = ticket.ticket_code;
+        elements.detailTitle.textContent = ticket.title;
+        elements.detailCategory.textContent = ticket.category.category_name;
+        elements.detailRequester.textContent =
+            `${ticket.requester.full_name} (${ticket.requester.email})`;
+        elements.detailAssignee.textContent =
+            ticket.current_assignee?.full_name || "Chưa phân công";
+        elements.detailCreatedAt.textContent =
+            formatDateTime(ticket.created_at);
+        elements.detailUpdatedAt.textContent =
+            formatDateTime(ticket.updated_at);
+        elements.detailDescription.textContent = ticket.description;
+
+        const priorityCode = ticket.priority.priority_code.toLowerCase();
+
+        elements.detailPriority.className =
+            `priority-badge priority-badge--${priorityCode}`;
+        elements.detailPriority.textContent =
+            `${ticket.priority.priority_code} · ${ticket.priority.priority_name}`;
+
+        const statusClass = ticket.status.status_code
+            .toLowerCase()
+            .replaceAll("_", "-");
+
+        elements.detailStatus.className =
+            `status-badge status-badge--${statusClass}`;
+        elements.detailStatus.textContent = ticket.status.status_name;
+
+        const responseSla = ticket.sla_summary?.response_sla;
+        const resolutionCycles =
+            ticket.sla_summary?.resolution_cycles || [];
+        const resolutionSla =
+            resolutionCycles.length > 0
+                ? resolutionCycles[resolutionCycles.length - 1]
+                : null;
+
+        elements.detailResponseDeadline.textContent =
+            formatSlaItem(responseSla);
+        elements.detailResolutionDeadline.textContent =
+            formatSlaItem(resolutionSla);
+
+        elements.detailLoading.hidden = true;
+        elements.detailError.hidden = true;
+        elements.detailContent.hidden = false;
+    }
+
+    function formatSlaItem(slaItem) {
+        if (!slaItem) return "Chưa thiết lập";
+
+        const deadline = slaItem.effective_due_at || slaItem.due_at;
+        const deadlineText = deadline
+            ? formatDateTime(deadline)
+            : "Chưa thiết lập";
+        const statusLabel = slaItem.status?.label;
+
+        return statusLabel
+            ? `${deadlineText} · ${statusLabel}`
+            : deadlineText;
+    }
+
+    function closeTicketDetail() {
+        if (elements.detailDialog.open) {
+            elements.detailDialog.close();
+        }
+    }
+
+    function handleDetailBackdropClick(event) {
+        if (event.target === elements.detailDialog) {
+            closeTicketDetail();
+        }
+    }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);
 

@@ -586,3 +586,140 @@ h1 {
         width: 100%;
     }
 }
+.ticket-detail-dialog {
+    width: min(760px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 0;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgb(15 23 42 / 28%);
+    overflow: auto;
+}
+
+.ticket-detail-dialog::backdrop {
+    background: rgb(15 23 42 / 58%);
+    backdrop-filter: blur(3px);
+}
+
+.ticket-detail-panel {
+    padding: 26px;
+}
+
+.ticket-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.ticket-detail-header h2 {
+    margin: 4px 0 0;
+}
+
+.ticket-detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.ticket-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+}
+
+.ticket-detail-grid > div {
+    padding: 14px;
+    border: 1px solid #e1e6ef;
+    border-radius: 12px;
+    background: #f8faff;
+}
+
+.ticket-detail-grid dt {
+    margin-bottom: 5px;
+    color: #647086;
+    font-size: 12px;
+    font-weight: 750;
+    text-transform: uppercase;
+}
+
+.ticket-detail-grid dd {
+    margin: 0;
+    color: #172033;
+    font-weight: 650;
+}
+
+.ticket-detail-section {
+    margin-top: 22px;
+}
+
+.ticket-detail-section h3 {
+    margin: 0 0 10px;
+}
+
+.ticket-detail-description,
+#ticket-detail-description {
+    margin: 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f7f9fc;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ticket-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.ticket-link {
+    padding: 0;
+    border: 0;
+    color: #2457d6;
+    background: transparent;
+    font: inherit;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ticket-link:hover {
+    text-decoration: underline;
+}
+
+.ticket-link:focus-visible {
+    border-radius: 4px;
+    outline: 3px solid rgb(36 87 214 / 22%);
+    outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+    .ticket-detail-dialog {
+        width: calc(100% - 20px);
+        max-height: calc(100dvh - 20px);
+        border-radius: 16px;
+    }
+
+    .ticket-detail-panel {
+        padding: 18px;
+    }
+
+    .ticket-detail-header {
+        flex-direction: column;
+    }
+
+    .ticket-detail-header .button {
+        width: 100%;
+    }
+
+    .ticket-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
