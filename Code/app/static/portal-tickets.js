@@ -127,6 +127,7 @@
         elements.workflowForm.addEventListener("submit",handleWorkflowSubmit,);
         elements.workflowCancel.addEventListener("click",closeWorkflowForm,);
         elements.commentForm.addEventListener("submit",handleCommentSubmit,);
+        elements.attachmentForm.addEventListener("submit",handleAttachmentUpload,);
     }
 
     function cacheElements() {
@@ -201,6 +202,12 @@
         elements.commentVisibilityGroup = document.getElementById("ticket-comment-visibility-group",);
         elements.commentVisibility = document.getElementById("ticket-comment-visibility",);
         elements.commentSubmit = document.getElementById("ticket-comment-submit",);
+        elements.attachmentsEmpty = document.getElementById("ticket-attachments-empty",);
+        elements.attachmentsList = document.getElementById("ticket-attachments-list",);
+        elements.attachmentForm = document.getElementById("ticket-attachment-form",);
+        elements.attachmentError = document.getElementById("ticket-attachment-error",);
+        elements.attachmentFile = document.getElementById("ticket-attachment-file",);
+        elements.attachmentSubmit = document.getElementById("ticket-attachment-submit",);
     }
 
     async function startTicketWorkspace() {
@@ -548,35 +555,29 @@
         closeWorkflowForm();
         listState.detailTicket = null;
         resetConversation();
+        resetTicketAttachments();
     }
 
     function renderTicketDetail(ticket) {
         elements.detailCode.textContent = ticket.ticket_code;
         elements.detailTitle.textContent = ticket.title;
         elements.detailCategory.textContent = ticket.category.category_name;
-        elements.detailRequester.textContent =
-            `${ticket.requester.full_name} (${ticket.requester.email})`;
-        elements.detailAssignee.textContent =
-            ticket.current_assignee?.full_name || "Chưa phân công";
-        elements.detailCreatedAt.textContent =
-            formatDateTime(ticket.created_at);
-        elements.detailUpdatedAt.textContent =
-            formatDateTime(ticket.updated_at);
+        elements.detailRequester.textContent =`${ticket.requester.full_name} (${ticket.requester.email})`;
+        elements.detailAssignee.textContent = ticket.current_assignee?.full_name || "Chưa phân công";
+        elements.detailCreatedAt.textContent = formatDateTime(ticket.created_at);
+        elements.detailUpdatedAt.textContent = formatDateTime(ticket.updated_at);
         elements.detailDescription.textContent = ticket.description;
 
         const priorityCode = ticket.priority.priority_code.toLowerCase();
 
-        elements.detailPriority.className =
-            `priority-badge priority-badge--${priorityCode}`;
-        elements.detailPriority.textContent =
-            `${ticket.priority.priority_code} · ${ticket.priority.priority_name}`;
+        elements.detailPriority.className = `priority-badge priority-badge--${priorityCode}`;
+        elements.detailPriority.textContent = `${ticket.priority.priority_code} · ${ticket.priority.priority_name}`;
 
         const statusClass = ticket.status.status_code
             .toLowerCase()
             .replaceAll("_", "-");
 
-        elements.detailStatus.className =
-            `status-badge status-badge--${statusClass}`;
+        elements.detailStatus.className = `status-badge status-badge--${statusClass}`;
         elements.detailStatus.textContent = ticket.status.status_name;
 
         const responseSla = ticket.sla_summary?.response_sla;
@@ -587,13 +588,14 @@
                 ? resolutionCycles[resolutionCycles.length - 1]
                 : null;
 
-        elements.detailResponseDeadline.textContent =
-            formatSlaItem(responseSla);
-        elements.detailResolutionDeadline.textContent =
-            formatSlaItem(resolutionSla);
+        elements.detailResponseDeadline.textContent = formatSlaItem(responseSla);
+        elements.detailResolutionDeadline.textContent = formatSlaItem(resolutionSla);
 
         elements.detailLoading.hidden = true;
         elements.detailError.hidden = true;
+
+        renderTicketAttachments(ticket);
+
         elements.detailContent.hidden = false;
     }
 
@@ -845,9 +847,13 @@
             elements.portalMessage.textContent = action.successMessage;
             elements.portalMessage.hidden = false;
 
+            listState.detailTicket = updatedTicket;
+
             renderTicketDetail(updatedTicket);
             configureWorkflowSection(updatedTicket);
-            await Promise.all([configureAssignmentSection(updatedTicket),loadTicketComments(updatedTicket),]);
+            await Promise.all([
+                configureAssignmentSection(updatedTicket),
+                loadTicketComments(updatedTicket),]);
             await loadTickets();
         } catch (error) {
             showWorkflowError(error.message);
@@ -1074,6 +1080,230 @@
     function clearCommentError() {
         elements.commentError.textContent = "";
         elements.commentError.hidden = true;
+    }
+    function resetTicketAttachments() {
+        elements.attachmentsList.replaceChildren();
+        elements.attachmentsList.hidden = true;
+        elements.attachmentsEmpty.hidden = true;
+        elements.attachmentForm.hidden = true;
+        elements.attachmentForm.reset();
+        clearAttachmentError();
+    }
+
+    function renderTicketAttachments(ticket) {
+        const attachments = ticket.attachments || [];
+        const permissions = new Set(ticket.permissions || []);
+        const canUpload = permissions.has("UPLOAD_ATTACHMENT");
+
+        elements.attachmentsList.replaceChildren();
+
+        for (const attachment of attachments) {
+            elements.attachmentsList.append(
+                createAttachmentItem(attachment),
+            );
+        }
+
+        const hasAttachments = attachments.length > 0;
+
+        elements.attachmentsEmpty.hidden = hasAttachments;
+        elements.attachmentsList.hidden = !hasAttachments;
+        elements.attachmentForm.hidden = !canUpload;
+        clearAttachmentError();
+    }
+
+    function createAttachmentItem(attachment) {
+        const item = document.createElement("li");
+        const info = document.createElement("div");
+        const name = document.createElement("span");
+        const meta = document.createElement("span");
+        const actions = document.createElement("div");
+        const downloadButton = document.createElement("button");
+
+        item.className = "attachment-item";
+        info.className = "attachment-info";
+        name.className = "attachment-name";
+        meta.className = "attachment-meta";
+        actions.className = "attachment-actions";
+
+        name.textContent = attachment.file_name;
+        meta.textContent =
+            `${formatFileSize(attachment.file_size)} · ` +
+            formatDateTime(attachment.uploaded_at);
+
+        downloadButton.type = "button";
+        downloadButton.className = "button button--secondary";
+        downloadButton.textContent = "Tải xuống";
+        downloadButton.addEventListener("click", () => {
+            downloadAttachment(attachment, downloadButton);
+        });
+
+        info.append(name, meta);
+        actions.append(downloadButton);
+        item.append(info, actions);
+
+        return item;
+    }
+
+    function formatFileSize(value) {
+        const bytes = Number(value || 0);
+
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    async function handleAttachmentUpload(event) {
+        event.preventDefault();
+        clearAttachmentError();
+
+        const ticket = listState.detailTicket;
+        const file = elements.attachmentFile.files[0];
+
+        if (!ticket) {
+            showAttachmentError("Không xác định được ticket.");
+            return;
+        }
+
+        if (!file) {
+            showAttachmentError("Vui lòng chọn tệp.");
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            showAttachmentError("Tệp vượt quá giới hạn 10 MB.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        setAttachmentBusy(true);
+
+        try {
+            await apiRequest(
+                `/tickets/${ticket.ticket_id}/attachments`,
+                {
+                    method: "POST",
+                    body: formData,
+                },
+            );
+
+            elements.portalMessage.textContent =
+                "Đã tải tệp đính kèm thành công.";
+            elements.portalMessage.hidden = false;
+
+            const refreshedTicket = await apiRequest(
+                `/tickets/${ticket.ticket_id}`,
+            );
+
+            listState.detailTicket = refreshedTicket;
+            renderTicketDetail(refreshedTicket);
+            configureWorkflowSection(refreshedTicket);
+
+            await Promise.all([
+                configureAssignmentSection(refreshedTicket),
+                loadTicketComments(refreshedTicket),
+            ]);
+        } catch (error) {
+            showAttachmentError(error.message);
+        } finally {
+            setAttachmentBusy(false);
+        }
+    }
+
+    async function downloadAttachment(
+        attachment,
+        button,
+        retry = true,
+    ) {
+        clearAttachmentError();
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Đang tải...";
+
+        try {
+            const accessToken = sessionStorage.getItem(
+                STORAGE_KEYS.accessToken,
+            );
+
+            const response = await fetch(
+                `${API_PREFIX}/attachments/` +
+                `${attachment.attachment_id}/download`,
+                {
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                    },
+                },
+            );
+
+            if (response.status === 401 && retry) {
+                const refreshed = await refreshSession();
+
+                if (refreshed) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    await downloadAttachment(
+                        attachment,
+                        button,
+                        false,
+                    );
+                    return;
+                }
+            }
+
+            if (!response.ok) {
+                const payload = await parseResponse(response);
+
+                throw new Error(
+                    errorMessage(
+                        payload,
+                        `Không thể tải tệp (${response.status}).`,
+                    ),
+                );
+            }
+
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = objectUrl;
+            link.download = attachment.file_name;
+            document.body.append(link);
+            link.click();
+            link.remove();
+
+            window.setTimeout(
+                () => URL.revokeObjectURL(objectUrl),
+                1000,
+            );
+        } catch (error) {
+            showAttachmentError(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    function setAttachmentBusy(busy) {
+        elements.attachmentFile.disabled = busy;
+        elements.attachmentSubmit.disabled = busy;
+        elements.attachmentSubmit.textContent = busy
+            ? "Đang tải lên..."
+            : "Tải tệp lên";
+    }
+
+    function showAttachmentError(message) {
+        elements.attachmentError.textContent = message;
+        elements.attachmentError.hidden = false;
+    }
+
+    function clearAttachmentError() {
+        elements.attachmentError.textContent = "";
+        elements.attachmentError.hidden = true;
     }
     function currentPrimaryRole() {
         const storedUser = sessionStorage.getItem(STORAGE_KEYS.user);

@@ -125,6 +125,69 @@
                 </section>
 
                 <section
+                    id="ticket-attachments-section"
+                    class="ticket-detail-section ticket-attachments-section"
+                    aria-labelledby="ticket-attachments-title"
+                >
+                    <header class="section-heading">
+                        <div>
+                            <h3 id="ticket-attachments-title">Tệp đính kèm</h3>
+                            <p>Minh chứng và tài liệu liên quan đến ticket.</p>
+                        </div>
+                    </header>
+
+                    <div
+                        id="ticket-attachment-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    >
+                    </div>
+                    <div
+                        id="ticket-attachments-empty"
+                        class="empty-panel"
+                        hidden
+                    >
+                        Ticket chưa có tệp đính kèm.
+                    </div>
+
+                    <ul
+                        id="ticket-attachments-list"
+                        class="attachment-list"
+                        aria-label="Danh sách tệp đính kèm"
+                        hidden
+                    ></ul>
+
+                    <form id="ticket-attachment-form" hidden>
+                        <div class="field-group">
+                            <label for="ticket-attachment-file">
+                                Chọn tệp
+                            </label>
+
+                            <input
+                                id="ticket-attachment-file"
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg,.txt,.docx,.xlsx"
+                                required
+                            >
+
+                            <p class="field-help">
+                                PDF, PNG, JPG, TXT, DOCX hoặc XLSX; tối đa 10 MB.
+                            </p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-attachment-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Tải tệp lên
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <section
                     id="ticket-assignment-section"
                     class="ticket-detail-section ticket-assignment-section"
                     aria-labelledby="ticket-assignment-title"
@@ -174,7 +237,8 @@
                         </div>
                     </form>
                 </section>
-                <section id="ticket-conversation-section"
+                <section
+                        id="ticket-conversation-section"
                         class="ticket-detail-section ticket-conversation-section"
                         aria-labelledby="ticket-conversation-title"
                     >
