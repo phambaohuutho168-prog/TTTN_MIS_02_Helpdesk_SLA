@@ -6,6 +6,7 @@
     <title>Cổng hỗ trợ | {{ app_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='portal.css') }}">
     <script defer src="{{ url_for('static', path='portal.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-tickets.js') }}"></script>
 </head>
 <body>
     <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
@@ -56,7 +57,6 @@
                 <label for="login-email">Email</label>
                 <input
                     id="login-email"
-                    name="email"
                     type="email"
                     autocomplete="username"
                     maxlength="254"
@@ -66,7 +66,6 @@
                 <label for="login-password">Mật khẩu</label>
                 <input
                     id="login-password"
-                    name="password"
                     type="password"
                     autocomplete="current-password"
                     minlength="8"
@@ -94,12 +93,94 @@
                 Đăng nhập thành công.
             </div>
 
-            <section class="workspace-card">
-                <h2 id="workspace-title">Không gian làm việc đã sẵn sàng</h2>
-                <p id="workspace-description">
-                    Các chức năng ticket sẽ được bổ sung trong bước tiếp theo.
-                </p>
-            </section>
+           <section class="workspace-card" aria-labelledby="ticket-list-title">
+    <header class="section-heading">
+        <div>
+            <h2 id="ticket-list-title">Danh sách ticket</h2>
+            <p id="ticket-list-summary">Đang tải dữ liệu...</p>
+        </div>
+    </header>
+
+    <form id="ticket-filter-form" class="ticket-filters">
+        <div class="field-group field-group--search">
+            <label for="ticket-filter-query">Tìm kiếm</label>
+            <input
+                id="ticket-filter-query"
+                name="q"
+                type="search"
+                maxlength="100"
+                placeholder="Mã hoặc tiêu đề ticket"
+            >
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-status">Trạng thái</label>
+            <select id="ticket-filter-status" name="status">
+                <option value="">Tất cả trạng thái</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-category">Danh mục</label>
+            <select id="ticket-filter-category" name="category_id">
+                <option value="">Tất cả danh mục</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-priority">Ưu tiên</label>
+            <select id="ticket-filter-priority" name="priority_id">
+                <option value="">Tất cả ưu tiên</option>
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button id="ticket-filter-submit" class="button button--primary" type="submit">
+                Áp dụng
+            </button>
+            <button id="ticket-filter-reset" class="button button--secondary" type="button">
+                Xóa lọc
+            </button>
+        </div>
+    </form>
+
+    <div id="ticket-list-loading" class="loading-panel" role="status" hidden>
+        Đang tải danh sách ticket...
+    </div>
+
+    <div id="ticket-list-error" class="alert alert--error" role="alert" hidden></div>
+
+    <div id="ticket-list-empty" class="empty-panel" hidden>
+        <strong>Chưa có ticket phù hợp</strong>
+        <p>Hãy thay đổi bộ lọc hoặc tạo yêu cầu hỗ trợ mới.</p>
+    </div>
+
+    <div id="ticket-table-wrapper" class="table-wrapper" hidden>
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th scope="col">Mã ticket</th>
+                    <th scope="col">Nội dung</th>
+                    <th scope="col">Ưu tiên</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Người xử lý</th>
+                    <th scope="col">Ngày tạo</th>
+                </tr>
+            </thead>
+            <tbody id="ticket-table-body"></tbody>
+        </table>
+    </div>
+
+    <footer id="ticket-pagination" class="pagination" hidden>
+        <button id="ticket-page-previous" class="button button--secondary" type="button">
+            Trang trước
+        </button>
+        <span id="ticket-page-information">Trang 1/1</span>
+        <button id="ticket-page-next" class="button button--secondary" type="button">
+            Trang sau
+        </button>
+    </footer>
+</section>
         </section>
     </main>
 </body>

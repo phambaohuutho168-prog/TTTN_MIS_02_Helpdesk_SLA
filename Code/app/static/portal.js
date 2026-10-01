@@ -31,10 +31,10 @@ function initialize() {
     elements.logoutButton.addEventListener("click", handleLogout);
 
     if (state.accessToken && state.user) {
-        showPortal();
-    } else {
-        showLogin();
-    }
+    showPortal();
+} else {
+    showLogin();
+}
 }
 
 function cacheElements() {
@@ -54,8 +54,6 @@ function cacheElements() {
         "portal-description",
         "portal-message",
         "role-badge",
-        "workspace-title",
-        "workspace-description",
     ];
 
     for (const id of ids) {
@@ -190,24 +188,20 @@ function showPortal() {
         elements.portalTitle.textContent = "Điều phối và quản trị ticket";
         elements.portalDescription.textContent =
             "Theo dõi toàn hệ thống, phân công và kiểm soát SLA.";
-        elements.workspaceTitle.textContent = "Không gian Quản trị viên";
-        elements.workspaceDescription.textContent =
-            "Bạn có quyền xem toàn bộ ticket và điều phối người xử lý.";
     } else if (role === "PROCESSOR") {
         elements.portalTitle.textContent = "Hàng đợi xử lý";
         elements.portalDescription.textContent =
             "Theo dõi và xử lý những ticket được phân công.";
-        elements.workspaceTitle.textContent = "Không gian Người xử lý";
-        elements.workspaceDescription.textContent =
-            "Bạn có thể phản hồi, yêu cầu bổ sung và hoàn tất ticket.";
     } else {
         elements.portalTitle.textContent = "Yêu cầu hỗ trợ của tôi";
         elements.portalDescription.textContent =
             "Tạo mới và theo dõi những ticket bạn đã gửi.";
-        elements.workspaceTitle.textContent = "Không gian Người gửi yêu cầu";
-        elements.workspaceDescription.textContent =
-            "Bạn có thể tạo ticket, trao đổi, đóng, mở lại và đánh giá.";
     }
+
+    window.setTimeout(
+        () => window.dispatchEvent(new Event("portal:authenticated")),
+        0,
+    );
 }
 
 async function handleLogout() {
