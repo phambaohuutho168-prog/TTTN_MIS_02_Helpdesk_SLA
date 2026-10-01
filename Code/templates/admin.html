@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Quản trị tài khoản · {{ app_name }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='portal.css') }}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='admin.css') }}"
+    >
+
+    <script
+        defer
+        src="{{ url_for('static', path='admin.js') }}"
+    ></script>
+</head>
+
+<body>
+    <a class="skip-link" href="#admin-main">
+        Đi đến nội dung chính
+    </a>
+
+    <header class="site-header">
+        <a class="brand" href="/portal">
+            <strong>HELPDESK</strong>
+            <span>SLA Management</span>
+        </a>
+
+        <nav aria-label="Điều hướng chính">
+            <a href="/portal">Ticket</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/admin" aria-current="page">Quản trị</a>
+            <a href="/docs">Tài liệu API</a>
+        </nav>
+
+        <div id="admin-session-navigation" class="session-navigation" hidden>
+            <div class="user-summary">
+                <strong id="admin-current-user-name"></strong>
+                <span id="admin-current-user-role">Quản trị viên</span>
+            </div>
+
+            <button
+                id="admin-logout-button"
+                class="button button--secondary"
+                type="button"
+            >
+                Đăng xuất
+            </button>
+        </div>
+    </header>
+
+    <main id="admin-main" class="page-container">
+        <section
+            id="admin-loading"
+            class="workspace-card"
+            aria-live="polite"
+        >
+            <p>Đang kiểm tra quyền quản trị...</p>
+        </section>
+
+        <section
+            id="admin-denied"
+            class="workspace-card"
+            hidden
+        >
+            <p class="eyebrow">KHÔNG CÓ QUYỀN TRUY CẬP</p>
+            <h1>Trang dành cho Quản trị viên</h1>
+            <p>
+                Tài khoản hiện tại không có quyền quản lý người dùng
+                và phân quyền hệ thống.
+            </p>
+
+            <a class="button button--primary" href="/portal">
+                Quay lại cổng hỗ trợ
+            </a>
+        </section>
+
+        <section id="admin-shell" hidden>
+            <header class="admin-heading">
+                <div>
+                    <p class="eyebrow">QUẢN TRỊ HỆ THỐNG</p>
+                    <h1>Quản lý tài khoản</h1>
+                    <p>
+                        Tạo tài khoản, quản lý phòng ban, trạng thái
+                        hoạt động và vai trò sử dụng hệ thống.
+                    </p>
+                </div>
+
+                <button
+                    id="user-create-toggle"
+                    class="button button--primary"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="user-create-panel"
+                >
+                    Thêm tài khoản
+                </button>
+            </header>
+
+            <div
+                id="admin-message"
+                class="alert alert--success"
+                role="status"
+                hidden
+            ></div>
+
+            <section
+                class="admin-summary-grid"
+                aria-label="Tổng quan tài khoản"
+            >
+                <article class="admin-summary-card">
+                    <span>Tổng tài khoản</span>
+                    <strong id="admin-total-users">0</strong>
+                </article>
+
+                <article class="admin-summary-card">
+                    <span>Đang hoạt động</span>
+                    <strong id="admin-active-users">0</strong>
+                </article>
+
+                <article class="admin-summary-card">
+                    <span>Đã khóa</span>
+                    <strong id="admin-inactive-users">0</strong>
+                </article>
+            </section>
+
+            <section
+                id="user-create-panel"
+                class="workspace-card admin-create-panel"
+                hidden
+            >
+                <header class="section-heading">
+                    <div>
+                        <h2>Tạo tài khoản mới</h2>
+                        <p>
+                            Cấp tài khoản và vai trò sử dụng hệ thống.
+                        </p>
+                    </div>
+                </header>
+
+                <form id="user-create-form">
+                    <div
+                        id="user-create-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div class="admin-form-grid">
+                        <div class="field-group">
+                            <label for="user-create-full-name">
+                                Họ và tên
+                            </label>
+                            <input
+                                id="user-create-full-name"
+                                type="text"
+                                maxlength="150"
+                                required
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="user-create-email">
+                                Email
+                            </label>
+                            <input
+                                id="user-create-email"
+                                type="email"
+                                maxlength="254"
+                                required
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="user-create-password">
+                                Mật khẩu ban đầu
+                            </label>
+                            <input
+                                id="user-create-password"
+                                type="password"
+                                minlength="8"
+                                maxlength="128"
+                                autocomplete="new-password"
+                                required
+                            >
+                            <p class="field-help">
+                                Tối thiểu 8 ký tự.
+                            </p>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="user-create-phone">
+                                Số điện thoại
+                            </label>
+                            <input
+                                id="user-create-phone"
+                                type="tel"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="user-create-department">
+                                Phòng ban
+                            </label>
+                            <select id="user-create-department">
+                                <option value="">Không chọn phòng ban</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <fieldset class="admin-fieldset">
+                        <legend>Vai trò</legend>
+                        <div
+                            id="user-create-roles"
+                            class="role-checkbox-list"
+                        ></div>
+                    </fieldset>
+
+                    <label class="checkbox-line">
+                        <input
+                            id="user-create-is-active"
+                            type="checkbox"
+                            checked
+                        >
+                        Kích hoạt tài khoản ngay sau khi tạo
+                    </label>
+
+                    <div class="form-actions">
+                        <button
+                            id="user-create-submit"
+                            class="button button--primary"
+                            type="submit"
+                        >
+                            Tạo tài khoản
+                        </button>
+
+                        <button
+                            id="user-create-cancel"
+                            class="button button--secondary"
+                            type="button"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="workspace-card">
+                <header class="section-heading">
+                    <div>
+                        <h2>Danh sách tài khoản</h2>
+                        <p id="user-list-summary">
+                            Đang tải dữ liệu...
+                        </p>
+                    </div>
+                </header>
+
+                <form id="user-filter-form" class="admin-filter-grid">
+                    <div class="field-group">
+                        <label for="user-filter-query">
+                            Tìm kiếm
+                        </label>
+                        <input
+                            id="user-filter-query"
+                            type="search"
+                            placeholder="Tên hoặc email"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-filter-role">Vai trò</label>
+                        <select id="user-filter-role">
+                            <option value="">Tất cả vai trò</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-filter-department">
+                            Phòng ban
+                        </label>
+                        <select id="user-filter-department">
+                            <option value="">Tất cả phòng ban</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-filter-status">
+                            Trạng thái
+                        </label>
+                        <select id="user-filter-status">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Đang hoạt động</option>
+                            <option value="false">Đã khóa</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-filter-actions">
+                        <button
+                            id="user-filter-submit"
+                            class="button button--primary"
+                            type="submit"
+                        >
+                            Lọc
+                        </button>
+
+                        <button
+                            id="user-filter-reset"
+                            class="button button--secondary"
+                            type="button"
+                        >
+                            Xóa lọc
+                        </button>
+                    </div>
+                </form>
+
+                <div
+                    id="user-list-loading"
+                    class="loading-panel"
+                    aria-live="polite"
+                    hidden
+                >
+                    Đang tải danh sách tài khoản...
+                </div>
+
+                <div
+                    id="user-list-error"
+                    class="alert alert--error"
+                    role="alert"
+                    hidden
+                ></div>
+
+                <div
+                    id="user-list-empty"
+                    class="empty-panel"
+                    hidden
+                >
+                    Không tìm thấy tài khoản phù hợp.
+                </div>
+
+                <div id="user-table-wrapper" class="admin-table-wrapper" hidden>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tài khoản</th>
+                                <th scope="col">Phòng ban</th>
+                                <th scope="col">Vai trò</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col">Ngày tạo</th>
+                                <th scope="col">Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="user-table-body"></tbody>
+                    </table>
+                </div>
+
+                <footer id="user-pagination" class="ticket-pagination" hidden>
+                    <button
+                        id="user-page-previous"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Trang trước
+                    </button>
+
+                    <span id="user-page-information">Trang 1/1</span>
+
+                    <button
+                        id="user-page-next"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Trang sau
+                    </button>
+                </footer>
+            </section>
+        </section>
+    </main>
+
+    <dialog id="user-edit-dialog" class="ticket-detail-dialog">
+        <div class="ticket-detail-card admin-edit-card">
+            <header class="ticket-detail-header">
+                <div>
+                    <p class="eyebrow">CHỈNH SỬA TÀI KHOẢN</p>
+                    <h2 id="user-edit-title">Thông tin người dùng</h2>
+                </div>
+
+                <button
+                    id="user-edit-close"
+                    class="dialog-close"
+                    type="button"
+                    aria-label="Đóng"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div
+                id="user-edit-loading"
+                class="loading-panel"
+                hidden
+            >
+                Đang tải tài khoản...
+            </div>
+
+            <div
+                id="user-edit-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <form id="user-edit-form" hidden>
+                <div class="admin-form-grid">
+                    <div class="field-group">
+                        <label for="user-edit-email">Email</label>
+                        <input
+                            id="user-edit-email"
+                            type="email"
+                            readonly
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-edit-full-name">
+                            Họ và tên
+                        </label>
+                        <input
+                            id="user-edit-full-name"
+                            type="text"
+                            maxlength="150"
+                            required
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-edit-phone">
+                            Số điện thoại
+                        </label>
+                        <input
+                            id="user-edit-phone"
+                            type="tel"
+                            maxlength="30"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="user-edit-department">
+                            Phòng ban
+                        </label>
+                        <select id="user-edit-department">
+                            <option value="">Không chọn phòng ban</option>
+                        </select>
+                    </div>
+                </div>
+
+                <fieldset class="admin-fieldset">
+                    <legend>Vai trò</legend>
+                    <div
+                        id="user-edit-roles"
+                        class="role-checkbox-list"
+                    ></div>
+                </fieldset>
+
+                <label class="checkbox-line">
+                    <input id="user-edit-is-active" type="checkbox">
+                    Tài khoản đang hoạt động
+                </label>
+
+                <p id="user-edit-meta" class="field-help"></p>
+
+                <div class="form-actions">
+                    <button
+                        id="user-edit-submit"
+                        class="button button--primary"
+                        type="submit"
+                    >
+                        Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+</body>
+</html>

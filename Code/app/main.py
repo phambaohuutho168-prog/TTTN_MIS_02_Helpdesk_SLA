@@ -70,3 +70,11 @@ async def portal_page(request: Request):
         name="portal.html",
         context={"app_name": settings.APP_NAME},
     )
+
+@app.get("/admin", include_in_schema=False)
+async def admin_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={"app_name": settings.APP_NAME},
+    )

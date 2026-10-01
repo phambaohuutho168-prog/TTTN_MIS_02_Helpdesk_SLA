@@ -54,6 +54,7 @@ function cacheElements() {
         "portal-description",
         "portal-message",
         "role-badge",
+        "admin-navigation-link",
     ];
 
     for (const id of ids) {
@@ -167,6 +168,7 @@ function showLogin(message = "") {
     elements.authPanel.hidden = false;
     elements.portalShell.hidden = true;
     elements.sessionNavigation.hidden = true;
+    elements.adminNavigationLink.hidden = true;
     setLoginError(message);
 
     window.setTimeout(() => elements.loginEmail.focus(), 0);
@@ -183,6 +185,7 @@ function showPortal() {
     elements.currentUserName.textContent = state.user.full_name;
     elements.currentUserRole.textContent = roleLabel;
     elements.roleBadge.textContent = roleLabel;
+    elements.adminNavigationLink.hidden = role !== "ADMIN";
 
     if (role === "ADMIN") {
         elements.portalTitle.textContent = "Điều phối và quản trị ticket";
