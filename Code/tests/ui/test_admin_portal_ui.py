@@ -282,3 +282,89 @@ async def test_admin_catalog_ui_uses_safe_rendering_and_responsive_styles(
 
     assert "@media (max-width: 768px)" in css
     assert "@media (max-width: 480px)" in css
+async def test_admin_exposes_audit_log_interface(client):
+    html = (await client.get("/admin")).text
+
+    assert "/static/admin-audit.js" in html
+
+    for element_id in (
+        "audit-log-section",
+        "audit-filter-form",
+        "audit-filter-actor",
+        "audit-filter-ticket",
+        "audit-filter-action",
+        "audit-filter-entity-type",
+        "audit-filter-from",
+        "audit-filter-to",
+        "audit-page-size",
+        "audit-table-body",
+        "audit-pagination",
+        "audit-detail-dialog",
+        "audit-detail-old-value",
+        "audit-detail-new-value",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert 'type="datetime-local"' in html
+    assert (
+        await client.get("/static/admin-audit.js")
+    ).status_code == 200
+
+
+async def test_admin_audit_script_integrates_filters_and_pagination(
+    client,
+):
+    script = (
+        await client.get("/static/admin-audit.js")
+    ).text
+
+    assert "/admin/audit-logs?" in script
+
+    for parameter in (
+        "actor_user_id",
+        "ticket_id",
+        "action_code",
+        "entity_type",
+        "created_from",
+        "created_to",
+        "page_size",
+    ):
+        assert parameter in script
+
+    assert 'query.set("page"' in script
+    assert 'query.set("page_size"' in script
+    assert "showPreviousPage" in script
+    assert "showNextPage" in script
+    assert "openAuditDetail" in script
+    assert "ACTION_LABELS" in script
+
+
+async def test_admin_audit_uses_safe_rendering_and_responsive_styles(
+    client,
+):
+    script = (
+        await client.get("/static/admin-audit.js")
+    ).text
+    css = (await client.get("/static/admin.css")).text
+
+    assert "sessionStorage" in script
+    assert "localStorage" not in script
+    assert "innerHTML" not in script
+    assert "document.createElement" in script
+    assert "replaceChildren" in script
+    assert "JSON.stringify(value, null, 2)" in script
+    assert "/auth/refresh" in script
+
+    for selector in (
+        ".admin-audit-section",
+        ".admin-audit-filter",
+        ".audit-detail-card",
+        ".audit-detail-meta",
+        ".audit-change-grid",
+        "#audit-detail-dialog",
+    ):
+        assert selector in css
+
+    assert "@media (max-width: 960px)" in css
+    assert "@media (max-width: 640px)" in css
+    assert "overflow-x: hidden" in css

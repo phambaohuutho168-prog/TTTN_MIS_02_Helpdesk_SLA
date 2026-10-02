@@ -25,6 +25,10 @@
         defer
         src="{{ url_for('static', path='admin-catalogs.js') }}"
     ></script>
+    <script
+        defer
+        src="{{ url_for('static', path='admin-audit.js') }}"
+    ></script>
 </head>
 
 <body>
@@ -511,28 +515,28 @@
             </div>
         </section>
         <section
-    id="priority-management-section"
-    class="workspace-card admin-catalog-section"
-    aria-labelledby="priority-management-title"
->
-    <header class="section-heading">
-        <div>
-            <p class="eyebrow">CẤU HÌNH SLA</p>
-            <h2 id="priority-management-title">Mức ưu tiên</h2>
-            <p>
-                Quản lý cấp độ ưu tiên được sử dụng khi tiếp nhận ticket.
-            </p>
-        </div>
+            id="priority-management-section"
+            class="workspace-card admin-catalog-section"
+            aria-labelledby="priority-management-title"
+        >
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">CẤU HÌNH SLA</p>
+                    <h2 id="priority-management-title">Mức ưu tiên</h2>
+                    <p>
+                        Quản lý cấp độ ưu tiên được sử dụng khi tiếp nhận ticket.
+                    </p>
+                </div>
 
-        <strong id="priority-total">0 mức ưu tiên</strong>
-    </header>
+                <strong id="priority-total">0 mức ưu tiên</strong>
+            </header>
 
-    <div
-        id="priority-message"
-        class="alert"
-        role="status"
-        hidden
-    ></div>
+            <div
+                id="priority-message"
+                class="alert"
+                role="status"
+                hidden
+            ></div>
 
     <form id="priority-form" class="admin-catalog-form">
         <input id="priority-edit-id" type="hidden">
@@ -660,10 +664,266 @@
                 </thead>
                 <tbody id="priority-table-body"></tbody>
             </table>
-        </div>
-</section>
+                    </div>
+                </section>
+
+                <section
+            id="audit-log-section"
+            class="workspace-card admin-audit-section"
+            aria-labelledby="audit-log-title"
+        >
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">GIÁM SÁT HỆ THỐNG</p>
+                    <h2 id="audit-log-title">Nhật ký kiểm toán</h2>
+                    <p>
+                        Theo dõi các hành động quan trọng và thay đổi dữ liệu.
+                    </p>
+                </div>
+
+                <strong id="audit-total">0 bản ghi</strong>
+            </header>
+
+            <form id="audit-filter-form" class="admin-audit-filter">
+                <div class="admin-audit-filter-grid">
+                    <div class="field-group">
+                        <label for="audit-filter-actor">ID người thao tác</label>
+                        <input
+                            id="audit-filter-actor"
+                            type="number"
+                            min="1"
+                            placeholder="Ví dụ: 1"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-filter-ticket">ID ticket</label>
+                        <input
+                            id="audit-filter-ticket"
+                            type="number"
+                            min="1"
+                            placeholder="Ví dụ: 15"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-filter-action">Mã hành động</label>
+                        <input
+                            id="audit-filter-action"
+                            type="text"
+                            maxlength="80"
+                            placeholder="Ví dụ: TICKET_CREATED"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-filter-entity-type">
+                            Loại đối tượng
+                        </label>
+                        <input
+                            id="audit-filter-entity-type"
+                            type="text"
+                            maxlength="80"
+                            placeholder="Ví dụ: TICKET"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-filter-from">Từ thời điểm</label>
+                        <input
+                            id="audit-filter-from"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-filter-to">Đến thời điểm</label>
+                        <input
+                            id="audit-filter-to"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="audit-page-size">Số dòng mỗi trang</label>
+                        <select id="audit-page-size">
+                            <option value="20">20 dòng</option>
+                            <option value="50">50 dòng</option>
+                            <option value="100">100 dòng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        id="audit-filter-submit"
+                        class="button button--primary"
+                        type="submit"
+                    >
+                        Áp dụng bộ lọc
+                    </button>
+
+                    <button
+                        id="audit-filter-reset"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Đặt lại
+                    </button>
+                </div>
+            </form>
+
+            <p id="audit-summary" class="list-summary">
+                Đang chuẩn bị nhật ký kiểm toán...
+            </p>
+
+            <div
+                id="audit-list-loading"
+                class="loading-panel"
+                role="status"
+            >
+                Đang tải nhật ký...
+            </div>
+
+            <div
+                id="audit-list-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="audit-list-empty"
+                class="empty-panel"
+                hidden
+            >
+                Không có bản ghi phù hợp với bộ lọc.
+            </div>
+
+            <div id="audit-table-wrapper" class="table-wrapper" hidden>
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Thời gian</th>
+                            <th scope="col">Hành động</th>
+                            <th scope="col">Đối tượng</th>
+                            <th scope="col">Người thao tác</th>
+                            <th scope="col">Ticket</th>
+                            <th scope="col">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-table-body"></tbody>
+                </table>
+            </div>
+
+            <footer id="audit-pagination" class="pagination" hidden>
+                <button
+                    id="audit-page-previous"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang trước
+                </button>
+
+                <span id="audit-page-information">Trang 1/1</span>
+
+                <button
+                    id="audit-page-next"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang sau
+                </button>
+            </footer>
         </section>
-    </main>
+            </section>
+            </main>
+
+    <dialog id="audit-detail-dialog" class="ticket-detail-dialog">
+        <div class="ticket-detail-card audit-detail-card">
+            <header class="ticket-detail-header">
+                <div>
+                    <p class="eyebrow">CHI TIẾT NHẬT KÝ</p>
+                    <h2 id="audit-detail-title">Bản ghi kiểm toán</h2>
+                </div>
+
+                <button
+                    id="audit-detail-close"
+                    class="button button--secondary"
+                    type="button"
+                    aria-label="Đóng chi tiết nhật ký"
+                >
+                    Đóng
+                </button>
+            </header>
+
+            <div
+                id="audit-detail-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <dl class="audit-detail-meta">
+                <div>
+                    <dt>Mã bản ghi</dt>
+                    <dd id="audit-detail-id">—</dd>
+                </div>
+
+                <div>
+                    <dt>Thời gian</dt>
+                    <dd id="audit-detail-created-at">—</dd>
+                </div>
+
+                <div>
+                    <dt>Hành động</dt>
+                    <dd id="audit-detail-action">—</dd>
+                </div>
+
+                <div>
+                    <dt>Đối tượng</dt>
+                    <dd id="audit-detail-entity">—</dd>
+                </div>
+
+                <div>
+                    <dt>Người thao tác</dt>
+                    <dd id="audit-detail-actor">—</dd>
+                </div>
+
+                <div>
+                    <dt>Ticket</dt>
+                    <dd id="audit-detail-ticket">—</dd>
+                </div>
+
+                <div>
+                    <dt>Địa chỉ IP</dt>
+                    <dd id="audit-detail-ip">—</dd>
+                </div>
+
+                <div>
+                    <dt>Request ID</dt>
+                    <dd id="audit-detail-request-id">—</dd>
+                </div>
+            </dl>
+
+            <section class="audit-detail-section">
+                <h3>Lý do</h3>
+                <p id="audit-detail-reason">Không có lý do được ghi nhận.</p>
+            </section>
+
+            <div class="audit-change-grid">
+                <section class="audit-detail-section">
+                    <h3>Dữ liệu trước thay đổi</h3>
+                    <pre id="audit-detail-old-value">Không có dữ liệu</pre>
+                </section>
+
+                <section class="audit-detail-section">
+                    <h3>Dữ liệu sau thay đổi</h3>
+                    <pre id="audit-detail-new-value">Không có dữ liệu</pre>
+                </section>
+            </div>
+        </div>
+    </dialog>
 
     <dialog id="user-edit-dialog" class="ticket-detail-dialog">
         <div class="ticket-detail-card admin-edit-card">
