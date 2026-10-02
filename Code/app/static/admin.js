@@ -70,6 +70,7 @@ function initializeAdminPage() {
     }
 
     showAdminWorkspace();
+    window.dispatchEvent(new Event("admin:authenticated"));
     startAdminWorkspace();
 }
 

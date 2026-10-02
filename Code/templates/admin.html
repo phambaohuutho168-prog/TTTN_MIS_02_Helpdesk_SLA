@@ -21,6 +21,10 @@
         defer
         src="{{ url_for('static', path='admin.js') }}"
     ></script>
+    <script
+        defer
+        src="{{ url_for('static', path='admin-catalogs.js') }}"
+    ></script>
 </head>
 
 <body>
@@ -383,6 +387,281 @@
                     </button>
                 </footer>
             </section>
+            <section
+                id="category-management-section"
+                class="workspace-card admin-catalog-section"
+                aria-labelledby="category-management-title"
+        >
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">CẤU HÌNH TICKET</p>
+                    <h2 id="category-management-title">Danh mục ticket</h2>
+                    <p>
+                        Tạo, chỉnh sửa hoặc ngừng sử dụng các nhóm yêu cầu hỗ trợ.
+                    </p>
+                </div>
+
+                <strong id="category-total">0 danh mục</strong>
+            </header>
+
+            <div
+                id="category-message"
+                class="alert"
+                role="status"
+                hidden
+            ></div>
+
+            <form id="category-form" class="admin-catalog-form">
+                <input id="category-edit-id" type="hidden">
+
+                <div
+                    id="category-form-error"
+                    class="alert alert--error"
+                    role="alert"
+                    hidden
+                ></div>
+
+                <div class="admin-form-grid">
+                    <div class="field-group">
+                        <label for="category-name">Tên danh mục</label>
+                        <input
+                            id="category-name"
+                            type="text"
+                            maxlength="150"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="category-description">Mô tả</label>
+                        <textarea
+                            id="category-description"
+                            rows="3"
+                            maxlength="2000"
+                            placeholder="Mô tả phạm vi yêu cầu thuộc danh mục"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <label class="checkbox-field" for="category-is-active">
+                    <input
+                        id="category-is-active"
+                        type="checkbox"
+                        checked
+                    >
+                    <span>Cho phép sử dụng danh mục này</span>
+                </label>
+
+                <div class="form-actions">
+                    <button
+                        id="category-submit"
+                        class="button button--primary"
+                        type="submit"
+                    >
+                        Tạo danh mục
+                    </button>
+
+                    <button
+                        id="category-cancel-edit"
+                        class="button button--secondary"
+                        type="button"
+                        hidden
+                    >
+                        Hủy chỉnh sửa
+                    </button>
+                </div>
+            </form>
+
+            <div
+                id="category-list-loading"
+                class="loading-panel"
+                role="status"
+            >
+                Đang tải danh mục...
+            </div>
+
+            <div
+                id="category-list-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="category-list-empty"
+                class="empty-panel"
+                hidden
+            >
+                Chưa có danh mục ticket.
+            </div>
+
+            <div id="category-table-wrapper" class="table-wrapper" hidden>
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Tên danh mục</th>
+                            <th scope="col">Mô tả</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+        <section
+    id="priority-management-section"
+    class="workspace-card admin-catalog-section"
+    aria-labelledby="priority-management-title"
+>
+    <header class="section-heading">
+        <div>
+            <p class="eyebrow">CẤU HÌNH SLA</p>
+            <h2 id="priority-management-title">Mức ưu tiên</h2>
+            <p>
+                Quản lý cấp độ ưu tiên được sử dụng khi tiếp nhận ticket.
+            </p>
+        </div>
+
+        <strong id="priority-total">0 mức ưu tiên</strong>
+    </header>
+
+    <div
+        id="priority-message"
+        class="alert"
+        role="status"
+        hidden
+    ></div>
+
+    <form id="priority-form" class="admin-catalog-form">
+        <input id="priority-edit-id" type="hidden">
+
+        <div
+            id="priority-form-error"
+            class="alert alert--error"
+            role="alert"
+            hidden
+        ></div>
+
+        <div class="admin-form-grid">
+            <div class="field-group">
+                <label for="priority-code">Mã ưu tiên</label>
+                <select id="priority-code" required>
+                    <option value="">Chọn mã ưu tiên</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="P3">P3</option>
+                    <option value="P4">P4</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="priority-level">Cấp ưu tiên</label>
+                <input
+                    id="priority-level"
+                    type="number"
+                    min="1"
+                    max="4"
+                    placeholder="Tự động theo mã P1–P4"
+                    readonly
+                    required
+                >
+            </div>
+
+            <div class="field-group">
+                <label for="priority-name">Tên mức ưu tiên</label>
+                <input
+                    id="priority-name"
+                    type="text"
+                    maxlength="100"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="field-group">
+                <label for="priority-description">Mô tả</label>
+                <textarea
+                    id="priority-description"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Mô tả cách sử dụng mức ưu tiên"
+                ></textarea>
+            </div>
+        </div>
+
+        <p class="field-help">
+            Mã và cấp ưu tiên không thể thay đổi sau khi được tạo.
+        </p>
+
+        <label class="checkbox-field" for="priority-is-active">
+            <input
+                id="priority-is-active"
+                type="checkbox"
+                checked
+            >
+            <span>Cho phép sử dụng mức ưu tiên này</span>
+        </label>
+
+        <div class="form-actions">
+            <button
+                id="priority-submit"
+                class="button button--primary"
+                type="submit"
+            >
+                Tạo mức ưu tiên
+            </button>
+
+            <button
+                id="priority-cancel-edit"
+                class="button button--secondary"
+                type="button"
+                hidden
+            >
+                Hủy chỉnh sửa
+            </button>
+        </div>
+    </form>
+
+    <div
+        id="priority-list-loading"
+        class="loading-panel"
+        role="status"
+    >
+        Đang tải mức ưu tiên...
+    </div>
+
+    <div
+        id="priority-list-error"
+        class="alert alert--error"
+        role="alert"
+        hidden
+    ></div>
+
+    <div
+        id="priority-list-empty"
+        class="empty-panel"
+        hidden
+    >
+        Chưa có mức ưu tiên.
+    </div>
+
+        <div id="priority-table-wrapper" class="table-wrapper" hidden>
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Mã và cấp</th>
+                        <th scope="col">Tên mức ưu tiên</th>
+                        <th scope="col">Mô tả</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="priority-table-body"></tbody>
+            </table>
+        </div>
+</section>
         </section>
     </main>
 

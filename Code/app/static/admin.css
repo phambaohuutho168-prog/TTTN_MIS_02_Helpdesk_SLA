@@ -415,3 +415,170 @@
     }
     }
 }
+.admin-catalog-section {
+    margin-top: 24px;
+}
+
+.admin-catalog-section .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.admin-catalog-section .section-heading h2 {
+    margin: 6px 0 8px;
+}
+
+.admin-catalog-section .section-heading p:last-child {
+    margin: 0;
+    color: #647086;
+}
+
+#category-total,
+#priority-total {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    color: #31405f;
+    background: #eef3ff;
+    border-radius: 999px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+#priority-level[readonly] {
+    color: #647086;
+    background: #f2f4f8;
+    cursor: not-allowed;
+}
+
+.priority-code {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    color: #244cbd;
+    background: #eaf0ff;
+    border-radius: 8px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.admin-catalog-form {
+    margin-bottom: 24px;
+    padding: 22px;
+    background: #f8faff;
+    border: 1px solid #dfe6f2;
+    border-radius: 16px;
+}
+
+.admin-catalog-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+}
+
+.admin-catalog-form .checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    margin: 4px 0 20px;
+    color: #35415a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-catalog-form .checkbox-field input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #315bd6;
+}
+
+.admin-catalog-section table {
+    min-width: 760px;
+}
+
+.admin-catalog-section th:last-child,
+.admin-catalog-section td:last-child {
+    width: 150px;
+    min-width: 150px;
+    text-align: right;
+}
+
+.catalog-edit-button {
+    min-width: 118px;
+    min-height: 36px;
+    padding: 7px 12px;
+    white-space: nowrap;
+}
+
+.catalog-description {
+    max-width: 420px;
+    color: #647086;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.catalog-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.catalog-status--active {
+    color: #137047;
+    background: #e3f7ed;
+}
+
+.catalog-status--inactive {
+    color: #7a4650;
+    background: #f8e8eb;
+}
+
+.catalog-edit-button {
+    min-height: 36px;
+    padding: 7px 12px;
+}
+
+@media (max-width: 768px) {
+    .admin-catalog-section .section-heading {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-catalog-form {
+        padding: 18px;
+    }
+
+    .admin-catalog-form .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-catalog-section {
+        margin-top: 18px;
+    }
+
+    .admin-catalog-form {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .admin-catalog-form .form-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-catalog-form .form-actions .button {
+        width: 100%;
+    }
+}

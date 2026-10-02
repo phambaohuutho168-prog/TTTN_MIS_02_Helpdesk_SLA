@@ -207,3 +207,78 @@ async def test_profile_styles_support_desktop_and_mobile(client):
     assert ".profile-role-badge" in css
     assert "width: calc(100vw - 20px)" in css
     assert "grid-template-columns: 1fr" in css
+async def test_admin_exposes_ticket_catalog_management(client):
+    html = (await client.get("/admin")).text
+
+    assert "/static/admin-catalogs.js" in html
+
+    for element_id in (
+        "category-management-section",
+        "category-form",
+        "category-name",
+        "category-description",
+        "category-is-active",
+        "category-table-body",
+        "priority-management-section",
+        "priority-form",
+        "priority-code",
+        "priority-level",
+        "priority-name",
+        "priority-description",
+        "priority-is-active",
+        "priority-table-body",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert (
+        await client.get("/static/admin-catalogs.js")
+    ).status_code == 200
+
+
+async def test_admin_catalog_script_integrates_catalog_endpoints(client):
+    script = (
+        await client.get("/static/admin-catalogs.js")
+    ).text
+
+    for endpoint in (
+        "/categories?is_active=true",
+        "/categories?is_active=false",
+        "/priorities?is_active=true",
+        "/priorities?is_active=false",
+        "/admin/categories",
+        "/admin/priorities",
+    ):
+        assert endpoint in script
+
+    assert 'editingId ? "PATCH" : "POST"' in script
+    assert "admin:authenticated" in script
+    assert "loadCategories()" in script
+    assert "loadPriorities()" in script
+
+
+async def test_admin_catalog_ui_uses_safe_rendering_and_responsive_styles(
+    client,
+):
+    script = (
+        await client.get("/static/admin-catalogs.js")
+    ).text
+    css = (await client.get("/static/admin.css")).text
+
+    assert "sessionStorage" in script
+    assert "localStorage" not in script
+    assert "innerHTML" not in script
+    assert "document.createElement" in script
+    assert "replaceChildren" in script
+    assert "/auth/refresh" in script
+
+    for selector in (
+        ".admin-catalog-section",
+        ".admin-catalog-form",
+        ".catalog-status--active",
+        ".catalog-status--inactive",
+        ".priority-code",
+    ):
+        assert selector in css
+
+    assert "@media (max-width: 768px)" in css
+    assert "@media (max-width: 480px)" in css
