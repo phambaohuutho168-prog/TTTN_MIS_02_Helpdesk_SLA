@@ -136,6 +136,12 @@
         elements.commentForm.addEventListener("submit",handleCommentSubmit,);
         elements.attachmentForm.addEventListener("submit",handleAttachmentUpload,);
         elements.ratingForm.addEventListener("submit",handleRatingSubmit,);
+
+        elements.historyReload.addEventListener("click", () => {
+        if (listState.detailTicket) {
+            void loadTicketHistory(listState.detailTicket);
+        }
+    });
     }
 
     function handleOpenTicketRequest(event) {
@@ -227,18 +233,24 @@
         elements.attachmentFile = document.getElementById("ticket-attachment-file",);
         elements.attachmentSubmit = document.getElementById("ticket-attachment-submit",);
         elements.ratingSection = document.getElementById("ticket-rating-section",);
-elements.ratingLoading = document.getElementById("ticket-rating-loading",);
-elements.ratingError = document.getElementById("ticket-rating-error",);
-elements.ratingEmpty = document.getElementById("ticket-rating-empty",);
-elements.ratingResult = document.getElementById("ticket-rating-result",);
-elements.ratingResultStars = document.getElementById("ticket-rating-result-stars",);
-elements.ratingResultScore = document.getElementById("ticket-rating-result-score",);
-elements.ratingResultComment = document.getElementById("ticket-rating-result-comment",);
-elements.ratingResultAuthor = document.getElementById("ticket-rating-result-author",);
-elements.ratingResultCreatedAt = document.getElementById("ticket-rating-result-created-at",);
-elements.ratingForm = document.getElementById("ticket-rating-form",);
-elements.ratingComment = document.getElementById("ticket-rating-comment",);
-elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
+        elements.ratingLoading = document.getElementById("ticket-rating-loading",);
+        elements.ratingError = document.getElementById("ticket-rating-error",);
+        elements.ratingEmpty = document.getElementById("ticket-rating-empty",);
+        elements.ratingResult = document.getElementById("ticket-rating-result",);
+        elements.ratingResultStars = document.getElementById("ticket-rating-result-stars",);
+        elements.ratingResultScore = document.getElementById("ticket-rating-result-score",);
+        elements.ratingResultComment = document.getElementById("ticket-rating-result-comment",);
+        elements.ratingResultAuthor = document.getElementById("ticket-rating-result-author",);
+        elements.ratingResultCreatedAt = document.getElementById("ticket-rating-result-created-at",);
+        elements.ratingForm = document.getElementById("ticket-rating-form",);
+        elements.ratingComment = document.getElementById("ticket-rating-comment",);
+        elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
+        elements.historyReload = document.getElementById("ticket-history-reload",);
+        elements.historySummary = document.getElementById("ticket-history-summary",);
+        elements.historyLoading = document.getElementById("ticket-history-loading",);
+        elements.historyError = document.getElementById("ticket-history-error",);
+        elements.historyEmpty = document.getElementById("ticket-history-empty",);
+        elements.historyTimeline = document.getElementById("ticket-history-timeline",);
     }
 
     async function startTicketWorkspace() {
@@ -564,6 +576,7 @@ elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
                 configureAssignmentSection(ticket),
                 loadTicketComments(ticket),
                 loadTicketRating(ticket),
+                loadTicketHistory(ticket),
             ]);
         } catch (error) {
             elements.detailLoading.hidden = true;
@@ -589,6 +602,7 @@ elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
         resetConversation();
         resetTicketAttachments();
         resetTicketRating();
+        resetTicketHistory();
     }
 
     function renderTicketDetail(ticket) {
@@ -644,6 +658,210 @@ elements.ratingSubmit = document.getElementById("ticket-rating-submit",);
         return statusLabel
             ? `${deadlineText} · ${statusLabel}`
             : deadlineText;
+    }
+
+    const HISTORY_STATUS_LABELS = Object.freeze({
+        NEW: "Mới",
+        ASSIGNED: "Đã phân công",
+        IN_PROGRESS: "Đang xử lý",
+        WAITING_REQUESTER: "Chờ bổ sung",
+        RESOLVED: "Đã giải quyết",
+        CLOSED: "Đã đóng",
+        REOPENED: "Đã mở lại",
+        REJECTED: "Đã từ chối",
+        PENDING_INFO: "Chờ bổ sung thông tin",
+    });
+
+    function resetTicketHistory() {
+        elements.historyReload.disabled = false;
+        elements.historySummary.textContent =
+            "Chưa tải lịch sử xử lý.";
+        elements.historyLoading.hidden = true;
+        elements.historyError.hidden = true;
+        elements.historyError.textContent = "";
+        elements.historyEmpty.hidden = true;
+        elements.historyTimeline.hidden = true;
+        elements.historyTimeline.replaceChildren();
+    }
+
+    async function loadTicketHistory(ticket) {
+        resetTicketHistory();
+
+        elements.historyReload.disabled = true;
+        elements.historyLoading.hidden = false;
+        elements.historySummary.textContent =
+            "Đang tải lịch sử xử lý...";
+
+        try {
+            const [statusHistory, assignments] = await Promise.all([
+                fetchAllHistoryPages(
+                    `/tickets/${ticket.ticket_id}/status-history`,
+                ),
+                fetchAllHistoryPages(
+                    `/tickets/${ticket.ticket_id}/assignments`,
+                ),
+            ]);
+
+            renderTicketHistory(statusHistory, assignments);
+        } catch (error) {
+            elements.historyError.textContent = error.message;
+            elements.historyError.hidden = false;
+            elements.historySummary.textContent =
+                "Không thể tải lịch sử xử lý.";
+        } finally {
+            elements.historyLoading.hidden = true;
+            elements.historyReload.disabled = false;
+        }
+    }
+
+    async function fetchAllHistoryPages(path) {
+        const items = [];
+        let page = 1;
+        let totalPages = 1;
+
+        do {
+            const separator = path.includes("?") ? "&" : "?";
+            const pageData = await apiRequest(
+                `${path}${separator}page=${page}&page_size=100`,
+            );
+
+            items.push(...(pageData?.items || []));
+            totalPages = Math.max(pageData?.total_pages || 0, 1);
+            page += 1;
+        } while (page <= totalPages);
+
+        return items;
+    }
+
+    function renderTicketHistory(statusHistory, assignments) {
+        const events = [
+            ...statusHistory.map(statusHistoryEvent),
+            ...assignments.map(assignmentHistoryEvent),
+        ].sort(
+            (first, second) =>
+                new Date(second.occurredAt) -
+                new Date(first.occurredAt),
+        );
+
+        elements.historyTimeline.replaceChildren();
+
+        elements.historySummary.textContent =
+            `${statusHistory.length} thay đổi trạng thái · ` +
+            `${assignments.length} lượt phân công`;
+
+        if (events.length === 0) {
+            elements.historyEmpty.hidden = false;
+            elements.historyTimeline.hidden = true;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        for (const event of events) {
+            fragment.append(createHistoryItem(event));
+        }
+
+        elements.historyTimeline.append(fragment);
+        elements.historyEmpty.hidden = true;
+        elements.historyTimeline.hidden = false;
+    }
+
+    function statusHistoryEvent(history) {
+        const fromStatus = history.from_status_code
+            ? statusHistoryLabel(history.from_status_code)
+            : null;
+        const toStatus = statusHistoryLabel(
+            history.to_status_code,
+        );
+        const actor = history.changed_by?.full_name || "Hệ thống";
+
+        return {
+            kind: "status",
+            occurredAt: history.changed_at,
+            title: fromStatus
+                ? `${fromStatus} → ${toStatus}`
+                : `Khởi tạo trạng thái ${toStatus}`,
+            description: `${actor} thực hiện thay đổi trạng thái.`,
+            reason: history.reason,
+        };
+    }
+
+    function assignmentHistoryEvent(assignment) {
+        const assignee =
+            assignment.assignee?.full_name || "Không xác định";
+        const assignedBy =
+            assignment.assigned_by?.full_name || "Hệ thống";
+
+        const stateDescription = assignment.is_current
+            ? "Đang là người xử lý hiện tại."
+            : assignment.ended_at
+                ? `Kết thúc lúc ${formatDateTime(assignment.ended_at)}.`
+                : "Đã kết thúc phân công.";
+
+        return {
+            kind: "assignment",
+            occurredAt: assignment.assigned_at,
+            title: `Phân công cho ${assignee}`,
+            description:
+                `${assignedBy} thực hiện phân công. ` +
+                stateDescription,
+            reason: assignment.reason,
+        };
+    }
+
+    function createHistoryItem(event) {
+        const item = document.createElement("li");
+        const marker = document.createElement("span");
+        const card = document.createElement("article");
+        const header = document.createElement("header");
+        const title = document.createElement("h4");
+        const time = document.createElement("time");
+        const description = document.createElement("p");
+        const kind = document.createElement("span");
+
+        item.className =
+            `ticket-history-item ticket-history-item--${event.kind}`;
+        marker.className = "ticket-history-marker";
+        marker.setAttribute("aria-hidden", "true");
+
+        card.className = "ticket-history-card";
+        header.className = "ticket-history-header";
+        title.className = "ticket-history-title";
+        time.className = "ticket-history-time";
+        description.className = "ticket-history-description";
+        kind.className =
+            `ticket-history-kind ticket-history-kind--${event.kind}`;
+
+        title.textContent = event.title;
+        time.textContent = formatDateTime(event.occurredAt);
+        time.dateTime = event.occurredAt;
+        description.textContent = event.description;
+        kind.textContent =
+            event.kind === "status"
+                ? "Trạng thái"
+                : "Phân công";
+
+        header.append(title, time);
+        card.append(header, description);
+
+        if (event.reason) {
+            const reason = document.createElement("p");
+            reason.className = "ticket-history-reason";
+            reason.textContent = `Lý do: ${event.reason}`;
+            card.append(reason);
+        }
+
+        card.append(kind);
+        item.append(marker, card);
+
+        return item;
+    }
+
+    function statusHistoryLabel(statusCode) {
+        return (
+            HISTORY_STATUS_LABELS[statusCode] ||
+            String(statusCode || "Không xác định")
+        );
     }
 
     function closeTicketDetail() {

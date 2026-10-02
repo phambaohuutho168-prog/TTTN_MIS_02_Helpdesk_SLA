@@ -753,6 +753,63 @@
                         </div>
                     </form>
                 </section>
+        <section
+            id="ticket-history-section"
+            class="ticket-detail-section ticket-history-section"
+            aria-labelledby="ticket-history-title"
+        >
+            <header class="section-heading">
+                <div>
+                    <h3 id="ticket-history-title">Lịch sử xử lý</h3>
+                    <p>
+                        Theo dõi thay đổi trạng thái và quá trình phân công ticket.
+                    </p>
+                </div>
+
+                <button
+                    id="ticket-history-reload"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Tải lại
+                </button>
+            </header>
+
+            <p id="ticket-history-summary" class="field-help">
+                Chưa tải lịch sử xử lý.
+            </p>
+
+            <div
+                id="ticket-history-loading"
+                class="loading-panel"
+                role="status"
+                hidden
+            >
+                Đang tải lịch sử xử lý...
+            </div>
+
+            <div
+                id="ticket-history-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="ticket-history-empty"
+                class="empty-panel"
+                hidden
+            >
+                Ticket chưa có lịch sử trạng thái hoặc phân công.
+            </div>
+
+            <ol
+                id="ticket-history-timeline"
+                class="ticket-history-timeline"
+                aria-label="Dòng thời gian xử lý ticket"
+                hidden
+            ></ol>
+        </section>
             </div>
         </article>
     </dialog>

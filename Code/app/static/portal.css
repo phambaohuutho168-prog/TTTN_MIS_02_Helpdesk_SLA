@@ -1427,3 +1427,157 @@ h1 {
         padding-left: 12px;
     }
 }
+.ticket-history-section .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 10px;
+}
+
+.ticket-history-section .section-heading h3 {
+    margin: 0 0 6px;
+}
+
+.ticket-history-section .section-heading p {
+    margin: 0;
+    color: #647086;
+}
+
+.ticket-history-timeline {
+    position: relative;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticket-history-timeline::before {
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: 15px;
+    width: 2px;
+    background: #dce4f2;
+    content: "";
+}
+
+.ticket-history-item {
+    position: relative;
+    padding: 0 0 20px 48px;
+}
+
+.ticket-history-item:last-child {
+    padding-bottom: 0;
+}
+
+.ticket-history-marker {
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    left: 7px;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border: 5px solid #315bd6;
+    border-radius: 50%;
+}
+
+.ticket-history-item--assignment .ticket-history-marker {
+    border-color: #8b5cf6;
+}
+
+.ticket-history-card {
+    padding: 16px 18px;
+    background: #f8faff;
+    border: 1px solid #dde5f1;
+    border-radius: 14px;
+}
+
+.ticket-history-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.ticket-history-title {
+    margin: 0;
+    color: #1d2940;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.ticket-history-time {
+    flex: 0 0 auto;
+    color: #718097;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.ticket-history-description {
+    margin: 0;
+    color: #4f5d75;
+    line-height: 1.55;
+}
+
+.ticket-history-reason {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    color: #47556e;
+    background: #fff;
+    border-left: 3px solid #9aabd0;
+    border-radius: 6px;
+    white-space: pre-wrap;
+}
+
+.ticket-history-kind {
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.ticket-history-kind--status {
+    color: #2450bf;
+    background: #e9efff;
+}
+
+.ticket-history-kind--assignment {
+    color: #7041b5;
+    background: #f0e8ff;
+}
+
+@media (max-width: 640px) {
+    .ticket-history-section .section-heading,
+    .ticket-history-header {
+        flex-direction: column;
+    }
+
+    .ticket-history-section .section-heading .button {
+        width: 100%;
+    }
+
+    .ticket-history-time {
+        white-space: normal;
+    }
+
+    .ticket-history-item {
+        padding-left: 40px;
+    }
+
+    .ticket-history-timeline::before {
+        left: 11px;
+    }
+
+    .ticket-history-marker {
+        left: 3px;
+    }
+
+    .ticket-history-card {
+        padding: 14px;
+    }
+}

@@ -368,3 +368,55 @@ async def test_admin_audit_uses_safe_rendering_and_responsive_styles(
     assert "@media (max-width: 960px)" in css
     assert "@media (max-width: 640px)" in css
     assert "overflow-x: hidden" in css
+async def test_portal_exposes_ticket_history_timeline(client):
+    html = (await client.get("/portal")).text
+
+    for element_id in (
+        "ticket-history-section",
+        "ticket-history-title",
+        "ticket-history-reload",
+        "ticket-history-summary",
+        "ticket-history-loading",
+        "ticket-history-error",
+        "ticket-history-empty",
+        "ticket-history-timeline",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert 'aria-label="Dòng thời gian xử lý ticket"' in html
+
+
+async def test_ticket_script_integrates_status_and_assignment_history(
+    client,
+):
+    script = (
+        await client.get("/static/portal-tickets.js")
+    ).text
+
+    assert "/status-history" in script
+    assert "/assignments" in script
+    assert "loadTicketHistory(ticket)" in script
+    assert "fetchAllHistoryPages" in script
+    assert "statusHistoryEvent" in script
+    assert "assignmentHistoryEvent" in script
+    assert "PENDING_INFO" in script
+    assert "innerHTML" not in script
+
+
+async def test_ticket_history_styles_support_timeline_and_mobile(
+    client,
+):
+    css = (await client.get("/static/portal.css")).text
+
+    for selector in (
+        ".ticket-history-timeline",
+        ".ticket-history-item",
+        ".ticket-history-marker",
+        ".ticket-history-card",
+        ".ticket-history-item--assignment",
+        ".ticket-history-kind--status",
+        ".ticket-history-kind--assignment",
+    ):
+        assert selector in css
+
+    assert "@media (max-width: 640px)" in css
