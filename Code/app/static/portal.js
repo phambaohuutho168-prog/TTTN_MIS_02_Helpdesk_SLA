@@ -23,6 +23,10 @@ const state = {
 const elements = {};
 
 document.addEventListener("DOMContentLoaded", initialize);
+window.addEventListener(
+    "portal:profile-updated",
+    handleProfileUpdated,
+);
 
 function initialize() {
     cacheElements();
@@ -205,6 +209,22 @@ function showPortal() {
         () => window.dispatchEvent(new Event("portal:authenticated")),
         0,
     );
+}
+
+function handleProfileUpdated(event) {
+    const updatedUser = event.detail?.user;
+
+    if (!updatedUser) return;
+
+    state.user = updatedUser;
+
+    const role = primaryRole();
+    const roleLabel = ROLE_LABELS[role] || "Người dùng";
+
+    elements.currentUserName.textContent =
+        updatedUser.full_name;
+    elements.currentUserRole.textContent = roleLabel;
+    elements.roleBadge.textContent = roleLabel;
 }
 
 async function handleLogout() {

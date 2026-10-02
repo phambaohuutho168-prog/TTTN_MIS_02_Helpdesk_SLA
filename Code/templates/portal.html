@@ -8,6 +8,7 @@
     <script defer src="{{ url_for('static', path='portal.js') }}"></script>
     <script defer src="{{ url_for('static', path='portal-tickets.js') }}"></script>
     <script defer src="{{ url_for('static', path='portal-notifications.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-profile.js') }}"></script>
 </head>
 <body>
     <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
@@ -132,11 +133,123 @@
                 <strong id="current-user-name">—</strong>
                 <span id="current-user-role">—</span>
             </div>
+            <button
+                id="profile-open"
+                class="button button--secondary"
+                type="button"
+            >
+                Hồ sơ
+            </button>
             <button id="logout-button" class="button button--secondary" type="button">
                 Đăng xuất
             </button>
         </div>
     </header>
+
+        <dialog id="profile-dialog" class="ticket-detail-dialog">
+            <div class="ticket-detail-card profile-card">
+                <header class="ticket-detail-header">
+                    <div>
+                        <p class="eyebrow">HỒ SƠ CÁ NHÂN</p>
+                        <h2 id="profile-title">Thông tin tài khoản</h2>
+                    </div>
+
+                    <button
+                        id="profile-close"
+                        class="dialog-close"
+                        type="button"
+                        aria-label="Đóng hồ sơ"
+                    >
+                        ×
+                    </button>
+                </header>
+
+                <form id="profile-form">
+                    <div
+                        id="profile-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="profile-success"
+                        class="alert alert--success"
+                        role="status"
+                        hidden
+                    ></div>
+
+                    <div class="profile-grid">
+                        <div class="field-group">
+                            <label for="profile-email">Email</label>
+                            <input
+                                id="profile-email"
+                                type="email"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-full-name">Họ và tên</label>
+                            <input
+                                id="profile-full-name"
+                                type="text"
+                                maxlength="150"
+                                required
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-phone">Số điện thoại</label>
+                            <input
+                                id="profile-phone"
+                                type="tel"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-department">Phòng ban</label>
+                            <input
+                                id="profile-department"
+                                type="text"
+                                readonly
+                            >
+                        </div>
+                    </div>
+
+                    <section class="profile-role-section">
+                        <h3>Vai trò được cấp</h3>
+                        <div
+                            id="profile-role-list"
+                            class="role-checkbox-list"
+                            aria-label="Danh sách vai trò"
+                        ></div>
+                        <p class="field-help">
+                            Liên hệ Quản trị viên nếu cần thay đổi vai trò hoặc phòng ban.
+                        </p>
+                    </section>
+
+                    <div class="form-actions">
+                        <button
+                            id="profile-submit"
+                            class="button button--primary"
+                            type="submit"
+                        >
+                            Lưu hồ sơ
+                        </button>
+
+                        <button
+                            id="profile-cancel"
+                            class="button button--secondary"
+                            type="button"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
 
         <dialog
         id="ticket-detail-dialog"

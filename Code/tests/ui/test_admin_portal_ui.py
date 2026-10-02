@@ -156,3 +156,54 @@ async def test_notification_ui_uses_safe_rendering_and_mobile_styles(client):
     assert ".notification-panel" in css
     assert ".notification-item--unread" in css
     assert "@media (max-width: 640px)" in css
+async def test_portal_exposes_profile_dialog_and_local_asset(client):
+    html = (await client.get("/portal")).text
+
+    assert "/static/portal-profile.js" in html
+
+    for element_id in (
+        "profile-open",
+        "profile-dialog",
+        "profile-close",
+        "profile-form",
+        "profile-email",
+        "profile-full-name",
+        "profile-phone",
+        "profile-department",
+        "profile-role-list",
+        "profile-submit",
+        "profile-cancel",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert (
+        await client.get("/static/portal-profile.js")
+    ).status_code == 200
+
+
+async def test_profile_script_updates_current_user_safely(client):
+    profile_script = (
+        await client.get("/static/portal-profile.js")
+    ).text
+    portal_script = (
+        await client.get("/static/portal.js")
+    ).text
+
+    assert '"/users/me"' in profile_script
+    assert 'method: "PATCH"' in profile_script
+    assert "sessionStorage" in profile_script
+    assert "localStorage" not in profile_script
+    assert "innerHTML" not in profile_script
+    assert "portal:profile-updated" in profile_script
+    assert "portal:profile-updated" in portal_script
+    assert "handleProfileUpdated" in portal_script
+
+
+async def test_profile_styles_support_desktop_and_mobile(client):
+    css = (await client.get("/static/portal.css")).text
+
+    assert ".profile-card" in css
+    assert ".profile-grid" in css
+    assert ".profile-role-badge" in css
+    assert "width: calc(100vw - 20px)" in css
+    assert "grid-template-columns: 1fr" in css
