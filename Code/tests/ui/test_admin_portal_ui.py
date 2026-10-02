@@ -99,3 +99,60 @@ async def test_admin_styles_support_mobile_and_table_overflow(client):
     assert "overflow-x: auto" in css
     assert ".admin-edit-card" in css
     assert ".admin-create-panel" in css
+
+async def test_portal_exposes_notification_center_and_local_asset(client):
+    html = (await client.get("/portal")).text
+
+    assert "/static/portal-notifications.js" in html
+
+    for element_id in (
+        "notification-center",
+        "notification-toggle",
+        "notification-unread-count",
+        "notification-panel",
+        "notification-filter",
+        "notification-mark-all",
+        "notification-list",
+        "notification-previous",
+        "notification-next",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert (
+        await client.get("/static/portal-notifications.js")
+    ).status_code == 200
+
+
+async def test_notification_script_integrates_api_and_ticket_detail(client):
+    notification_script = (
+        await client.get("/static/portal-notifications.js")
+    ).text
+    ticket_script = (
+        await client.get("/static/portal-tickets.js")
+    ).text
+
+    for endpoint in (
+        "/notifications?is_read=false",
+        "/notifications/read-all",
+        "/notifications/${notification.notification_id}/read",
+    ):
+        assert endpoint in notification_script
+
+    assert "portal:open-ticket" in notification_script
+    assert "portal:open-ticket" in ticket_script
+    assert "openTicketDetail(ticketId)" in ticket_script
+
+
+async def test_notification_ui_uses_safe_rendering_and_mobile_styles(client):
+    script = (
+        await client.get("/static/portal-notifications.js")
+    ).text
+    css = (await client.get("/static/portal.css")).text
+
+    assert "sessionStorage" in script
+    assert "localStorage" not in script
+    assert "innerHTML" not in script
+    assert "NOTIFICATION_TYPE_LABELS" in script
+    assert ".notification-panel" in css
+    assert ".notification-item--unread" in css
+    assert "@media (max-width: 640px)" in css

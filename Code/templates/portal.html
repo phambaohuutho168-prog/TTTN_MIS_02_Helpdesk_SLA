@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='portal.css') }}">
     <script defer src="{{ url_for('static', path='portal.js') }}"></script>
     <script defer src="{{ url_for('static', path='portal-tickets.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-notifications.js') }}"></script>
 </head>
 <body>
     <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
@@ -25,6 +26,108 @@
         </nav>
 
         <div id="session-navigation" class="session-navigation" hidden>
+            <div id="notification-center" class="notification-center">
+                <button
+                    id="notification-toggle"
+                    class="button button--secondary notification-toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="notification-panel"
+                >
+                    <span aria-hidden="true">🔔</span>
+                    <span class="notification-toggle__label">Thông báo</span>
+                    <span
+                        id="notification-unread-count"
+                        class="notification-badge"
+                        aria-label="Thông báo chưa đọc"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+                <section
+                    id="notification-panel"
+                    class="notification-panel"
+                    aria-labelledby="notification-title"
+                    hidden
+                >
+                    <header class="notification-panel__header">
+                        <div>
+                            <p class="eyebrow">HỘP THÔNG BÁO</p>
+                            <h2 id="notification-title">Thông báo của bạn</h2>
+                        </div>
+
+                        <button
+                            id="notification-mark-all"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Đánh dấu tất cả đã đọc
+                        </button>
+                    </header>
+
+                    <div class="notification-toolbar">
+                        <label for="notification-filter">Hiển thị</label>
+                        <select id="notification-filter">
+                            <option value="">Tất cả</option>
+                            <option value="false">Chưa đọc</option>
+                            <option value="true">Đã đọc</option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="notification-loading"
+                        class="notification-state"
+                        role="status"
+                        hidden
+                    >
+                        Đang tải thông báo...
+                    </div>
+
+                    <div
+                        id="notification-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="notification-empty"
+                        class="notification-state"
+                        hidden
+                    >
+                        Bạn chưa có thông báo phù hợp.
+                    </div>
+
+                    <ul
+                        id="notification-list"
+                        class="notification-list"
+                        aria-label="Danh sách thông báo"
+                        hidden
+                    ></ul>
+
+                    <footer class="notification-pagination">
+                        <button
+                            id="notification-previous"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Trang trước
+                        </button>
+
+                        <span id="notification-page-status">Trang 1/1</span>
+
+                        <button
+                            id="notification-next"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Trang sau
+                        </button>
+                    </footer>
+                </section>
+            </div>
             <div class="user-summary">
                 <strong id="current-user-name">—</strong>
                 <span id="current-user-role">—</span>

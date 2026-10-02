@@ -109,7 +109,14 @@
     const elements = {};
 
     document.addEventListener("DOMContentLoaded", initialize);
-    window.addEventListener("portal:authenticated", startTicketWorkspace);
+    window.addEventListener(
+        "portal:authenticated",
+        startTicketWorkspace
+    );
+    window.addEventListener(
+        "portal:open-ticket",
+        handleOpenTicketRequest,
+    );
 
     function initialize() {
         cacheElements();
@@ -129,6 +136,16 @@
         elements.commentForm.addEventListener("submit",handleCommentSubmit,);
         elements.attachmentForm.addEventListener("submit",handleAttachmentUpload,);
         elements.ratingForm.addEventListener("submit",handleRatingSubmit,);
+    }
+
+    function handleOpenTicketRequest(event) {
+        const ticketId = Number(event.detail?.ticketId);
+
+        if (!Number.isInteger(ticketId) || ticketId <= 0) {
+            return;
+        }
+
+        void openTicketDetail(ticketId);
     }
 
     function cacheElements() {
