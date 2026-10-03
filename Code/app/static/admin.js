@@ -206,6 +206,16 @@ async function loadAdminCatalogs() {
         "department_name",
         "Tất cả phòng ban",
     );
+
+    populateSelect(
+        elements.createDepartment,
+        adminState.departments,
+        "department_id",
+        "department_name",
+        "Không chọn phòng ban",
+    );
+
+    renderRoleCheckboxes(elements.createRoles);
 }
 
 function populateSelect(
@@ -218,6 +228,7 @@ function populateSelect(
     select.replaceChildren();
 
     const defaultOption = document.createElement("option");
+
     defaultOption.value = "";
     defaultOption.textContent = placeholder;
     select.append(defaultOption);
@@ -231,15 +242,6 @@ function populateSelect(
         select.append(option);
     }
 }
-populateSelect(
-    elements.createDepartment,
-    adminState.departments,
-    "department_id",
-    "department_name",
-    "Không chọn phòng ban",
-);
-
-renderRoleCheckboxes(elements.createRoles);
 
 async function loadAdminSummary() {
     const [allUsers, activeUsers, inactiveUsers] =
