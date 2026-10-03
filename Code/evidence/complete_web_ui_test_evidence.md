@@ -86,4 +86,21 @@ trao đổi và tệp đính kèm hiển thị đúng trên mobile.
 Lệnh thực thi:
 
 ```powershell
-python -m pytest -q
+python -m pytest -o addopts="" -q
+```
+
+Kết quả:
+
+```text
+339 passed in 190.88s (0:03:10)
+```
+
+- Passed: 339;
+- Failed: 0;
+- Error: 0;
+- Skipped: 0.
+
+## 7. Kết luận
+
+Giao diện Web hoàn chỉnh cho Requester, Processor và Admin đã đạt yêu cầu.
+Toàn bộ 339 automated test passed, không phát sinh regression.
