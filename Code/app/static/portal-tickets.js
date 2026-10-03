@@ -142,6 +142,7 @@
             void loadTicketHistory(listState.detailTicket);
         }
     });
+        elements.slaReload.addEventListener("click", handleTicketSlaReload,);
     }
 
     function handleOpenTicketRequest(event) {
@@ -251,6 +252,23 @@
         elements.historyError = document.getElementById("ticket-history-error",);
         elements.historyEmpty = document.getElementById("ticket-history-empty",);
         elements.historyTimeline = document.getElementById("ticket-history-timeline",);
+        elements.slaSection = document.getElementById("ticket-sla-section");
+        elements.slaOverall = document.getElementById("ticket-sla-overall");
+        elements.slaReload = document.getElementById("ticket-sla-reload");
+        elements.slaLoading = document.getElementById("ticket-sla-loading");
+        elements.slaError = document.getElementById("ticket-sla-error");
+        elements.slaContent = document.getElementById("ticket-sla-content");
+        elements.slaFirstResponse = document.getElementById("ticket-sla-first-response");
+        elements.slaResponseEmpty = document.getElementById("ticket-sla-response-empty");
+        elements.slaResponseContainer = document.getElementById("ticket-sla-response-container");
+        elements.slaResolutionEmpty = document.getElementById("ticket-sla-resolution-empty");
+        elements.slaResolutionList = document.getElementById("ticket-sla-resolution-list");
+    }
+
+    async function handleTicketSlaReload() {
+        if (!listState.detailTicket) return;
+
+        await loadTicketSla(listState.detailTicket);
     }
 
     async function startTicketWorkspace() {
@@ -517,6 +535,7 @@
     }
 
     function formatDateTime(value) {
+        if (!value) return "—";
         const date = new Date(value);
 
         if (Number.isNaN(date.getTime())) return "—";
@@ -577,8 +596,10 @@
                 loadTicketComments(ticket),
                 loadTicketRating(ticket),
                 loadTicketHistory(ticket),
+                loadTicketSla(ticket),
             ]);
         } catch (error) {
+            console.error("OPEN_TICKET_DETAIL_ERROR", error);
             elements.detailLoading.hidden = true;
             elements.detailContent.hidden = true;
             elements.detailError.textContent = error.message;
@@ -603,6 +624,7 @@
         resetTicketAttachments();
         resetTicketRating();
         resetTicketHistory();
+        resetTicketSla();
     }
 
     function renderTicketDetail(ticket) {
@@ -1106,6 +1128,7 @@
                 configureAssignmentSection(updatedTicket),
                 loadTicketComments(updatedTicket),
                 loadTicketRating(updatedTicket),
+                loadTicketSla(ticket),
             ]);
             await loadTickets();
         } catch (error) {
@@ -1850,6 +1873,366 @@
     function clearCreateError() {
         elements.createError.textContent = "";
         elements.createError.hidden = true;
+    }
+
+    function resetTicketSla() {
+        elements.slaLoading.hidden = true;
+        elements.slaError.hidden = true;
+        elements.slaError.textContent = "";
+        elements.slaContent.hidden = true;
+
+        elements.slaOverall.className =
+            "sla-status-badge sla-status-badge--muted";
+        elements.slaOverall.textContent = "Chưa tải";
+
+        elements.slaFirstResponse.textContent = "—";
+        elements.slaResponseEmpty.hidden = true;
+        elements.slaResolutionEmpty.hidden = true;
+
+        elements.slaResponseContainer.replaceChildren();
+        elements.slaResolutionList.replaceChildren();
+    }
+
+    async function loadTicketSla(ticket) {
+        const ticketId = Number(ticket?.ticket_id);
+
+        if (!ticketId) return;
+
+        resetTicketSla();
+        elements.slaLoading.hidden = false;
+        elements.slaReload.disabled = true;
+
+        try {
+            const sla = await apiRequest(`/tickets/${ticketId}/sla`);
+
+            if (listState.detailTicketId !== ticketId) return;
+
+            renderTicketSla(sla);
+        } catch (error) {
+            if (listState.detailTicketId !== ticketId) return;
+
+            elements.slaLoading.hidden = true;
+            elements.slaContent.hidden = true;
+            elements.slaError.textContent =
+                error.message || "Không thể tải thông tin SLA.";
+            elements.slaError.hidden = false;
+        } finally {
+            if (listState.detailTicketId === ticketId) {
+                elements.slaReload.disabled = false;
+            }
+        }
+    }
+
+    function renderTicketSla(sla) {
+        const responseSla = sla?.response_sla || null;
+        const resolutionCycles = Array.isArray(sla?.resolution_cycles)
+            ? [...sla.resolution_cycles]
+            : [];
+
+        resolutionCycles.sort(
+            (left, right) =>
+                Number(right.cycle_no || 0) -
+                Number(left.cycle_no || 0),
+        );
+
+        elements.slaLoading.hidden = true;
+        elements.slaError.hidden = true;
+        elements.slaContent.hidden = false;
+
+        setTicketSlaStatusBadge(
+            elements.slaOverall,
+            sla?.overall_status,
+        );
+
+        elements.slaFirstResponse.textContent =
+            formatDateTime(sla?.first_response_at);
+
+        elements.detailResponseDeadline.textContent =
+            formatDateTime(
+                responseSla?.effective_due_at ||
+                responseSla?.due_at,
+            );
+
+        const currentResolution =
+            resolutionCycles.find((item) =>
+                ["ACTIVE", "PAUSED"].includes(item.runtime_status),
+            ) ||
+            resolutionCycles[0] ||
+            null;
+
+        elements.detailResolutionDeadline.textContent =
+            formatDateTime(
+                currentResolution?.effective_due_at ||
+                currentResolution?.due_at,
+            );
+
+        elements.slaResponseContainer.replaceChildren();
+
+        if (responseSla) {
+            elements.slaResponseEmpty.hidden = true;
+            elements.slaResponseContainer.append(
+                createTicketSlaCard(
+                    responseSla,
+                    "Thời hạn phản hồi đầu tiên",
+                ),
+            );
+        } else {
+            elements.slaResponseEmpty.hidden = false;
+        }
+
+        elements.slaResolutionList.replaceChildren();
+
+        if (resolutionCycles.length === 0) {
+            elements.slaResolutionEmpty.hidden = false;
+        } else {
+            elements.slaResolutionEmpty.hidden = true;
+
+            for (const cycle of resolutionCycles) {
+                const item = document.createElement("li");
+
+                item.append(
+                    createTicketSlaCard(
+                        cycle,
+                        `Chu kỳ xử lý ${cycle.cycle_no}`,
+                    ),
+                );
+
+                elements.slaResolutionList.append(item);
+            }
+        }
+    }
+
+    function createTicketSlaCard(item, title) {
+        const card = document.createElement("article");
+        const header = document.createElement("header");
+        const headingGroup = document.createElement("div");
+        const heading = document.createElement("h5");
+        const subtitle = document.createElement("p");
+        const statusBadge = document.createElement("span");
+        const details = document.createElement("dl");
+
+        card.className = "ticket-sla-card";
+        header.className = "ticket-sla-card__header";
+        details.className = "ticket-sla-card__grid";
+
+        heading.textContent = title;
+        subtitle.textContent =
+            `Chính sách phiên bản ${item.policy_version} · ` +
+            `${formatTicketSlaMinutes(item.target_minutes)}`;
+
+        setTicketSlaStatusBadge(statusBadge, item.status);
+
+        headingGroup.append(heading, subtitle);
+        header.append(headingGroup, statusBadge);
+
+        appendTicketSlaMetric(
+            details,
+            "Bắt đầu",
+            formatDateTime(item.started_at),
+        );
+        appendTicketSlaMetric(
+            details,
+            "Hạn hiệu lực",
+            formatDateTime(item.effective_due_at || item.due_at),
+        );
+        appendTicketSlaMetric(
+            details,
+            "Hoàn tất",
+            formatDateTime(item.completed_at),
+        );
+        appendTicketSlaMetric(
+            details,
+            "Trạng thái vận hành",
+            formatTicketSlaRuntime(item.runtime_status),
+        );
+        appendTicketSlaMetric(
+            details,
+            "Kết quả",
+            formatTicketSlaResult(item.result),
+        );
+        appendTicketSlaMetric(
+            details,
+            "Thời gian tạm dừng",
+            formatTicketSlaSeconds(item.total_paused_seconds),
+        );
+
+        card.append(header, details);
+
+        if (item.progress_percent != null) {
+            card.append(createTicketSlaProgress(item));
+        }
+
+        return card;
+    }
+
+    function appendTicketSlaMetric(container, label, value) {
+        const wrapper = document.createElement("div");
+        const term = document.createElement("dt");
+        const description = document.createElement("dd");
+
+        term.textContent = label;
+        description.textContent = value || "—";
+
+        wrapper.append(term, description);
+        container.append(wrapper);
+    }
+
+    function createTicketSlaProgress(item) {
+        const group = document.createElement("div");
+        const label = document.createElement("div");
+        const description = document.createElement("span");
+        const percentage = document.createElement("strong");
+        const progress = document.createElement("progress");
+
+        const numericProgress = Number(item.progress_percent);
+        const displayedProgress = Number.isFinite(numericProgress)
+            ? Math.max(0, numericProgress)
+            : 0;
+        const progressValue = Math.min(100, displayedProgress);
+        const tone = ticketSlaTone(item.status?.tone);
+
+        group.className = "ticket-sla-progress-group";
+        label.className = "ticket-sla-progress-label";
+
+        description.textContent =
+            formatTicketSlaRemaining(item.remaining_seconds);
+        percentage.textContent =
+            `${Math.round(displayedProgress)}% thời hạn`;
+
+        progress.className = "ticket-sla-progress";
+
+        if (["warning", "danger", "success"].includes(tone)) {
+            progress.classList.add(
+                `ticket-sla-progress--${tone}`,
+            );
+        }
+
+        progress.max = 100;
+        progress.value = progressValue;
+        progress.setAttribute(
+            "aria-label",
+            `${titleForSlaType(item.sla_type)}: ` +
+            `${Math.round(displayedProgress)}% thời hạn`,
+        );
+
+        label.append(description, percentage);
+        group.append(label, progress);
+
+        return group;
+    }
+
+    function setTicketSlaStatusBadge(element, status) {
+        const tone = ticketSlaTone(status?.tone);
+
+        element.className =
+            `sla-status-badge sla-status-badge--${tone}`;
+        element.textContent =
+            status?.label ||
+            formatTicketSlaStatus(status?.code);
+    }
+
+    function ticketSlaTone(value) {
+        const tone = String(value || "MUTED").toLowerCase();
+
+        return ["info", "warning", "danger", "success", "muted"]
+            .includes(tone)
+            ? tone
+            : "muted";
+    }
+
+    function formatTicketSlaStatus(code) {
+        const labels = {
+            ON_TRACK: "Đúng tiến độ",
+            NEAR_DUE: "Sắp đến hạn",
+            OVERDUE: "Quá hạn",
+            MET: "Đạt SLA",
+            NOT_APPLICABLE: "Không áp dụng",
+        };
+
+        return labels[code] || "Chưa xác định";
+    }
+
+    function formatTicketSlaRuntime(value) {
+        const labels = {
+            ACTIVE: "Đang tính thời gian",
+            PAUSED: "Đang tạm dừng",
+            COMPLETED: "Đã hoàn tất",
+            CANCELLED: "Đã hủy",
+        };
+
+        return labels[value] || value || "—";
+    }
+
+    function formatTicketSlaResult(value) {
+        const labels = {
+            MET: "Đạt SLA",
+            BREACHED: "Vi phạm SLA",
+            CANCELLED: "Đã hủy",
+        };
+
+        return labels[value] || value || "Chưa có kết quả";
+    }
+
+    function titleForSlaType(value) {
+        return value === "RESPONSE" ? "SLA phản hồi" : "SLA xử lý";
+    }
+
+    function formatTicketSlaMinutes(value) {
+        const minutes = Number(value);
+
+        if (!Number.isFinite(minutes)) return "Chưa có thời hạn";
+
+        if (minutes < 60) return `${minutes} phút`;
+
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+
+        return remainingMinutes
+            ? `${hours} giờ ${remainingMinutes} phút`
+            : `${hours} giờ`;
+    }
+
+    function formatTicketSlaSeconds(value) {
+        const seconds = Number(value);
+
+        if (!Number.isFinite(seconds) || seconds <= 0) {
+            return "Không";
+        }
+
+        return formatTicketSlaDuration(seconds);
+    }
+
+    function formatTicketSlaRemaining(value) {
+        const seconds = Number(value);
+
+        if (!Number.isFinite(seconds)) {
+            return "Chưa có dữ liệu thời gian";
+        }
+
+        if (seconds < 0) {
+            return `Quá hạn ${formatTicketSlaDuration(Math.abs(seconds))}`;
+        }
+
+        return `Còn lại ${formatTicketSlaDuration(seconds)}`;
+    }
+
+    function formatTicketSlaDuration(value) {
+        const totalMinutes = Math.max(
+            0,
+            Math.floor(Number(value) / 60),
+        );
+        const days = Math.floor(totalMinutes / 1440);
+        const hours = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+        const parts = [];
+
+        if (days) parts.push(`${days} ngày`);
+        if (hours) parts.push(`${hours} giờ`);
+        if (minutes || parts.length === 0) {
+            parts.push(`${minutes} phút`);
+        }
+
+        return parts.join(" ");
     }
 
     async function apiRequest(path, options = {}, retry = true) {

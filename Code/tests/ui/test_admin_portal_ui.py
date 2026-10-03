@@ -420,3 +420,117 @@ async def test_ticket_history_styles_support_timeline_and_mobile(
         assert selector in css
 
     assert "@media (max-width: 640px)" in css
+async def test_portal_exposes_ticket_sla_detail_controls(client):
+    html = (await client.get("/portal")).text
+
+    for element_id in (
+        "ticket-sla-section",
+        "ticket-sla-overall",
+        "ticket-sla-reload",
+        "ticket-sla-loading",
+        "ticket-sla-error",
+        "ticket-sla-content",
+        "ticket-sla-first-response",
+        "ticket-sla-response-empty",
+        "ticket-sla-response-container",
+        "ticket-sla-resolution-empty",
+        "ticket-sla-resolution-list",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert 'id="ticket-detail-response-deadline"' in html
+    assert 'id="ticket-detail-resolution-deadline"' in html
+    assert 'id="ticket-detail-description"' in html
+
+
+async def test_ticket_sla_script_integrates_detail_endpoint_safely(client):
+    script = (
+        await client.get("/static/portal-tickets.js")
+    ).text
+
+    assert "`/tickets/${ticketId}/sla`" in script
+    assert "loadTicketSla(ticket)" in script
+    assert "handleTicketSlaReload" in script
+    assert "renderTicketSla" in script
+    assert "createTicketSlaCard" in script
+    assert "setTicketSlaStatusBadge" in script
+    assert "replaceChildren" in script
+    assert "innerHTML" not in script
+
+
+async def test_ticket_sla_styles_support_status_progress_and_mobile(client):
+    css = (await client.get("/static/portal.css")).text
+
+    for selector in (
+        ".ticket-sla-card",
+        ".ticket-sla-card__grid",
+        ".ticket-sla-progress",
+        ".sla-status-badge--warning",
+        ".sla-status-badge--danger",
+        ".sla-status-badge--success",
+    ):
+        assert selector in css
+
+    assert "@media (max-width: 640px)" in css
+async def test_portal_exposes_sla_monitor_and_local_asset(client):
+    html = (await client.get("/portal")).text
+
+    assert "/static/portal-sla.js" in html
+
+    for element_id in (
+        "sla-monitor-section",
+        "sla-monitor-total",
+        "sla-monitor-reload",
+        "sla-monitor-filter-form",
+        "sla-monitor-filter-state",
+        "sla-monitor-filter-type",
+        "sla-monitor-filter-ticket",
+        "sla-monitor-filter-from",
+        "sla-monitor-filter-to",
+        "sla-monitor-page-size",
+        "sla-monitor-table-body",
+        "sla-monitor-pagination",
+        "sla-monitor-page-previous",
+        "sla-monitor-page-next",
+    ):
+        assert f'id="{element_id}"' in html
+
+    assert (
+        await client.get("/static/portal-sla.js")
+    ).status_code == 200
+
+
+async def test_sla_monitor_script_integrates_filters_and_ticket_detail(client):
+    script = (await client.get("/static/portal-sla.js")).text
+
+    assert "/sla/breaches?" in script
+    assert 'query.append("state"' in script
+    assert 'query.set("sla_type"' in script
+    assert '"ticket_id"' in script
+    assert '"triggered_from"' in script
+    assert '"triggered_to"' in script
+    assert "portal:open-ticket" in script
+    assert '["ADMIN", "PROCESSOR"].includes(role)' in script
+    assert "elements.section.hidden = true" in script
+    assert "sessionStorage" in script
+    assert "localStorage" not in script
+    assert "innerHTML" not in script
+
+
+async def test_sla_monitor_styles_support_states_table_and_mobile(client):
+    css = (await client.get("/static/portal.css")).text
+
+    for selector in (
+        ".sla-monitor-section",
+        ".sla-monitor-filter-grid",
+        ".sla-event-badge--warning",
+        ".sla-event-badge--overdue",
+        ".sla-event-badge--escalated",
+        ".sla-monitor-row--overdue",
+        ".sla-monitor-row--escalated",
+    ):
+        assert selector in css
+
+    assert "#sla-monitor-table-wrapper" in css
+    assert "overflow-x: auto" in css
+    assert "@media (max-width: 640px)" in css

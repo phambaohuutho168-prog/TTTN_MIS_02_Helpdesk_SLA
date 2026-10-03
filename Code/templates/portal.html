@@ -9,6 +9,7 @@
     <script defer src="{{ url_for('static', path='portal-tickets.js') }}"></script>
     <script defer src="{{ url_for('static', path='portal-notifications.js') }}"></script>
     <script defer src="{{ url_for('static', path='portal-profile.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-sla.js') }}"></script>
 </head>
 <body>
     <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
@@ -326,19 +327,102 @@
                     <p id="ticket-detail-description">—</p>
                 </section>
 
-                <section class="ticket-detail-section">
-                    <h3>Thông tin SLA</h3>
-                    <dl class="ticket-detail-grid">
+                <section
+                    id="ticket-sla-section"
+                    class="ticket-detail-section ticket-sla-section"
+                    aria-labelledby="ticket-sla-title"
+                >
+                    <header class="section-heading">
                         <div>
-                            <dt>Hạn phản hồi</dt>
-                            <dd id="ticket-detail-response-deadline">—</dd>
+                            <h3 id="ticket-sla-title">Thông tin SLA</h3>
+                            <p>
+                                Theo dõi thời hạn phản hồi và các chu kỳ xử lý ticket.
+                            </p>
                         </div>
 
-                        <div>
-                            <dt>Hạn xử lý</dt>
-                            <dd id="ticket-detail-resolution-deadline">—</dd>
+                        <div class="ticket-sla-heading-actions">
+                            <span
+                                id="ticket-sla-overall"
+                                class="sla-status-badge sla-status-badge--muted"
+                            >
+                                Chưa tải
+                            </span>
+
+                            <button
+                                id="ticket-sla-reload"
+                                class="button button--secondary"
+                                type="button"
+                            >
+                                Tải lại
+                            </button>
                         </div>
-                    </dl>
+                    </header>
+
+                    <div
+                        id="ticket-sla-loading"
+                        class="loading-panel"
+                        role="status"
+                        hidden
+                    >
+                        Đang tải thông tin SLA...
+                    </div>
+
+                    <div
+                        id="ticket-sla-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div id="ticket-sla-content" hidden>
+                        <dl class="ticket-detail-grid">
+                            <div>
+                                <dt>Phản hồi đầu tiên</dt>
+                                <dd id="ticket-sla-first-response">—</dd>
+                            </div>
+
+                            <div>
+                                <dt>Hạn phản hồi</dt>
+                                <dd id="ticket-detail-response-deadline">—</dd>
+                            </div>
+
+                            <div>
+                                <dt>Hạn xử lý hiện tại</dt>
+                                <dd id="ticket-detail-resolution-deadline">—</dd>
+                            </div>
+                        </dl>
+
+                        <section class="ticket-sla-group">
+                            <h4>SLA phản hồi</h4>
+
+                            <div
+                                id="ticket-sla-response-empty"
+                                class="empty-panel"
+                                hidden
+                            >
+                                Ticket không áp dụng SLA phản hồi.
+                            </div>
+
+                            <div id="ticket-sla-response-container"></div>
+                        </section>
+
+                        <section class="ticket-sla-group">
+                            <h4>Các chu kỳ SLA xử lý</h4>
+
+                            <div
+                                id="ticket-sla-resolution-empty"
+                                class="empty-panel"
+                                hidden
+                            >
+                                Ticket chưa có chu kỳ SLA xử lý.
+                            </div>
+
+                            <ol
+                                id="ticket-sla-resolution-list"
+                                class="ticket-sla-cycle-list"
+                            ></ol>
+                        </section>
+                    </div>
                 </section>
 
                 <section
@@ -874,10 +958,200 @@
             </div>
 
         <section
-    id="ticket-create-section"
-    class="workspace-card ticket-create-card"
-    aria-labelledby="ticket-create-title"
-    hidden
+            id="sla-monitor-section"
+            class="workspace-card sla-monitor-section"
+            aria-labelledby="sla-monitor-title"
+            hidden
+        >
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">GIÁM SÁT SLA</p>
+                    <h2 id="sla-monitor-title">
+                        Cảnh báo và vi phạm SLA
+                    </h2>
+                    <p>
+                        Theo dõi ticket sắp đến hạn, quá hạn hoặc đã
+                        escalation để ưu tiên xử lý.
+                    </p>
+                </div>
+
+                <div class="sla-monitor-heading-actions">
+                    <strong id="sla-monitor-total">0 sự kiện</strong>
+
+                    <button
+                        id="sla-monitor-reload"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Tải lại
+                    </button>
+                </div>
+            </header>
+
+            <form id="sla-monitor-filter-form">
+                <div class="sla-monitor-filter-grid">
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-state">
+                            Trạng thái cảnh báo
+                        </label>
+                        <select id="sla-monitor-filter-state">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="WARNING">Sắp đến hạn</option>
+                            <option value="OVERDUE">Quá hạn</option>
+                            <option value="ESCALATED">Đã escalation</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-type">
+                            Loại SLA
+                        </label>
+                        <select id="sla-monitor-filter-type">
+                            <option value="">Tất cả loại SLA</option>
+                            <option value="RESPONSE">Phản hồi</option>
+                            <option value="RESOLUTION">Xử lý</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-ticket">
+                            ID ticket
+                        </label>
+                        <input
+                            id="sla-monitor-filter-ticket"
+                            type="number"
+                            min="1"
+                            placeholder="Ví dụ: 15"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-from">
+                            Phát sinh từ
+                        </label>
+                        <input
+                            id="sla-monitor-filter-from"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-to">
+                            Phát sinh đến
+                        </label>
+                        <input
+                            id="sla-monitor-filter-to"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-page-size">
+                            Số dòng mỗi trang
+                        </label>
+                        <select id="sla-monitor-page-size">
+                            <option value="10">10 dòng</option>
+                            <option value="20" selected>20 dòng</option>
+                            <option value="50">50 dòng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        id="sla-monitor-filter-submit"
+                        class="button button--primary"
+                        type="submit"
+                    >
+                        Áp dụng bộ lọc
+                    </button>
+
+                    <button
+                        id="sla-monitor-filter-reset"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Đặt lại
+                    </button>
+                </div>
+            </form>
+
+            <p id="sla-monitor-summary" class="list-summary">
+                Đang chuẩn bị dữ liệu SLA...
+            </p>
+
+            <div
+                id="sla-monitor-loading"
+                class="loading-panel"
+                role="status"
+                hidden
+            >
+                Đang tải cảnh báo SLA...
+            </div>
+
+            <div
+                id="sla-monitor-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="sla-monitor-empty"
+                class="empty-panel"
+                hidden
+            >
+                Không có cảnh báo SLA phù hợp với bộ lọc.
+            </div>
+
+            <div
+                id="sla-monitor-table-wrapper"
+                class="table-wrapper"
+                hidden
+            >
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Ticket</th>
+                            <th scope="col">Loại SLA</th>
+                            <th scope="col">Cảnh báo</th>
+                            <th scope="col">Hạn hiệu lực</th>
+                            <th scope="col">Phát sinh</th>
+                            <th scope="col">Người xử lý</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sla-monitor-table-body"></tbody>
+                </table>
+            </div>
+
+            <footer id="sla-monitor-pagination" class="pagination" hidden>
+                <button
+                    id="sla-monitor-page-previous"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang trước
+                </button>
+
+                <span id="sla-monitor-page-information">Trang 1/1</span>
+
+                <button
+                    id="sla-monitor-page-next"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang sau
+                </button>
+            </footer>
+        </section>
+
+        <section
+            id="ticket-create-section"
+            class="workspace-card ticket-create-card"
+            aria-labelledby="ticket-create-title"
+            hidden
 >
     <header class="section-heading">
         <div>

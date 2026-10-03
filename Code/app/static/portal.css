@@ -1581,3 +1581,375 @@ h1 {
         padding: 14px;
     }
 }
+/* Ticket SLA detail */
+.ticket-sla-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sla-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.sla-status-badge--info {
+    color: #1856a3;
+    background: #eaf3ff;
+    border-color: #bdd7fb;
+}
+
+.sla-status-badge--warning {
+    color: #8a5100;
+    background: #fff5d9;
+    border-color: #f2d38a;
+}
+
+.sla-status-badge--danger {
+    color: #a12626;
+    background: #fff0f0;
+    border-color: #f3b9b9;
+}
+
+.sla-status-badge--success {
+    color: #17633b;
+    background: #eaf8f0;
+    border-color: #a9ddbd;
+}
+
+.sla-status-badge--muted {
+    color: #596579;
+    background: #f1f3f6;
+    border-color: #d7dce4;
+}
+
+.ticket-sla-group {
+    margin-top: 22px;
+}
+
+.ticket-sla-group h4 {
+    margin: 0 0 12px;
+    color: #273249;
+    font-size: 15px;
+}
+
+.ticket-sla-card {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid #dfe5ee;
+    border-radius: 16px;
+    background: #f9fbfd;
+}
+
+.ticket-sla-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ticket-sla-card__header h5 {
+    margin: 0 0 4px;
+    color: #202b40;
+    font-size: 15px;
+}
+
+.ticket-sla-card__header p {
+    margin: 0;
+    color: #68748a;
+    font-size: 13px;
+}
+
+.ticket-sla-card__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+    margin: 0;
+}
+
+.ticket-sla-card__grid div {
+    min-width: 0;
+}
+
+.ticket-sla-card__grid dt {
+    margin-bottom: 4px;
+    color: #6a7588;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ticket-sla-card__grid dd {
+    margin: 0;
+    color: #263249;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.ticket-sla-progress-group {
+    margin-top: 16px;
+}
+
+.ticket-sla-progress-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
+    color: #536076;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ticket-sla-progress {
+    display: block;
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: #e6eaf0;
+    appearance: none;
+}
+
+.ticket-sla-progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: #e6eaf0;
+}
+
+.ticket-sla-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: #2563eb;
+}
+
+.ticket-sla-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: #2563eb;
+}
+
+.ticket-sla-progress--warning::-webkit-progress-value {
+    background: #d88a00;
+}
+
+.ticket-sla-progress--warning::-moz-progress-bar {
+    background: #d88a00;
+}
+
+.ticket-sla-progress--danger::-webkit-progress-value {
+    background: #d14343;
+}
+
+.ticket-sla-progress--danger::-moz-progress-bar {
+    background: #d14343;
+}
+
+.ticket-sla-progress--success::-webkit-progress-value {
+    background: #238255;
+}
+
+.ticket-sla-progress--success::-moz-progress-bar {
+    background: #238255;
+}
+
+.ticket-sla-cycle-list {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticket-sla-cycle-list > li {
+    min-width: 0;
+}
+
+/* SLA monitoring */
+.sla-monitor-section {
+    margin-bottom: 24px;
+}
+
+.sla-monitor-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+#sla-monitor-total {
+    color: #455269;
+    font-size: 14px;
+}
+
+.sla-monitor-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 22px 0 18px;
+}
+
+.sla-monitor-filter-grid .field-group {
+    min-width: 0;
+}
+
+.sla-monitor-filter-grid input,
+.sla-monitor-filter-grid select {
+    width: 100%;
+}
+
+#sla-monitor-table-wrapper {
+    overflow-x: auto;
+}
+
+#sla-monitor-table-wrapper table {
+    min-width: 980px;
+}
+
+.sla-monitor-ticket {
+    display: grid;
+    gap: 4px;
+    min-width: 190px;
+}
+
+.sla-monitor-ticket strong {
+    color: #2457cf;
+    font-size: 14px;
+}
+
+.sla-monitor-ticket span {
+    color: #263249;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.sla-monitor-ticket small {
+    color: #748096;
+}
+
+.sla-event-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.sla-event-badge--warning {
+    color: #825000;
+    background: #fff4d6;
+    border-color: #f0cf7f;
+}
+
+.sla-event-badge--overdue {
+    color: #a32626;
+    background: #fff0f0;
+    border-color: #f0b2b2;
+}
+
+.sla-event-badge--escalated {
+    color: #6d32a8;
+    background: #f5edff;
+    border-color: #d8baf5;
+}
+
+.sla-monitor-meta {
+    display: grid;
+    gap: 4px;
+    min-width: 125px;
+}
+
+.sla-monitor-meta small {
+    color: #758095;
+}
+
+.sla-monitor-row--overdue {
+    background: #fffafa;
+}
+
+.sla-monitor-row--escalated {
+    background: #fcf9ff;
+}
+
+.sla-monitor-open-ticket {
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .sla-monitor-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .sla-monitor-heading-actions {
+        width: 100%;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+    .sla-monitor-heading-actions .button,
+    #sla-monitor-total {
+        width: 100%;
+    }
+
+    #sla-monitor-total {
+        padding: 6px 0;
+    }
+
+    .sla-monitor-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #sla-monitor-filter-form .form-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    #sla-monitor-filter-form .button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .ticket-sla-heading-actions {
+        width: 100%;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+    .ticket-sla-heading-actions .button,
+    .ticket-sla-heading-actions .sla-status-badge {
+        width: 100%;
+    }
+
+    .ticket-sla-card {
+        padding: 15px;
+    }
+
+    .ticket-sla-card__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket-sla-progress-label {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+}
