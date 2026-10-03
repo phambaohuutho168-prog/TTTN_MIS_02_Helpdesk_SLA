@@ -3,6 +3,8 @@
 (() => {
     const API_PREFIX = "/api/v1";
 
+    const COMMENT_EDIT_WINDOW_MINUTES = 15;
+
     const STORAGE_KEYS = Object.freeze({
         accessToken: "helpdesk.dashboard.accessToken",
         refreshToken: "helpdesk.dashboard.refreshToken",
@@ -1220,6 +1222,7 @@
         const meta = document.createElement("span");
         const badge = document.createElement("span");
         const content = document.createElement("p");
+        const actions = document.createElement("div");
 
         item.className = "conversation-item";
 
@@ -1236,15 +1239,43 @@
         meta.className = "conversation-meta";
         badge.className = "conversation-badge";
         content.className = "conversation-content";
+        actions.className = "conversation-item-actions";
 
         authorName.textContent = comment.author.full_name;
         meta.textContent = formatDateTime(comment.created_at);
+
+        if (comment.updated_at) {
+            meta.textContent +=
+                ` · Đã chỉnh sửa ${formatDateTime(comment.updated_at)}`;
+        }
+
         badge.textContent = commentLabel(comment);
         content.textContent = comment.content;
 
         author.append(authorName, meta);
         header.append(author, badge);
         item.append(header, content);
+
+        if (canEditComment(comment)) {
+            const editButton = document.createElement("button");
+
+            editButton.type = "button";
+            editButton.className =
+                "button button--secondary conversation-edit-button";
+            editButton.textContent = "Chỉnh sửa";
+
+            editButton.addEventListener("click", () => {
+                openCommentEditor(
+                    item,
+                    comment,
+                    content,
+                    actions,
+                );
+            });
+
+            actions.append(editButton);
+            item.append(actions);
+        }
 
         return item;
     }
@@ -1259,6 +1290,159 @@
         }
 
         return "Công khai";
+    }
+
+    function currentPortalUser() {
+        const value = sessionStorage.getItem(STORAGE_KEYS.user);
+
+        if (!value) return null;
+
+        try {
+            return JSON.parse(value);
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    function isTerminalTicket(ticket) {
+        return ["CLOSED", "REJECTED"].includes(
+            ticket?.status?.status_code,
+        );
+    }
+
+    function canEditComment(comment) {
+        const ticket = listState.detailTicket;
+        const user = currentPortalUser();
+        const role = currentPrimaryRole();
+
+        if (!ticket || !user || isTerminalTicket(ticket)) {
+            return false;
+        }
+
+        if (role === "ADMIN") return true;
+
+        if (Number(comment.author?.user_id) !== Number(user.user_id)) {
+            return false;
+        }
+
+        const createdAt = new Date(comment.created_at);
+
+        if (Number.isNaN(createdAt.getTime())) return false;
+
+        const elapsedMinutes =
+            (Date.now() - createdAt.getTime()) / 60_000;
+
+        return elapsedMinutes <= COMMENT_EDIT_WINDOW_MINUTES;
+    }
+
+    function openCommentEditor(
+        item,
+        comment,
+        contentElement,
+        actionsElement,
+    ) {
+        const form = document.createElement("form");
+        const textarea = document.createElement("textarea");
+        const error = document.createElement("div");
+        const formActions = document.createElement("div");
+        const submitButton = document.createElement("button");
+        const cancelButton = document.createElement("button");
+
+        form.className = "conversation-edit-form";
+        textarea.className = "conversation-edit-input";
+        textarea.rows = 4;
+        textarea.maxLength = 4000;
+        textarea.required = true;
+        textarea.value = comment.content;
+
+        error.className = "alert alert--error";
+        error.setAttribute("role", "alert");
+        error.hidden = true;
+
+        formActions.className = "form-actions";
+
+        submitButton.type = "submit";
+        submitButton.className = "button button--primary";
+        submitButton.textContent = "Lưu thay đổi";
+
+        cancelButton.type = "button";
+        cancelButton.className = "button button--secondary";
+        cancelButton.textContent = "Hủy";
+
+        formActions.append(submitButton, cancelButton);
+        form.append(error, textarea, formActions);
+
+        contentElement.hidden = true;
+        actionsElement.hidden = true;
+        item.append(form);
+
+        cancelButton.addEventListener("click", () => {
+            form.remove();
+            contentElement.hidden = false;
+            actionsElement.hidden = false;
+        });
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const newContent = textarea.value.trim();
+
+            error.hidden = true;
+            error.textContent = "";
+
+            if (!newContent) {
+                error.textContent =
+                    "Vui lòng nhập nội dung trao đổi.";
+                error.hidden = false;
+                return;
+            }
+
+            textarea.disabled = true;
+            submitButton.disabled = true;
+            cancelButton.disabled = true;
+            submitButton.textContent = "Đang lưu...";
+
+            try {
+                await apiRequest(
+                    `/comments/${comment.comment_id}`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            content: newContent,
+                        }),
+                    },
+                );
+
+                elements.portalMessage.textContent =
+                    "Đã cập nhật nội dung trao đổi.";
+                elements.portalMessage.hidden = false;
+
+                if (listState.detailTicket) {
+                    await loadTicketComments(
+                        listState.detailTicket,
+                    );
+                }
+            } catch (requestError) {
+                error.textContent = requestError.message;
+                error.hidden = false;
+
+                textarea.disabled = false;
+                submitButton.disabled = false;
+                cancelButton.disabled = false;
+                submitButton.textContent = "Lưu thay đổi";
+            }
+        });
+
+        window.setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(
+                textarea.value.length,
+                textarea.value.length,
+            );
+        }, 0);
     }
 
     function configureCommentForm(ticket) {
@@ -1415,9 +1599,78 @@
 
         info.append(name, meta);
         actions.append(downloadButton);
+
+        if (canDeleteAttachment(attachment)) {
+            const deleteButton = document.createElement("button");
+
+            deleteButton.type = "button";
+            deleteButton.className =
+                "button attachment-delete-button";
+            deleteButton.textContent = "Xóa tệp";
+
+            deleteButton.addEventListener("click", () => {
+                deleteAttachment(attachment, deleteButton);
+            });
+
+            actions.append(deleteButton);
+        }
+
         item.append(info, actions);
 
         return item;
+    }
+
+        function canDeleteAttachment(attachment) {
+        const ticket = listState.detailTicket;
+        const user = currentPortalUser();
+        const role = currentPrimaryRole();
+
+        if (!ticket || !user) return false;
+
+        if (role === "ADMIN") return true;
+
+        return (
+            !isTerminalTicket(ticket) &&
+            Number(attachment.uploaded_by) === Number(user.user_id)
+        );
+    }
+
+    async function deleteAttachment(attachment, button) {
+        const confirmed = window.confirm(
+            `Bạn có chắc muốn xóa tệp "${attachment.file_name}" không?`,
+        );
+
+        if (!confirmed) return;
+
+        clearAttachmentError();
+
+        button.disabled = true;
+        button.textContent = "Đang xóa...";
+
+        try {
+            await apiRequest(
+                `/attachments/${attachment.attachment_id}`,
+                {
+                    method: "DELETE",
+                },
+            );
+
+            const updatedTicket = await apiRequest(
+                `/tickets/${attachment.ticket_id}`,
+            );
+
+            listState.detailTicket = updatedTicket;
+            renderTicketAttachments(updatedTicket);
+
+            elements.portalMessage.textContent =
+                `Đã xóa tệp "${attachment.file_name}".`;
+            elements.portalMessage.hidden = false;
+        } catch (error) {
+            showAttachmentError(error.message);
+
+            button.disabled = false;
+            button.textContent = "Xóa tệp";
+        }
     }
 
     function formatFileSize(value) {

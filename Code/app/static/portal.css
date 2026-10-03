@@ -870,6 +870,51 @@ h1 {
     overflow-wrap: anywhere;
 }
 
+.conversation-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.conversation-edit-button {
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+.conversation-edit-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.conversation-edit-input {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    color: #172033;
+    font: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.conversation-edit-input:focus {
+    border-color: #315efb;
+    outline: 3px solid rgb(49 94 251 / 14%);
+}
+
+.conversation-edit-input:disabled {
+    color: #64748b;
+    background: #f1f5f9;
+    cursor: wait;
+}
+
 #ticket-comment-form {
     margin-top: 18px;
     padding: 18px;
@@ -939,6 +984,37 @@ h1 {
 .attachment-actions {
     display: flex;
     flex-shrink: 0;
+    gap: 8px;
+}
+
+.attachment-delete-button {
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    color: #b42318;
+}
+
+.attachment-delete-button:hover:not(:disabled) {
+    border-color: #fda4af;
+    background: #ffe4e6;
+    color: #9f1239;
+}
+
+.attachment-delete-button:focus-visible {
+    outline: 3px solid rgb(225 29 72 / 18%);
+    outline-offset: 2px;
+}
+
+.attachment-delete-button:disabled {
+    color: #94a3b8;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    cursor: wait;
+}
+
+.attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 8px;
 }
 
@@ -1951,5 +2027,31 @@ h1 {
         align-items: flex-start;
         flex-direction: column;
         gap: 3px;
+    }
+    .conversation-item-actions {
+        justify-content: stretch;
+    }
+
+    .conversation-edit-button {
+        width: 100%;
+    }
+
+    .conversation-edit-form .form-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .conversation-edit-form .button {
+        width: 100%;
+    }
+
+    .attachment-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .attachment-actions .button {
+        width: 100%;
     }
 }

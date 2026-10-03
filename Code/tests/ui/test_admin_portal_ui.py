@@ -534,3 +534,57 @@ async def test_sla_monitor_styles_support_states_table_and_mobile(client):
     assert "#sla-monitor-table-wrapper" in css
     assert "overflow-x: auto" in css
     assert "@media (max-width: 640px)" in css
+async def test_portal_supports_comment_editing(client):
+    script = (
+        await client.get("/static/portal-tickets.js")
+    ).text
+
+    for marker in (
+        "COMMENT_EDIT_WINDOW_MINUTES",
+        "function canEditComment",
+        "function openCommentEditor",
+        "/comments/${comment.comment_id}",
+        'method: "PATCH"',
+        "COMMENT_EDIT_WINDOW_MINUTES",
+        "Đã chỉnh sửa",
+    ):
+        assert marker in script
+
+    assert "currentPortalUser" in script
+    assert "isTerminalTicket(ticket)" in script
+    assert "innerHTML" not in script
+
+
+async def test_portal_supports_attachment_deletion(client):
+    script = (
+        await client.get("/static/portal-tickets.js")
+    ).text
+
+    for marker in (
+        "function canDeleteAttachment",
+        "async function deleteAttachment",
+        "/attachments/${attachment.attachment_id}",
+        'method: "DELETE"',
+        "attachment-delete-button",
+        "Number(attachment.uploaded_by)",
+    ):
+        assert marker in script
+
+    assert 'role === "ADMIN"' in script
+    assert "!isTerminalTicket(ticket)" in script
+    assert "window.confirm" in script
+
+
+async def test_comment_edit_and_attachment_delete_styles(client):
+    css = (await client.get("/static/portal.css")).text
+
+    for selector in (
+        ".conversation-item-actions",
+        ".conversation-edit-form",
+        ".conversation-edit-input",
+        ".attachment-delete-button",
+        ".attachment-actions",
+    ):
+        assert selector in css
+
+    assert "@media (max-width: 640px)" in css
