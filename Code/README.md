@@ -7,7 +7,7 @@ phủ quy trình từ tạo ticket, phân công, xử lý, theo dõi SLA, thông
 Đề tài được triển khai theo 56 công việc, từ **CV001 đến CV056**. Mã `CVxxx`
 chỉ dùng để theo dõi công việc trong kế hoạch; tên thư mục và tên file sử dụng
 nội dung nghiệp vụ, không sử dụng mã công việc. Phần lập trình CV023–CV056 hiện
-có **308 automated test Passed**.
+có **339 automated test Passed**.
 
 ## Công nghệ
 
