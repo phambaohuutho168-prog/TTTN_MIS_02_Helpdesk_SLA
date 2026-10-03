@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cổng hỗ trợ | {{ app_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='portal.css') }}">
+    <script defer src="{{ url_for('static', path='portal.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-tickets.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-notifications.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-profile.js') }}"></script>
+    <script defer src="{{ url_for('static', path='portal-sla.js') }}"></script>
+</head>
+<body>
+    <a class="skip-link" href="#portal-main">Đi đến nội dung chính</a>
+
+    <header class="site-header">
+        <a class="brand" href="/portal">
+            <strong>HELPDESK</strong>
+            <span>SLA Management</span>
+        </a>
+
+        <nav aria-label="Điều hướng chính">
+            <a href="/portal">Ticket</a>
+            <a href="/dashboard">Dashboard</a>
+            <a id="admin-navigation-link" href="/admin" hidden>Quản trị</a>
+            <a href="/docs">API</a>
+        </nav>
+
+        <div id="session-navigation" class="session-navigation" hidden>
+            <div id="notification-center" class="notification-center">
+                <button
+                    id="notification-toggle"
+                    class="button button--secondary notification-toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="notification-panel"
+                >
+                    <span aria-hidden="true">🔔</span>
+                    <span class="notification-toggle__label">Thông báo</span>
+                    <span
+                        id="notification-unread-count"
+                        class="notification-badge"
+                        aria-label="Thông báo chưa đọc"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+                <section
+                    id="notification-panel"
+                    class="notification-panel"
+                    aria-labelledby="notification-title"
+                    hidden
+                >
+                    <header class="notification-panel__header">
+                        <div>
+                            <p class="eyebrow">HỘP THÔNG BÁO</p>
+                            <h2 id="notification-title">Thông báo của bạn</h2>
+                        </div>
+
+                        <button
+                            id="notification-mark-all"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Đánh dấu tất cả đã đọc
+                        </button>
+                    </header>
+
+                    <div class="notification-toolbar">
+                        <label for="notification-filter">Hiển thị</label>
+                        <select id="notification-filter">
+                            <option value="">Tất cả</option>
+                            <option value="false">Chưa đọc</option>
+                            <option value="true">Đã đọc</option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="notification-loading"
+                        class="notification-state"
+                        role="status"
+                        hidden
+                    >
+                        Đang tải thông báo...
+                    </div>
+
+                    <div
+                        id="notification-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="notification-empty"
+                        class="notification-state"
+                        hidden
+                    >
+                        Bạn chưa có thông báo phù hợp.
+                    </div>
+
+                    <ul
+                        id="notification-list"
+                        class="notification-list"
+                        aria-label="Danh sách thông báo"
+                        hidden
+                    ></ul>
+
+                    <footer class="notification-pagination">
+                        <button
+                            id="notification-previous"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Trang trước
+                        </button>
+
+                        <span id="notification-page-status">Trang 1/1</span>
+
+                        <button
+                            id="notification-next"
+                            class="button button--secondary button--small"
+                            type="button"
+                        >
+                            Trang sau
+                        </button>
+                    </footer>
+                </section>
+            </div>
+            <div class="user-summary">
+                <strong id="current-user-name">—</strong>
+                <span id="current-user-role">—</span>
+            </div>
+            <button
+                id="profile-open"
+                class="button button--secondary"
+                type="button"
+            >
+                Hồ sơ
+            </button>
+            <button id="logout-button" class="button button--secondary" type="button">
+                Đăng xuất
+            </button>
+        </div>
+    </header>
+
+        <dialog id="profile-dialog" class="ticket-detail-dialog">
+            <div class="ticket-detail-card profile-card">
+                <header class="ticket-detail-header">
+                    <div>
+                        <p class="eyebrow">HỒ SƠ CÁ NHÂN</p>
+                        <h2 id="profile-title">Thông tin tài khoản</h2>
+                    </div>
+
+                    <button
+                        id="profile-close"
+                        class="dialog-close"
+                        type="button"
+                        aria-label="Đóng hồ sơ"
+                    >
+                        ×
+                    </button>
+                </header>
+
+                <form id="profile-form">
+                    <div
+                        id="profile-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="profile-success"
+                        class="alert alert--success"
+                        role="status"
+                        hidden
+                    ></div>
+
+                    <div class="profile-grid">
+                        <div class="field-group">
+                            <label for="profile-email">Email</label>
+                            <input
+                                id="profile-email"
+                                type="email"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-full-name">Họ và tên</label>
+                            <input
+                                id="profile-full-name"
+                                type="text"
+                                maxlength="150"
+                                required
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-phone">Số điện thoại</label>
+                            <input
+                                id="profile-phone"
+                                type="tel"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="field-group">
+                            <label for="profile-department">Phòng ban</label>
+                            <input
+                                id="profile-department"
+                                type="text"
+                                readonly
+                            >
+                        </div>
+                    </div>
+
+                    <section class="profile-role-section">
+                        <h3>Vai trò được cấp</h3>
+                        <div
+                            id="profile-role-list"
+                            class="role-checkbox-list"
+                            aria-label="Danh sách vai trò"
+                        ></div>
+                        <p class="field-help">
+                            Liên hệ Quản trị viên nếu cần thay đổi vai trò hoặc phòng ban.
+                        </p>
+                    </section>
+
+                    <div class="form-actions">
+                        <button
+                            id="profile-submit"
+                            class="button button--primary"
+                            type="submit"
+                        >
+                            Lưu hồ sơ
+                        </button>
+
+                        <button
+                            id="profile-cancel"
+                            class="button button--secondary"
+                            type="button"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <dialog
+        id="ticket-detail-dialog"
+        class="ticket-detail-dialog"
+        aria-labelledby="ticket-detail-title"
+    >
+        <article class="ticket-detail-panel">
+            <header class="ticket-detail-header">
+                <div>
+                    <p id="ticket-detail-code" class="eyebrow">TICKET</p>
+                    <h2 id="ticket-detail-title">Chi tiết ticket</h2>
+                </div>
+
+                <button
+                    id="ticket-detail-close"
+                    class="button button--secondary"
+                    type="button"
+                    aria-label="Đóng chi tiết ticket"
+                >
+                    Đóng
+                </button>
+            </header>
+
+            <div
+                id="ticket-detail-loading"
+                class="loading-panel"
+                role="status"
+            >
+                Đang tải chi tiết ticket...
+            </div>
+
+            <div
+                id="ticket-detail-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div id="ticket-detail-content" hidden>
+                <div class="ticket-detail-badges">
+                    <span id="ticket-detail-priority" class="priority-badge">—</span>
+                    <span id="ticket-detail-status" class="status-badge">—</span>
+                </div>
+
+                <dl class="ticket-detail-grid">
+                    <div>
+                        <dt>Danh mục</dt>
+                        <dd id="ticket-detail-category">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Người gửi</dt>
+                        <dd id="ticket-detail-requester">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Người xử lý</dt>
+                        <dd id="ticket-detail-assignee">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Ngày tạo</dt>
+                        <dd id="ticket-detail-created-at">—</dd>
+                    </div>
+
+                    <div>
+                        <dt>Cập nhật gần nhất</dt>
+                        <dd id="ticket-detail-updated-at">—</dd>
+                    </div>
+                </dl>
+
+                <section class="ticket-detail-section">
+                    <h3>Mô tả yêu cầu</h3>
+                    <p id="ticket-detail-description">—</p>
+                </section>
+
+                <section
+                    id="ticket-sla-section"
+                    class="ticket-detail-section ticket-sla-section"
+                    aria-labelledby="ticket-sla-title"
+                >
+                    <header class="section-heading">
+                        <div>
+                            <h3 id="ticket-sla-title">Thông tin SLA</h3>
+                            <p>
+                                Theo dõi thời hạn phản hồi và các chu kỳ xử lý ticket.
+                            </p>
+                        </div>
+
+                        <div class="ticket-sla-heading-actions">
+                            <span
+                                id="ticket-sla-overall"
+                                class="sla-status-badge sla-status-badge--muted"
+                            >
+                                Chưa tải
+                            </span>
+
+                            <button
+                                id="ticket-sla-reload"
+                                class="button button--secondary"
+                                type="button"
+                            >
+                                Tải lại
+                            </button>
+                        </div>
+                    </header>
+
+                    <div
+                        id="ticket-sla-loading"
+                        class="loading-panel"
+                        role="status"
+                        hidden
+                    >
+                        Đang tải thông tin SLA...
+                    </div>
+
+                    <div
+                        id="ticket-sla-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div id="ticket-sla-content" hidden>
+                        <dl class="ticket-detail-grid">
+                            <div>
+                                <dt>Phản hồi đầu tiên</dt>
+                                <dd id="ticket-sla-first-response">—</dd>
+                            </div>
+
+                            <div>
+                                <dt>Hạn phản hồi</dt>
+                                <dd id="ticket-detail-response-deadline">—</dd>
+                            </div>
+
+                            <div>
+                                <dt>Hạn xử lý hiện tại</dt>
+                                <dd id="ticket-detail-resolution-deadline">—</dd>
+                            </div>
+                        </dl>
+
+                        <section class="ticket-sla-group">
+                            <h4>SLA phản hồi</h4>
+
+                            <div
+                                id="ticket-sla-response-empty"
+                                class="empty-panel"
+                                hidden
+                            >
+                                Ticket không áp dụng SLA phản hồi.
+                            </div>
+
+                            <div id="ticket-sla-response-container"></div>
+                        </section>
+
+                        <section class="ticket-sla-group">
+                            <h4>Các chu kỳ SLA xử lý</h4>
+
+                            <div
+                                id="ticket-sla-resolution-empty"
+                                class="empty-panel"
+                                hidden
+                            >
+                                Ticket chưa có chu kỳ SLA xử lý.
+                            </div>
+
+                            <ol
+                                id="ticket-sla-resolution-list"
+                                class="ticket-sla-cycle-list"
+                            ></ol>
+                        </section>
+                    </div>
+                </section>
+
+                <section
+                    id="ticket-attachments-section"
+                    class="ticket-detail-section ticket-attachments-section"
+                    aria-labelledby="ticket-attachments-title"
+                >
+                    <header class="section-heading">
+                        <div>
+                            <h3 id="ticket-attachments-title">Tệp đính kèm</h3>
+                            <p>Minh chứng và tài liệu liên quan đến ticket.</p>
+                        </div>
+                    </header>
+
+                    <div
+                        id="ticket-attachment-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    >
+                    </div>
+                    <div
+                        id="ticket-attachments-empty"
+                        class="empty-panel"
+                        hidden
+                    >
+                        Ticket chưa có tệp đính kèm.
+                    </div>
+
+                    <ul
+                        id="ticket-attachments-list"
+                        class="attachment-list"
+                        aria-label="Danh sách tệp đính kèm"
+                        hidden
+                    ></ul>
+
+                    <form id="ticket-attachment-form" hidden>
+                        <div class="field-group">
+                            <label for="ticket-attachment-file">
+                                Chọn tệp
+                            </label>
+
+                            <input
+                                id="ticket-attachment-file"
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg,.txt,.docx,.xlsx"
+                                required
+                            >
+
+                            <p class="field-help">
+                                PDF, PNG, JPG, TXT, DOCX hoặc XLSX; tối đa 10 MB.
+                            </p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-attachment-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Tải tệp lên
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <section
+                    id="ticket-rating-section"
+                    class="ticket-detail-section ticket-rating-section"
+                    aria-labelledby="ticket-rating-title"
+                    hidden
+                >
+                    <header class="section-heading">
+                        <div>
+                            <h3 id="ticket-rating-title">Đánh giá mức độ hài lòng</h3>
+                            <p>Ghi nhận chất lượng hỗ trợ sau khi ticket được giải quyết.</p>
+                        </div>
+                    </header>
+
+                    <div
+                        id="ticket-rating-loading"
+                        class="loading-panel"
+                        hidden
+                    >
+                        Đang tải đánh giá...
+                    </div>
+
+                    <div
+                        id="ticket-rating-error"
+                        class="alert alert--error"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div
+                        id="ticket-rating-empty"
+                        class="empty-panel"
+                        hidden
+                    >
+                        Ticket chưa có đánh giá.
+                    </div>
+
+                    <article
+                        id="ticket-rating-result"
+                        class="rating-result"
+                        hidden
+                    >
+                        <div class="rating-result-summary">
+                            <span
+                                id="ticket-rating-result-stars"
+                                class="rating-result-stars"
+                                aria-hidden="true"
+                            ></span>
+
+                            <strong id="ticket-rating-result-score"></strong>
+                        </div>
+
+                        <p
+                            id="ticket-rating-result-comment"
+                            class="rating-result-comment"
+                        ></p>
+
+                        <p class="rating-result-meta">
+                            Đánh giá bởi
+                            <strong id="ticket-rating-result-author"></strong>
+                            vào
+                            <time id="ticket-rating-result-created-at"></time>
+                        </p>
+                    </article>
+
+                    <form id="ticket-rating-form" hidden>
+                        <fieldset class="rating-fieldset">
+                            <legend>Mức độ hài lòng</legend>
+
+                            <div class="rating-options">
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="1"
+                                        aria-label="1 sao"
+                                        required
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="2"
+                                        aria-label="2 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="3"
+                                        aria-label="3 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="4"
+                                        aria-label="4 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+
+                                <label class="rating-option">
+                                    <input
+                                        type="radio"
+                                        name="ticket-rating-score"
+                                        value="5"
+                                        aria-label="5 sao"
+                                    >
+                                    <span aria-hidden="true">★</span>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div class="field-group">
+                            <label for="ticket-rating-comment">
+                                Nhận xét
+                            </label>
+
+                            <textarea
+                                id="ticket-rating-comment"
+                                rows="4"
+                                maxlength="2000"
+                                placeholder="Chia sẻ trải nghiệm hỗ trợ của bạn"
+                            ></textarea>
+
+                            <p class="field-help">
+                                Không bắt buộc, tối đa 2.000 ký tự.
+                            </p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-rating-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <section
+                    id="ticket-assignment-section"
+                    class="ticket-detail-section ticket-assignment-section"
+                    aria-labelledby="ticket-assignment-title"
+                    hidden
+                >
+                    <h3 id="ticket-assignment-title">Phân công người xử lý</h3>
+
+                    <form id="ticket-assignment-form">
+                        <div
+                            id="ticket-assignment-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div class="ticket-create-grid">
+                            <div class="field-group">
+                                <label for="ticket-assignment-assignee">
+                                    Người xử lý
+                                </label>
+                                <select id="ticket-assignment-assignee" required>
+                                    <option value="">Chọn người xử lý</option>
+                                </select>
+                            </div>
+
+                            <div class="field-group">
+                                <label for="ticket-assignment-reason">
+                                    Lý do phân công
+                                </label>
+                                <input
+                                    id="ticket-assignment-reason"
+                                    type="text"
+                                    maxlength="1000"
+                                    placeholder="Ví dụ: Phân công theo chuyên môn"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-assignment-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Xác nhận phân công
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <section
+                        id="ticket-conversation-section"
+                        class="ticket-detail-section ticket-conversation-section"
+                        aria-labelledby="ticket-conversation-title"
+                    >
+                        <header class="section-heading">
+                            <div>
+                                <h3 id="ticket-conversation-title">Trao đổi</h3>
+                                <p>Theo dõi nội dung trao đổi trong quá trình xử lý.</p>
+                            </div>
+                        </header>
+
+                        <div
+                            id="ticket-conversation-loading"
+                            class="loading-panel"
+                            role="status"
+                        >
+                            Đang tải trao đổi...
+                        </div>
+
+                        <div
+                            id="ticket-conversation-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div
+                            id="ticket-conversation-empty"
+                            class="empty-panel"
+                            hidden
+                        >
+                            Chưa có nội dung trao đổi.
+                        </div>
+
+                        <ol
+                            id="ticket-conversation-list"
+                            class="conversation-list"
+                            aria-label="Lịch sử trao đổi"
+                            hidden
+                        ></ol>
+
+                        <form id="ticket-comment-form" hidden>
+                            <div
+                                id="ticket-comment-error"
+                                class="alert alert--error"
+                                role="alert"
+                                hidden
+                            ></div>
+
+                            <div class="field-group">
+                                <label for="ticket-comment-content">
+                                    Nội dung trao đổi
+                                </label>
+                                <textarea
+                                    id="ticket-comment-content"
+                                    rows="4"
+                                    minlength="1"
+                                    maxlength="4000"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div
+                                id="ticket-comment-visibility-group"
+                                class="field-group"
+                                hidden
+                            >
+                                <label for="ticket-comment-visibility">
+                                    Phạm vi hiển thị
+                                </label>
+                                <select id="ticket-comment-visibility">
+                                    <option value="PUBLIC">Công khai</option>
+                                    <option value="INTERNAL">Nội bộ</option>
+                                </select>
+                            </div>
+
+                            <div class="form-actions">
+                                <button
+                                    id="ticket-comment-submit"
+                                    class="button button--primary"
+                                    type="submit"
+                                >
+                                    Gửi trao đổi
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                <section
+                    id="ticket-workflow-section"
+                    class="ticket-detail-section ticket-workflow-section"
+                    aria-labelledby="ticket-workflow-title"
+                    hidden
+                >
+                    <h3 id="ticket-workflow-title">Thao tác ticket</h3>
+
+                    <div
+                        id="ticket-detail-actions"
+                        class="ticket-detail-actions"
+                    ></div>
+
+                    <form id="ticket-workflow-form" hidden>
+                        <div
+                            id="ticket-workflow-error"
+                            class="alert alert--error"
+                            role="alert"
+                            hidden
+                        ></div>
+
+                        <div class="field-group">
+                            <label
+                                id="ticket-workflow-input-label"
+                                for="ticket-workflow-input"
+                            >
+                                Nội dung
+                            </label>
+
+                            <textarea
+                                id="ticket-workflow-input"
+                                rows="5"
+                                maxlength="8000"
+                            ></textarea>
+
+                            <p
+                                id="ticket-workflow-help"
+                                class="field-help"
+                            ></p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                id="ticket-workflow-submit"
+                                class="button button--primary"
+                                type="submit"
+                            >
+                                Xác nhận
+                            </button>
+
+                            <button
+                                id="ticket-workflow-cancel"
+                                class="button button--secondary"
+                                type="button"
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </form>
+                </section>
+        <section
+            id="ticket-history-section"
+            class="ticket-detail-section ticket-history-section"
+            aria-labelledby="ticket-history-title"
+        >
+            <header class="section-heading">
+                <div>
+                    <h3 id="ticket-history-title">Lịch sử xử lý</h3>
+                    <p>
+                        Theo dõi thay đổi trạng thái và quá trình phân công ticket.
+                    </p>
+                </div>
+
+                <button
+                    id="ticket-history-reload"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Tải lại
+                </button>
+            </header>
+
+            <p id="ticket-history-summary" class="field-help">
+                Chưa tải lịch sử xử lý.
+            </p>
+
+            <div
+                id="ticket-history-loading"
+                class="loading-panel"
+                role="status"
+                hidden
+            >
+                Đang tải lịch sử xử lý...
+            </div>
+
+            <div
+                id="ticket-history-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="ticket-history-empty"
+                class="empty-panel"
+                hidden
+            >
+                Ticket chưa có lịch sử trạng thái hoặc phân công.
+            </div>
+
+            <ol
+                id="ticket-history-timeline"
+                class="ticket-history-timeline"
+                aria-label="Dòng thời gian xử lý ticket"
+                hidden
+            ></ol>
+        </section>
+            </div>
+        </article>
+    </dialog>
+
+    <main id="portal-main" class="page-container">
+        <section id="auth-panel" class="auth-layout">
+            <div class="welcome-card">
+                <p class="eyebrow">CỔNG HỖ TRỢ DOANH NGHIỆP</p>
+                <h1>Quản lý yêu cầu hỗ trợ</h1>
+                <p>
+                    Tạo và theo dõi ticket, trao đổi với bộ phận xử lý,
+                    kiểm soát SLA và truy vết toàn bộ quá trình hỗ trợ.
+                </p>
+            </div>
+
+            <form id="login-form" class="login-card">
+                <div>
+                    <p class="eyebrow">ĐĂNG NHẬP</p>
+                    <h2>Chào mừng bạn quay lại</h2>
+                    <p>Sử dụng tài khoản được cấp để truy cập hệ thống.</p>
+                </div>
+
+                <div id="login-error" class="alert alert--error" role="alert" hidden></div>
+
+                <label for="login-email">Email</label>
+                <input
+                    id="login-email"
+                    type="email"
+                    autocomplete="username"
+                    maxlength="254"
+                    required
+                >
+
+                <label for="login-password">Mật khẩu</label>
+                <input
+                    id="login-password"
+                    type="password"
+                    autocomplete="current-password"
+                    minlength="8"
+                    maxlength="128"
+                    required
+                >
+
+                <button id="login-button" class="button button--primary" type="submit">
+                    Đăng nhập
+                </button>
+            </form>
+        </section>
+
+        <section id="portal-shell" hidden>
+            <div class="portal-heading">
+                <div>
+                    <p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p>
+                    <h1 id="portal-title">Danh sách ticket</h1>
+                    <p id="portal-description">Đang tải phạm vi làm việc...</p>
+                </div>
+                <span id="role-badge" class="role-badge">—</span>
+            </div>
+
+            <div id="portal-message" class="alert alert--success" role="status">
+                Đăng nhập thành công.
+            </div>
+
+        <section
+            id="sla-monitor-section"
+            class="workspace-card sla-monitor-section"
+            aria-labelledby="sla-monitor-title"
+            hidden
+        >
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">GIÁM SÁT SLA</p>
+                    <h2 id="sla-monitor-title">
+                        Cảnh báo và vi phạm SLA
+                    </h2>
+                    <p>
+                        Theo dõi ticket sắp đến hạn, quá hạn hoặc đã
+                        escalation để ưu tiên xử lý.
+                    </p>
+                </div>
+
+                <div class="sla-monitor-heading-actions">
+                    <strong id="sla-monitor-total">0 sự kiện</strong>
+
+                    <button
+                        id="sla-monitor-reload"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Tải lại
+                    </button>
+                </div>
+            </header>
+
+            <form id="sla-monitor-filter-form">
+                <div class="sla-monitor-filter-grid">
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-state">
+                            Trạng thái cảnh báo
+                        </label>
+                        <select id="sla-monitor-filter-state">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="WARNING">Sắp đến hạn</option>
+                            <option value="OVERDUE">Quá hạn</option>
+                            <option value="ESCALATED">Đã escalation</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-type">
+                            Loại SLA
+                        </label>
+                        <select id="sla-monitor-filter-type">
+                            <option value="">Tất cả loại SLA</option>
+                            <option value="RESPONSE">Phản hồi</option>
+                            <option value="RESOLUTION">Xử lý</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-ticket">
+                            ID ticket
+                        </label>
+                        <input
+                            id="sla-monitor-filter-ticket"
+                            type="number"
+                            min="1"
+                            placeholder="Ví dụ: 15"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-from">
+                            Phát sinh từ
+                        </label>
+                        <input
+                            id="sla-monitor-filter-from"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-filter-to">
+                            Phát sinh đến
+                        </label>
+                        <input
+                            id="sla-monitor-filter-to"
+                            type="datetime-local"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="sla-monitor-page-size">
+                            Số dòng mỗi trang
+                        </label>
+                        <select id="sla-monitor-page-size">
+                            <option value="10">10 dòng</option>
+                            <option value="20" selected>20 dòng</option>
+                            <option value="50">50 dòng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        id="sla-monitor-filter-submit"
+                        class="button button--primary"
+                        type="submit"
+                    >
+                        Áp dụng bộ lọc
+                    </button>
+
+                    <button
+                        id="sla-monitor-filter-reset"
+                        class="button button--secondary"
+                        type="button"
+                    >
+                        Đặt lại
+                    </button>
+                </div>
+            </form>
+
+            <p id="sla-monitor-summary" class="list-summary">
+                Đang chuẩn bị dữ liệu SLA...
+            </p>
+
+            <div
+                id="sla-monitor-loading"
+                class="loading-panel"
+                role="status"
+                hidden
+            >
+                Đang tải cảnh báo SLA...
+            </div>
+
+            <div
+                id="sla-monitor-error"
+                class="alert alert--error"
+                role="alert"
+                hidden
+            ></div>
+
+            <div
+                id="sla-monitor-empty"
+                class="empty-panel"
+                hidden
+            >
+                Không có cảnh báo SLA phù hợp với bộ lọc.
+            </div>
+
+            <div
+                id="sla-monitor-table-wrapper"
+                class="table-wrapper"
+                hidden
+            >
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Ticket</th>
+                            <th scope="col">Loại SLA</th>
+                            <th scope="col">Cảnh báo</th>
+                            <th scope="col">Hạn hiệu lực</th>
+                            <th scope="col">Phát sinh</th>
+                            <th scope="col">Người xử lý</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sla-monitor-table-body"></tbody>
+                </table>
+            </div>
+
+            <footer id="sla-monitor-pagination" class="pagination" hidden>
+                <button
+                    id="sla-monitor-page-previous"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang trước
+                </button>
+
+                <span id="sla-monitor-page-information">Trang 1/1</span>
+
+                <button
+                    id="sla-monitor-page-next"
+                    class="button button--secondary"
+                    type="button"
+                >
+                    Trang sau
+                </button>
+            </footer>
+        </section>
+
+        <section
+            id="ticket-create-section"
+            class="workspace-card ticket-create-card"
+            aria-labelledby="ticket-create-title"
+            hidden
+>
+    <header class="section-heading">
+        <div>
+            <h2 id="ticket-create-title">Tạo yêu cầu hỗ trợ</h2>
+            <p>Mô tả vấn đề để bộ phận phụ trách tiếp nhận và xử lý.</p>
+        </div>
+
+        <button
+            id="ticket-create-toggle"
+            class="button button--primary"
+            type="button"
+            aria-expanded="false"
+            aria-controls="ticket-create-form"
+        >
+            Tạo ticket mới
+        </button>
+    </header>
+
+    <form id="ticket-create-form" hidden>
+        <div
+            id="ticket-create-error"
+            class="alert alert--error"
+            role="alert"
+            hidden
+        ></div>
+
+        <div class="ticket-create-grid">
+            <div class="field-group field-group--full">
+                <label for="ticket-create-title-input">Tiêu đề</label>
+                <input
+                    id="ticket-create-title-input"
+                    type="text"
+                    minlength="5"
+                    maxlength="255"
+                    required
+                >
+            </div>
+
+            <div class="field-group">
+                <label for="ticket-create-category">Danh mục</label>
+                <select id="ticket-create-category" required>
+                    <option value="">Chọn danh mục</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="ticket-create-priority">Mức ưu tiên</label>
+                <select id="ticket-create-priority" required>
+                    <option value="">Chọn mức ưu tiên</option>
+                </select>
+            </div>
+
+            <div class="field-group field-group--full">
+                <label for="ticket-create-description">Mô tả chi tiết</label>
+                <textarea
+                    id="ticket-create-description"
+                    rows="6"
+                    minlength="10"
+                    maxlength="10000"
+                    required
+                ></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button
+                id="ticket-create-submit"
+                class="button button--primary"
+                type="submit"
+            >
+                Gửi yêu cầu
+            </button>
+
+            <button
+                id="ticket-create-cancel"
+                class="button button--secondary"
+                type="button"
+            >
+                Hủy
+            </button>
+        </div>
+    </form>
+</section>
+
+           <section class="workspace-card" aria-labelledby="ticket-list-title">
+    <header class="section-heading">
+        <div>
+            <h2 id="ticket-list-title">Danh sách ticket</h2>
+            <p id="ticket-list-summary">Đang tải dữ liệu...</p>
+        </div>
+    </header>
+
+    <form id="ticket-filter-form" class="ticket-filters">
+        <div class="field-group field-group--search">
+            <label for="ticket-filter-query">Tìm kiếm</label>
+            <input
+                id="ticket-filter-query"
+                name="q"
+                type="search"
+                maxlength="100"
+                placeholder="Mã hoặc tiêu đề ticket"
+            >
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-status">Trạng thái</label>
+            <select id="ticket-filter-status" name="status">
+                <option value="">Tất cả trạng thái</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-category">Danh mục</label>
+            <select id="ticket-filter-category" name="category_id">
+                <option value="">Tất cả danh mục</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label for="ticket-filter-priority">Ưu tiên</label>
+            <select id="ticket-filter-priority" name="priority_id">
+                <option value="">Tất cả ưu tiên</option>
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button id="ticket-filter-submit" class="button button--primary" type="submit">
+                Áp dụng
+            </button>
+            <button id="ticket-filter-reset" class="button button--secondary" type="button">
+                Xóa lọc
+            </button>
+        </div>
+    </form>
+
+    <div id="ticket-list-loading" class="loading-panel" role="status" hidden>
+        Đang tải danh sách ticket...
+    </div>
+
+    <div id="ticket-list-error" class="alert alert--error" role="alert" hidden></div>
+
+    <div id="ticket-list-empty" class="empty-panel" hidden>
+        <strong>Chưa có ticket phù hợp</strong>
+        <p>Hãy thay đổi bộ lọc hoặc tạo yêu cầu hỗ trợ mới.</p>
+    </div>
+
+    <div id="ticket-table-wrapper" class="table-wrapper" hidden>
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th scope="col">Mã ticket</th>
+                    <th scope="col">Nội dung</th>
+                    <th scope="col">Ưu tiên</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Người xử lý</th>
+                    <th scope="col">Ngày tạo</th>
+                </tr>
+            </thead>
+            <tbody id="ticket-table-body"></tbody>
+        </table>
+    </div>
+
+    <footer id="ticket-pagination" class="pagination" hidden>
+        <button id="ticket-page-previous" class="button button--secondary" type="button">
+            Trang trước
+        </button>
+        <span id="ticket-page-information">Trang 1/1</span>
+        <button id="ticket-page-next" class="button button--secondary" type="button">
+            Trang sau
+        </button>
+    </footer>
+</section>
+        </section>
+    </main>
+</body>
+</html>
