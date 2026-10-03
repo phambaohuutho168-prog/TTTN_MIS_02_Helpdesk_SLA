@@ -80,15 +80,15 @@ kết nối PostgreSQL và Redis đang ở trạng thái healthy. Giao diện đ
 
 | Kịch bản | Chế độ | Minh chứng | Kết quả |
 | --- | --- | --- | --- |
-| Trang trạng thái hệ thống | Desktop | [Xem ảnh](ui_screenshots/desktop_system_status.png) | PASS |
-| Trang đăng nhập KPI | Desktop | [Xem ảnh](ui_screenshots/desktop_dashboard_login.png) | PASS |
-| Dashboard tải dữ liệu thành công | Desktop | [Xem ảnh](ui_screenshots/desktop_dashboard_success.png) | PASS |
-| Form đăng nhập responsive | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_dashboard_login.png) | PASS |
-| Trạng thái đang xử lý | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_loading_state.png) | PASS |
-| Sai thông tin đăng nhập | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_invalid_login.png) | PASS |
-| Dashboard đăng nhập thành công | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_dashboard_success.png) | PASS |
-| Thẻ KPI và trạng thái thiếu dữ liệu | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_kpi_cards.png) | PASS |
-| Requester không có quyền truy cập | Mobile 357 × 667 | [Xem ảnh](ui_screenshots/mobile_access_denied.png) | PASS |
+| Trang trạng thái hệ thống | Desktop | [Xem ảnh](../../extra/ui_screenshots/desktop_system_status.png) | PASS |
+| Trang đăng nhập KPI | Desktop | [Xem ảnh](../../extra/ui_screenshots/desktop_dashboard_login.png) | PASS |
+| Dashboard tải dữ liệu thành công | Desktop | [Xem ảnh](../../extra/ui_screenshots/desktop_dashboard_success.png) | PASS |
+| Form đăng nhập responsive | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_dashboard_login.png) | PASS |
+| Trạng thái đang xử lý | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_loading_state.png) | PASS |
+| Sai thông tin đăng nhập | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_invalid_login.png) | PASS |
+| Dashboard đăng nhập thành công | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_dashboard_success.png) | PASS |
+| Thẻ KPI và trạng thái thiếu dữ liệu | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_kpi_cards.png) | PASS |
+| Requester không có quyền truy cập | Mobile 357 × 667 | [Xem ảnh](../../extra/ui_screenshots/mobile_access_denied.png) | PASS |
 
 Kết quả quan sát: giao diện không xuất hiện thanh cuộn ngang, không chồng lấn
 nội dung, các điều khiển vẫn sử dụng được và các trạng thái loading, success,

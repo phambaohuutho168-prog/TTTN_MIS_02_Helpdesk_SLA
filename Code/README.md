@@ -197,10 +197,28 @@ python -m uvicorn app.main:app --reload
 | Thành phần | Địa chỉ |
 | --- | --- |
 | Trang chính | <http://127.0.0.1:8000/> |
+| Cổng quản lý ticket | <http://127.0.0.1:8000/portal> |
+| Quản trị hệ thống | <http://127.0.0.1:8000/admin> |
 | KPI Dashboard | <http://127.0.0.1:8000/dashboard> |
 | Swagger | <http://127.0.0.1:8000/docs> |
 | Liveness | <http://127.0.0.1:8000/api/v1/health/live> |
 | Readiness | <http://127.0.0.1:8000/api/v1/health/ready> |
+
+### Giao diện Web
+
+Các giao diện sử dụng chung phiên đăng nhập lưu trong `sessionStorage`:
+
+- `/portal`: đăng nhập, danh sách và bộ lọc ticket, tạo ticket, xem chi tiết,
+  phân công, workflow, trao đổi công khai/nội bộ, chỉnh sửa trao đổi, tệp đính
+  kèm, đánh giá, thông báo, hồ sơ cá nhân, lịch sử trạng thái/phân công và SLA;
+- `/admin`: quản lý tài khoản, vai trò, trạng thái hoạt động, danh mục, mức ưu
+  tiên và Audit Log;
+- `/dashboard`: theo dõi KPI và hiệu suất SLA theo phạm vi của Admin hoặc
+  Processor.
+
+Requester chỉ truy cập ticket của mình. Processor chỉ truy cập ticket được
+phân công. Admin có phạm vi quản trị và giám sát toàn hệ thống. Các thao tác bị
+giới hạn đồng thời ở giao diện và API.
 
 ## 5. Vai trò và phạm vi truy cập
 
@@ -326,7 +344,7 @@ python -m pytest
 Kết quả hiện tại:
 
 ```text
-308 passed
+339 passed
 ```
 
 Các nhóm test chính:
@@ -424,7 +442,7 @@ python .\scripts\run_ui_tests.py
 Kết quả mong đợi:
 
 - `5/5` CV056 UI contract test passed;
-- full regression `308/308 passed`;
+- full regression `339/339 passed`;
 - kết luận `PASSED - UI COMPLETE`.
 
 Test tự động kiểm tra cấu trúc HTML/CSS/JavaScript. Trước khi bàn giao vẫn cần
@@ -483,8 +501,7 @@ nhanh, cô lập. Trước khi nộp cần thực hiện thêm:
 
 - Phân tích và thiết kế CV001–CV022: hoàn thành.
 - Source code và kiểm thử CV023–CV056: hoàn thành.
-- Automated regression: `308/308 passed`.
+- Automated regression: `339/339 passed`.
 - KPI: `8/10`, đạt có điều kiện.
 - UAT: automated test đạt; cần chữ ký xác nhận thực tế.
-- UI: Dashboard đã hoàn thiện state và responsive contract; cần kiểm tra trình
-  duyệt trước khi bàn giao.
+- UI: Portal, Admin và Dashboard đã hoàn thiện chức năng, trạng thái giao diện, phân quyền và responsive; smoke test thủ công ba vai trò đã đạt.
