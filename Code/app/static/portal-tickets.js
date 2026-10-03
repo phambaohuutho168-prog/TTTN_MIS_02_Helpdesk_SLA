@@ -1126,11 +1126,13 @@
 
             renderTicketDetail(updatedTicket);
             configureWorkflowSection(updatedTicket);
+
             await Promise.all([
                 configureAssignmentSection(updatedTicket),
                 loadTicketComments(updatedTicket),
                 loadTicketRating(updatedTicket),
-                loadTicketSla(ticket),
+                loadTicketHistory(updatedTicket),
+                loadTicketSla(updatedTicket),
             ]);
             await loadTickets();
         } catch (error) {
