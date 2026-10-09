@@ -496,8 +496,7 @@ Get-ChildItem -Recurse -Force | Where-Object {
 }
 ```
 
-Không đưa các file được liệt kê vào gói ZIP nộp bài. Giữ `.env.example` để
-người khác biết các biến cần cấu hình nhưng không để lộ secret thật.
+
 
 Kiểm tra thay đổi trước khi commit:
 
