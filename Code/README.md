@@ -6,8 +6,8 @@ phủ quy trình từ tạo ticket, phân công, xử lý, theo dõi SLA, thông
 
 Đề tài được triển khai theo 56 công việc, từ **CV001 đến CV056**. Mã `CVxxx`
 chỉ dùng để theo dõi công việc trong kế hoạch; tên thư mục và tên file sử dụng
-nội dung nghiệp vụ, không sử dụng mã công việc. Phần lập trình CV023–CV056 hiện
-có **339 automated test Passed**.
+nội dung nghiệp vụ. Phần source code và kiểm thử CV023–CV056 hiện đạt
+**339/339 automated tests passed**.
 
 ## Công nghệ
 
@@ -18,7 +18,8 @@ có **339 automated test Passed**.
 - JWT Bearer Authentication
 - Argon2id thông qua `pwdlib`
 - Pytest và Pytest AsyncIO
-- HTML, CSS và JavaScript cho KPI Dashboard
+- HTML, CSS và JavaScript cho Portal, trang quản trị và KPI Dashboard
+- Lưu trữ tệp cục bộ qua `ATTACHMENT_STORAGE_DIR`
 
 ## Phạm vi CV001–CV056
 
@@ -105,8 +106,10 @@ có **339 automated test Passed**.
 
 ## Cấu trúc thư mục
 
+README này được đặt trong thư mục `Code` của gói bàn giao.
+
 ```text
-Code/
+.
 ├── alembic/                  # Migration database
 ├── app/
 │   ├── api/                  # Router và dependency
@@ -116,20 +119,22 @@ Code/
 │   ├── repositories/         # Data-access layer
 │   ├── schemas/              # Pydantic request/response
 │   ├── services/             # Business logic
-│   └── static/               # CSS và JavaScript
+│   └── static/               # CSS/JavaScript của Portal, Admin và Dashboard
 ├── data/                     # Dữ liệu KPI mô phỏng
 ├── evidence/                 # Test evidence, JUnit và biên bản
 ├── scripts/                  # Seed, worker và test runner
-├── templates/                # Trang chính và KPI Dashboard
-├── tests/                    # Automated test
+├── storage/                  # Tệp runtime cục bộ, không đóng gói bàn giao
+├── templates/                # Trang Portal, Admin và KPI Dashboard
+├── tests/                    # Automated tests
 ├── docker-compose.yml
 ├── pytest.ini
 ├── requirements.txt
 └── README.md
 ```
 
-Không đưa `.env`, `.venv`, `.pytest_cache`, `__pycache__` hoặc file `*.pyc`
-vào GitHub và gói ZIP bàn giao.
+Không đưa `.git`, `.env`, `.venv`, `.pytest_cache`, `__pycache__`, file `*.pyc`,
+database cục bộ, log, `storage/` hoặc dữ liệu chạy thử vào gói ZIP bàn giao.
+Giữ `.env.example` để mô tả các biến cấu hình cần thiết.
 
 ## 1. Chuẩn bị môi trường trên Windows
 
@@ -150,7 +155,7 @@ Copy-Item .env.example .env
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Mở `.env` và thực hiện các việc sau:
+Mở `.env` và thực hiện:
 
 - thay `SECRET_KEY` bằng chuỗi ngẫu nhiên vừa tạo;
 - thay tất cả giá trị `CHANGE_ME`;
@@ -211,8 +216,8 @@ Các giao diện sử dụng chung phiên đăng nhập lưu trong `sessionStora
 - `/portal`: đăng nhập, danh sách và bộ lọc ticket, tạo ticket, xem chi tiết,
   phân công, workflow, trao đổi công khai/nội bộ, chỉnh sửa trao đổi, tệp đính
   kèm, đánh giá, thông báo, hồ sơ cá nhân, lịch sử trạng thái/phân công và SLA;
-- `/admin`: quản lý tài khoản, vai trò, trạng thái hoạt động, danh mục, mức ưu
-  tiên và Audit Log;
+- `/admin`: tạo và quản lý tài khoản, vai trò, trạng thái hoạt động, danh mục,
+  mức ưu tiên và Audit Log;
 - `/dashboard`: theo dõi KPI và hiệu suất SLA theo phạm vi của Admin hoặc
   Processor.
 
@@ -235,14 +240,14 @@ role header do phía client tự gửi.
 
 | ID | Endpoint | Transition | Quyền chính |
 | --- | --- | --- | --- |
-| WF-01 | `POST /api/v1/tickets/{ticket_id}/start` | `ASSIGNED -> IN_PROGRESS` | Processor được giao hoặc Admin |
-| WF-02 | `POST /api/v1/tickets/{ticket_id}/request-info` | `IN_PROGRESS -> PENDING_INFO` | Processor được giao hoặc Admin |
-| WF-03 | `POST /api/v1/tickets/{ticket_id}/provide-info` | `PENDING_INFO -> IN_PROGRESS` | Requester sở hữu |
-| WF-04 | `POST /api/v1/tickets/{ticket_id}/resolve` | `IN_PROGRESS -> RESOLVED` | Processor được giao hoặc Admin |
-| WF-05 | `POST /api/v1/tickets/{ticket_id}/close` | `RESOLVED -> CLOSED` | Requester sở hữu hoặc Admin |
-| WF-06 | `POST /api/v1/tickets/{ticket_id}/reopen` | `RESOLVED -> REOPENED` | Requester sở hữu, trong 72 giờ |
-| WF-07 | `POST /api/v1/tickets/{ticket_id}/resume` | `REOPENED -> IN_PROGRESS` | Processor được giao hoặc Admin |
-| WF-08 | `POST /api/v1/tickets/{ticket_id}/reject` | `NEW -> REJECTED` | Admin |
+| WF-01 | `POST /api/v1/tickets/{ticket_id}/start` | `ASSIGNED → IN_PROGRESS` | Processor được giao hoặc Admin |
+| WF-02 | `POST /api/v1/tickets/{ticket_id}/request-info` | `IN_PROGRESS → PENDING_INFO` | Processor được giao hoặc Admin |
+| WF-03 | `POST /api/v1/tickets/{ticket_id}/provide-info` | `PENDING_INFO → IN_PROGRESS` | Requester sở hữu |
+| WF-04 | `POST /api/v1/tickets/{ticket_id}/resolve` | `IN_PROGRESS → RESOLVED` | Processor được giao hoặc Admin |
+| WF-05 | `POST /api/v1/tickets/{ticket_id}/close` | `RESOLVED → CLOSED` | Requester sở hữu hoặc Admin |
+| WF-06 | `POST /api/v1/tickets/{ticket_id}/reopen` | `RESOLVED → REOPENED` | Requester sở hữu, trong 72 giờ |
+| WF-07 | `POST /api/v1/tickets/{ticket_id}/resume` | `REOPENED → IN_PROGRESS` | Processor được giao hoặc Admin |
+| WF-08 | `POST /api/v1/tickets/{ticket_id}/reject` | `NEW → REJECTED` | Admin |
 
 Mỗi transition hợp lệ cập nhật ticket, status history và audit log trong cùng
 transaction. `CLOSED` và `REJECTED` là trạng thái cuối.
@@ -360,7 +365,8 @@ Các nhóm test chính:
 | CV054 KPI evaluation | 2 |
 | CV055 High-priority regression | 3 |
 | CV056 UI completion | 5 |
-| **Tổng cộng hiện tại** | **308** |
+| Web UI Portal/Admin mở rộng | 31 |
+| **Tổng cộng hiện tại** | **339** |
 
 CV052 sử dụng lại 10 test CV047–CV051 thông qua marker `business_rule`, nên
 không làm tăng tổng số test.
@@ -375,7 +381,7 @@ python -m pytest .\tests\functional\test_security_access.py -v
 python -m pytest .\tests\functional\test_negative_cases.py -v
 ```
 
-| CV | Nội dung | Kết quả mong đợi |
+| CV | Nội dung | Kết quả hiện tại |
 | --- | --- | ---: |
 | CV047 | Luồng tạo đến đánh giá | 1 passed |
 | CV048 | Gần hạn, quá hạn, escalation và breach | 1 passed |
@@ -391,7 +397,7 @@ python -m pytest .\tests\functional\test_negative_cases.py -v
 python .\scripts\run_automated_tests.py
 ```
 
-Kết quả mong đợi: `10/10 passed`.
+Kết quả hiện tại: `10/10 passed`.
 
 ### CV053 – Automated UAT ba vai trò
 
@@ -399,7 +405,7 @@ Kết quả mong đợi: `10/10 passed`.
 python .\scripts\run_uat.py
 ```
 
-Kết quả mong đợi: `3/3 accepted`.
+Kết quả hiện tại: `3/3 accepted`.
 
 Automated UAT không thay thế phiên UAT thủ công. Biên bản UAT trong thư mục
 `evidence` chỉ hoàn tất khi người kiểm thử thực tế xác nhận, ghi ngày và ký tên.
@@ -413,7 +419,7 @@ python .\scripts\run_evaluation.py
 Kết quả hiện tại:
 
 - `8/10` KPI đạt;
-- `2/2` automated test passed;
+- `2/2` automated tests passed;
 - kết luận: **ĐẠT CÓ ĐIỀU KIỆN**.
 
 Hai KPI chưa đạt:
@@ -427,10 +433,12 @@ Hai KPI chưa đạt:
 python .\scripts\run_release_candidate.py
 ```
 
-Điều kiện `GO - RELEASE CANDIDATE`:
+Kết quả hiện tại: `GO - RELEASE CANDIDATE`.
+
+Điều kiện đã xác nhận:
 
 - không còn Critical/High đang mở trong defect log thuộc thư mục `evidence`;
-- `3/3` high-priority regression test passed;
+- `3/3` high-priority regression tests passed;
 - full regression passed.
 
 ### CV056 – UI/UX và responsive
@@ -439,14 +447,14 @@ python .\scripts\run_release_candidate.py
 python .\scripts\run_ui_tests.py
 ```
 
-Kết quả mong đợi:
+Kết quả hiện tại:
 
-- `5/5` CV056 UI contract test passed;
+- `5/5` CV056 UI contract tests passed;
 - full regression `339/339 passed`;
 - kết luận `PASSED - UI COMPLETE`.
 
-Test tự động kiểm tra cấu trúc HTML/CSS/JavaScript. Trước khi bàn giao vẫn cần
-mở Chrome và kiểm tra hiển thị thực tế tại 320, 390, 560, 768, 900 và 1.180 px.
+Test tự động kiểm tra cấu trúc HTML/CSS/JavaScript. Portal, Admin và Dashboard
+đã được smoke test thủ công với ba vai trò trên desktop và mobile.
 
 ## 13. Test evidence
 
@@ -458,44 +466,62 @@ Thư mục `evidence` lưu các nhóm bằng chứng sau:
 - biên bản UAT ba vai trò;
 - bảng đánh giá KPI và dữ liệu kết quả;
 - defect log và regression evidence của Release Candidate;
-- checklist và test evidence của UI/UX responsive.
+- checklist và test evidence của UI/UX responsive;
+- kết quả kiểm thử hoàn chỉnh Portal, Admin và Dashboard;
+- kết quả full regression `339/339 passed`.
 
 Tên file bằng chứng phải mô tả đúng nội dung, không dùng mã `CVxxx` làm tên
 file. Mã công việc chỉ được ghi bên trong tài liệu để đối chiếu với kế hoạch.
 
+Ảnh giao diện được lưu trong bộ minh chứng bàn giao riêng. Không giữ liên kết
+đến ảnh chưa tồn tại trong tài liệu evidence.
+
 ## 14. Kiểm tra trước khi commit hoặc đóng gói
 
-Kiểm tra secret:
+Kiểm tra secret và dữ liệu cục bộ:
 
 ```powershell
 git check-ignore .env
-git ls-files | Select-String -Pattern '(^|/)\.env$|\.db$|\.sqlite$'
+git ls-files | Select-String -Pattern '(^|/)\.env$|\.db$|\.sqlite$|(^|/)storage/'
 ```
 
-Lệnh thứ hai không được trả về `.env` hoặc database cục bộ.
+Lệnh thứ hai không được trả về `.env`, database hoặc tệp runtime trong
+`storage/`.
 
-Kiểm tra file không cần thiết:
+Kiểm tra file không cần thiết trong thư mục đóng gói:
 
 ```powershell
 Get-ChildItem -Recurse -Force | Where-Object {
-    $_.FullName -match '\\.venv|__pycache__|\\.pytest_cache|\.pyc$'
+    $_.FullName -match '\\.git($|\\)|\\.venv($|\\)|__pycache__|\\.pytest_cache|\.pyc$|\\.env$|\\storage($|\\)'
 }
 ```
 
-Không đưa các file trên vào gói ZIP nộp bài. Giữ `.env.example` để người khác
-biết các biến cần cấu hình nhưng không để lộ secret thật.
 
-## 15. Giới hạn kiểm thử
 
-Automated test sử dụng SQLite in-memory và session store giả để bảo đảm chạy
-nhanh, cô lập. Trước khi nộp cần thực hiện thêm:
+Kiểm tra thay đổi trước khi commit:
 
-1. chạy migration trên PostgreSQL 16;
-2. kiểm tra Redis 7 và refresh-token rotation;
-3. chạy seed dữ liệu thật;
-4. smoke test các API chính trên Swagger;
-5. UAT thủ công ba vai trò;
-6. kiểm tra responsive trên trình duyệt.
+```powershell
+git diff --check
+git status --short
+```
+
+## 15. Phạm vi và giới hạn kiểm thử
+
+Automated tests sử dụng SQLite in-memory và session store giả để bảo đảm tốc độ
+và tính cô lập. Ngoài kiểm thử tự động, hệ thống đã được kiểm tra với PostgreSQL
+16, Redis 7 và trình duyệt Chrome.
+
+Các nội dung đã xác nhận:
+
+1. migration PostgreSQL chạy thành công;
+2. PostgreSQL và Redis ở trạng thái healthy;
+3. seed dữ liệu chạy thành công;
+4. các API chính đã được smoke test;
+5. giao diện ba vai trò đã được kiểm tra thủ công;
+6. responsive trên desktop và mobile đạt yêu cầu.
+
+Biên bản UAT vẫn cần chữ ký xác nhận thực tế nếu đơn vị hoặc giảng viên yêu cầu.
+Ảnh giao diện được quản lý trong bộ minh chứng bàn giao riêng.
 
 ## Trạng thái hiện tại
 
@@ -503,5 +529,9 @@ nhanh, cô lập. Trước khi nộp cần thực hiện thêm:
 - Source code và kiểm thử CV023–CV056: hoàn thành.
 - Automated regression: `339/339 passed`.
 - KPI: `8/10`, đạt có điều kiện.
-- UAT: automated test đạt; cần chữ ký xác nhận thực tế.
-- UI: Portal, Admin và Dashboard đã hoàn thiện chức năng, trạng thái giao diện, phân quyền và responsive; smoke test thủ công ba vai trò đã đạt.
+- UAT: automated test đạt; kiểm thử thủ công ba vai trò đã hoàn thành; biên bản
+  cần chữ ký xác nhận nếu được yêu cầu.
+- UI: Portal, Admin và Dashboard đã hoàn thiện chức năng, trạng thái giao diện,
+  phân quyền và responsive.
+- Gói bàn giao phải được làm sạch `.git`, `.env`, môi trường ảo, cache và dữ liệu
+  runtime trước khi nén.
